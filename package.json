@@ -1,0 +1,29 @@
+{
+  "name": "mathjslab",
+  "version": "1.0.0",
+  "description": "Interpreter with language syntax like MATLAB/Octave",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sergiolindau/mathjslab.git"
+  },
+  "keywords": [
+    "MATLAB",
+    "Octave",
+    "interpreter",
+    "parser",
+    "yacc",
+    "bison",
+    "lex",
+    "flex"
+  ],
+  "author": "Sergio Lindau <sergiolindau@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sergiolindau/mathjslab/issues"
+  },
+  "homepage": "https://github.com/sergiolindau/mathjslab#readme"
+}
