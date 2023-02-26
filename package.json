@@ -3,13 +3,6 @@
   "version": "1.0.0",
   "description": "Interpreter with language syntax like MATLAB/Octave",
   "main": "index.js",
-  "scripts": {
-    "git:add:all": "git add .",
-    "git:commit:initial": "git commit -m \"Initial Commit\"",
-    "git:push": "git push",
-    "git:add:commit:push": "npm run git:add:all && npm run git:commit:initial && npm run git:push",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sergiolindau/mathjslab.git"
@@ -22,12 +15,39 @@
     "yacc",
     "bison",
     "lex",
-    "flex"
+    "flex",
+    "jison"
   ],
   "author": "Sergio Lindau <sergiolindau@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/sergiolindau/mathjslab/issues"
   },
-  "homepage": "https://github.com/sergiolindau/mathjslab#readme"
+  "homepage": "https://github.com/sergiolindau/mathjslab#readme",
+  "scripts": {
+    "git:add:all": "git add .",
+    "git:commit:initial": "git commit -m \"Initial Commit\"",
+    "git:push": "git push",
+    "git:add:commit:push": "npm run git:add:all && npm run git:commit:initial && npm run git:push",
+    "get:decimal:js": "curl https://raw.githubusercontent.com/MikeMcl/decimal.js/master/decimal.js --ssl-no-revoke -o ./src/decimal/decimal.js",
+    "get:decimal:dts": "curl https://raw.githubusercontent.com/MikeMcl/decimal.js/master/decimal.d.ts --ssl-no-revoke -o ./src/decimal/decimal.d.ts",
+    "get:decimal": "npm run get:decimal:js && npm run get:decimal:dts",
+    "clean:decimal": "rimraf ./src/decimal/decimal.js ./src/decimal/decimal.d.ts",
+    "update": "npx ncu -u"
+  },
+  "dependencies": {
+    "decimal.js": "^10.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^18.14.1",
+    "cpx": "^1.5.0",
+    "cross-env": "^7.0.3",
+    "jison": "^0.4.18",
+    "rimraf": "^4.1.2",
+    "ts-loader": "^9.4.2",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "tsconfig-paths": "^3.14.2",
+    "typescript": "^4.9.5"
+  }
 }
