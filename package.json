@@ -33,7 +33,17 @@
     "get:decimal:dts": "curl https://raw.githubusercontent.com/MikeMcl/decimal.js/master/decimal.d.ts --ssl-no-revoke -o ./src/decimal/decimal.d.ts",
     "get:decimal": "npm run get:decimal:js && npm run get:decimal:dts",
     "clean:decimal": "rimraf ./src/decimal/decimal.js ./src/decimal/decimal.d.ts",
-    "update": "npx ncu -u"
+    "get:tln:js": "curl https://raw.githubusercontent.com/MatheusAvellar/textarea-line-numbers/master/tln.js --ssl-no-revoke -o ./src/tln/tln.js",
+    "get:tln:css": "curl https://raw.githubusercontent.com/MatheusAvellar/textarea-line-numbers/master/tln.css --ssl-no-revoke -o ./src/tln/tln.css",
+    "get:tln": "npm run get:tln:js && npm run get:tln:css",
+    "clean:tln": "rimraf ./src/tln/tln.js ./src/tln/tln.css",
+    "get:deps": "npm run get:decimal && npm run get:tln",
+    "update": "npx ncu -u",
+    "clean:parser": "rimraf dist/src/parser/parser.js",
+    "prebuild:parser": "rimraf dist/src/parser/parser.js",
+    "build:parser": "mkdirp dist/src/parser && jison src/parser/parser.jison -o dist/src/parser/parser.js",
+    "prebuild": "rimraf dist",
+    "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "decimal.js": "^10.4.3"
@@ -41,8 +51,8 @@
   "devDependencies": {
     "@types/node": "^18.14.1",
     "cpx": "^1.5.0",
-    "cross-env": "^7.0.3",
     "jison": "^0.4.18",
+    "mkdirp": "^2.1.4",
     "rimraf": "^4.1.2",
     "ts-loader": "^9.4.2",
     "ts-node": "^10.9.1",
