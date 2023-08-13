@@ -1,4 +1,4 @@
-var constantsTable: Array<[string, number]> = [
+export const constantsTable: Array<[string, number]> = [
 	// Mathematical Constants
 	["cte.pi",		Math.PI],
 	["cte.e",		Math.E],

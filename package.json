@@ -1,8 +1,8 @@
 {
   "name": "mathjslab",
   "version": "1.0.0",
-  "description": "Interpreter with language syntax like MATLAB/Octave",
-  "main": "index.js",
+  "description": "MathJSLab - Interpreter with language syntax like MATLAB/Octave",
+  "private": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sergiolindau/mathjslab.git"
@@ -29,35 +29,34 @@
     "git:commit:initial": "git commit -m \"Initial Commit\"",
     "git:push": "git push",
     "git:add:commit:push": "npm run git:add:all && npm run git:commit:initial && npm run git:push",
-    "get:decimal:js": "curl https://raw.githubusercontent.com/MikeMcl/decimal.js/master/decimal.js --ssl-no-revoke -o ./src/decimal/decimal.js",
-    "get:decimal:dts": "curl https://raw.githubusercontent.com/MikeMcl/decimal.js/master/decimal.d.ts --ssl-no-revoke -o ./src/decimal/decimal.d.ts",
-    "get:decimal": "npm run get:decimal:js && npm run get:decimal:dts",
-    "clean:decimal": "rimraf ./src/decimal/decimal.js ./src/decimal/decimal.d.ts",
-    "get:tln:js": "curl https://raw.githubusercontent.com/MatheusAvellar/textarea-line-numbers/master/tln.js --ssl-no-revoke -o ./src/tln/tln.js",
-    "get:tln:css": "curl https://raw.githubusercontent.com/MatheusAvellar/textarea-line-numbers/master/tln.css --ssl-no-revoke -o ./src/tln/tln.css",
-    "get:tln": "npm run get:tln:js && npm run get:tln:css",
-    "clean:tln": "rimraf ./src/tln/tln.js ./src/tln/tln.css",
-    "get:deps": "npm run get:decimal && npm run get:tln",
     "update": "npx ncu -u",
-    "clean:parser": "rimraf dist/src/parser/parser.js",
-    "prebuild:parser": "rimraf dist/src/parser/parser.js",
-    "build:parser": "mkdirp dist/src/parser && jison src/parser/parser.jison -o dist/src/parser/parser.js",
-    "prebuild": "rimraf dist",
-    "build": "tsc -p tsconfig.build.json"
+    "tscbuild": "tsc -p tsconfig.build.json",
+    "prebuild:parser": "rimraf src/parser.js",
+    "build:parser": "jison src/parser.jison -o src/parser.js",
+    "prebuild": "npm run build:parser",
+    "build": "webpack --mode production",
+    "clean": "rimraf dist src/parser.js",
+    "test:decimal": "ts-node-dev --respawn --transpile-only test/decimal-test.ts"
   },
   "dependencies": {
     "decimal.js": "^10.4.3"
   },
   "devDependencies": {
-    "@types/node": "^18.14.1",
-    "cpx": "^1.5.0",
+    "@types/node": "^20.4.9",
+    "@types/webpack": "^5.28.1",
     "jison": "^0.4.18",
-    "mkdirp": "^2.1.4",
-    "rimraf": "^4.1.2",
-    "ts-loader": "^9.4.2",
+    "rimraf": "^5.0.1",
+    "ts-loader": "^9.4.4",
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
-    "tsconfig-paths": "^3.14.2",
-    "typescript": "^4.9.5"
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.1.6",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "browser": {
+    "fs": false,
+    "os": false,
+    "path": false
   }
 }

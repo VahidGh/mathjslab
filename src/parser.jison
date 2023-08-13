@@ -1,12 +1,12 @@
 /**
  * #### parser.jison ####
- * 
+ *
  * MATLAB®/Octave like syntax parser
  *
- * This file defines a parser for a subset of MATLAB®/Octave syntax. 
+ * This file defines a parser for a subset of MATLAB®/Octave syntax.
  * Semantic actions is provided by Evaluator class defined in Evaluator.ts
  * file.
- * 
+ *
  * The parser access methods in Evaluator class using EvaluatorPointer global
  * variable (Window.EvaluatorPointer) defined in parser body.
  *
@@ -80,7 +80,7 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 	i = commandsTable.indexOf(this.match);
 	if (i>=0) {
 		this.pushState('FQIDENT_AS_STRING');
-	}		
+	}
 	return "NAME";
 }
 
@@ -158,8 +158,63 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 %token INVALID
 
 %{
-// Global var Window.EvaluatorPointer
-this.EvaluatorPointer = null;
+
+global.EvaluatorPointer = null;
+
+/**
+ * Language keywords
+ */
+const keywordsTable = [
+	'global',
+	'persistent',
+	'if',
+	'endif',
+	'end',
+	'elseif',
+	'else',
+	'switch',
+	'endswitch',
+	'case',
+	'otherwise',
+	'while',
+	'endwhile',
+	'do',
+	'until',
+	'for',
+	'endfor',
+	'parfor',
+	'endparfor',
+	'break',
+	'continue',
+	'return',
+	'function',
+	'endfunction',
+	'try',
+	'catch',
+	'end_try_catch',
+	'unwind_protect',
+	'unwind_protect_cleanup',
+	'end_unwind_protect',
+	'classdef',
+	'endclassdef',
+	'enumeration',
+	'endenumeration',
+	'properties',
+	'endproperties',
+	'events',
+	'endevents',
+	'methods',
+	'endmethods'
+];
+
+/**
+ * Word-list commands
+ */
+const commandsTable = [
+	'help',
+	'doc'
+];
+
 %}
 
 // Non-terminal start symbol.
