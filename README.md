@@ -2,17 +2,21 @@
 
 > Interpreter with language syntax like MATLAB&reg;/Octave
 
-This package emulates a parser and evaluator for is a subset of
-MATLAB&reg;/Octave language. This can run in browser environment and
-implements a arbitrary precision arithmetics using
-[decimal.js](https://www.npmjs.com/package/decimal.js) package.
+This package emulates a parser and evaluator for a subset of
+[MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/)
+language.
+
+It can run in browser environment and implements a arbitrary precision arithmetics using
+[decimal.js](https://www.npmjs.com/package/decimal.js) package. The package
+has functions to generate ([MathML](https://www.w3.org/Math/)) code of
+expressions parsed too.
 
 ## Installation
 
 Install the `mathjslab` package:
 
 ```bash
-npm install mathsjalab
+npm install mathjslab
 ```
 
 Install `@types/mathjslab` package:
@@ -31,21 +35,20 @@ let evaluator = new Evaluator(EvaluatorConfiguration);
 
 Examples:
 
-+ Parsing
+* Parsing
 ```typescript
 let tree = evaluator.Parse('x=sqrt(1+2*3)');
 ```
 
-+ Evaluation
+* Evaluation
 ```typescript
 let result = evaluator.Evaluate(tree);
 ```
 
-+ MathML generation
+* MathML generation
 ```typescript
 let mathml = evaluator.UnparseML(tree);
 ```
-
 
 # License
 
