@@ -11,6 +11,8 @@ It can run in browser environment and implements a arbitrary precision arithmeti
 has functions to generate [MathML](https://www.w3.org/Math/) code of
 expressions parsed too.
 
+This software is intended for educational purposes primarily.
+
 ## Installation
 
 Install the `mathjslab` package:
