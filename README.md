@@ -8,7 +8,7 @@ language.
 
 It can run in browser environment and implements a arbitrary precision arithmetics using
 [decimal.js](https://www.npmjs.com/package/decimal.js) package. The package
-has functions to generate ([MathML](https://www.w3.org/Math/)) code of
+has functions to generate [MathML](https://www.w3.org/Math/) code of
 expressions parsed too.
 
 ## Installation
