@@ -1,22 +1,14 @@
 /**
- * #### Evaluator.ts ####
- *
  * MATLAB®/Octave like syntax parser/interpreter/compiler.
- *
- * This file defines Evaluator class that is instantiated using
- * EvaluatorConfiguration defined in EvaluatorSetup.ts file.
- *
  */
+
 import Parser from './parser.js';
 import { constantsTable } from './constants-table';
 import { substGreek } from './subst-greek';
-
-/**
- * Base class type
- */
-type TString = { str: string };
-type TNumber = { re: any, im: any };
-type TTensor = { dim: Array<number>, array: Array<any> };
+import { CharString } from './char-string';
+import { ComplexDecimal } from './complex-decimal';
+import { MultiArray } from './multi-array';
+import { Tensor } from './tensor';
 
 /**
  * baseFunctionTable type
@@ -31,16 +23,10 @@ export type TBaseFunctionTable = { [k: string]: TBaseFunctionTableEntry };
 /**
  * TEvaluatorConfig type
  */
-type TFunctionListTable = { [k: string]: TFunctionTable };
-type TFunctionTable = { [k: string]: Function };
-type TAliasNameTable = Array<[RegExp, string]>;
+type TAliasNameTable = Record<string, RegExp>;
 export type TEvaluatorConfig = {
-    constantTable: TFunctionTable,
-    functionListTable: TFunctionListTable,
-    functionTable: TFunctionTable,
-    aliasTable: TAliasNameTable,
-    opTable: TFunctionTable,
-    externalFuctionTable: TBaseFunctionTable
+    aliasTable?: TAliasNameTable,
+    externalFuctionTable?: TBaseFunctionTable
 };
 
 /**
@@ -68,7 +54,7 @@ export interface NodeName extends PrimaryNode {
 interface NodeCmdWList extends PrimaryNode {
     type: "CmdWList";
     id: string;
-    args: Array<TString>;
+    args: Array<CharString>;
 }
 
 export interface NodeArgExpr extends PrimaryNode {
@@ -103,8 +89,8 @@ export interface NodeList {
 */
 declare global {
     var EvaluatorPointer: any;
+    const commandsTable: string[];
 }
-declare var commandsTable: string[];
 
 /**
 * Evaluator object
@@ -127,80 +113,77 @@ export class Evaluator {
     };
 
     public debug: boolean = false;
-    public baseFunctionTable: TBaseFunctionTable = {};
-    private readonly nativeNameTable: { [k: string]: any } = {};
+    private readonly nativeNameTable: { [k: string]: any } = {
+        'false': ComplexDecimal.false(),
+        'true': ComplexDecimal.true(),
+        'i': ComplexDecimal.onei(),
+        'I': ComplexDecimal.onei(),
+        'j': ComplexDecimal.onei(),
+        'J': ComplexDecimal.onei(),
+        'e': ComplexDecimal.e(),
+        'pi': ComplexDecimal.pi(),
+        'inf': ComplexDecimal.inf_0(),
+        'Inf': ComplexDecimal.inf_0(),
+        'NaN': ComplexDecimal.NaN_0(),
+    };
     private nameTable: { [k: string]: any } = {};
+    private aliasTable: TAliasNameTable;
+    public baseFunctionTable: TBaseFunctionTable = {};
     public localTable: { [k: string]: any } = {};
     private readonly parser: { parse: (input: string) => any } = Parser;
     exitStatus: number = Evaluator.response.OK;
     exitMessage: string = "";
+    private readonly opTable: { [k: string]: Function } = {
+        '+': Tensor.plus,
+        '-': Tensor.minus,
+        '.*': Tensor.times,
+        '*': Tensor.mtimes,
+        './': Tensor.rdivide,
+        '/': Tensor.mrdivide,
+        '.\\': Tensor.ldivide,
+        '\\': Tensor.mldivide,
+        '.^': Tensor.power,
+        '^': Tensor.mpower,
+        '+_': Tensor.uplus,
+        '-_': Tensor.uminus,
+        '.\'': Tensor.transpose,
+        '\'': Tensor.ctranspose,
+        '<': Tensor.lt,
+        '<=': Tensor.lte,
+        '==': Tensor.eq,
+        '>=': Tensor.gte,
+        '>': Tensor.gt,
+        '!=': Tensor.ne,
+    };
 
-    opTable: TFunctionTable;
-    aliasTable: TAliasNameTable;
-    nodeString: Function;
-    isString: Function;
-    unparseString: Function;
-    unparseStringML: Function;
-    removeQuotes: Function;
-    nodeNumber: Function;
-    newNumber: Function;
-    isNumber: Function;
-    unparseNumber: Function;
-    unparseNumberML: Function;
-    isTensor: Function;
-    isRange: Function;
-    unparseTensor: Function;
-    unparseTensorML: Function;
-    evaluateTensor: Function;
-    mapTensor: Function;
-    subTensor: Function;
-    expandRange: Function;
-    firstRow: Function;
-    appendRow: Function;
-    tensor0x0: Function;
+    readonly nodeString = CharString.parse;
+    readonly isString = CharString.isThis;
+    readonly unparseString = CharString.unparse;
+    readonly unparseStringML = CharString.unparseML;
+    readonly removeQuotes = CharString.removeQuotes;
+    readonly nodeNumber = ComplexDecimal.parse;
+    readonly newNumber = ComplexDecimal.newThis;
+    readonly isNumber = ComplexDecimal.isThis;
+    readonly unparseNumber = ComplexDecimal.unparse;
+    readonly unparseNumberML = ComplexDecimal.unparseML;
+    readonly isTensor = MultiArray.isThis;
+    readonly isRange = MultiArray.isRange;
+    readonly unparseTensor = MultiArray.unparse;
+    readonly unparseTensorML = MultiArray.unparseML;
+    readonly evaluateTensor = MultiArray.evaluate;
+    readonly mapTensor = MultiArray.map;
+    readonly subTensor = MultiArray.subMatrix;
+    readonly expandRange = MultiArray.expandRange;
+    readonly firstRow = MultiArray.firstRow;
+    readonly appendRow = MultiArray.appendRow;
+    readonly tensor0x0 = MultiArray.mat_0x0;
 
     /**
      * Evaluator object constructor
      * @param config Evaluator configuration
      */
-    constructor(config: TEvaluatorConfig) {
+    constructor(config?: TEvaluatorConfig) {
         global.EvaluatorPointer = this;
-        this.opTable = config.opTable;
-        this.aliasTable = config.aliasTable;
-        /* Set nativeNameTable */
-        this.nativeNameTable['false'] = config.constantTable['false']();
-        this.nativeNameTable['true'] = config.constantTable['true']();
-        this.nativeNameTable['i'] = config.constantTable['i']();
-        this.nativeNameTable['I'] = config.constantTable['i']();
-        this.nativeNameTable['j'] = config.constantTable['i']();
-        this.nativeNameTable['J'] = config.constantTable['i']();
-        this.nativeNameTable['e'] = config.constantTable['e']();
-        this.nativeNameTable['pi'] = config.constantTable['pi']();
-        this.nativeNameTable['inf'] = config.constantTable['inf']();
-        this.nativeNameTable['Inf'] = config.constantTable['inf']();
-        this.nativeNameTable['NaN'] = config.constantTable['NaN']();
-        /* Set Evaluator methods */
-        this.nodeString = config.functionTable['nodeString'];
-        this.isString = config.functionTable['isString'];
-        this.unparseString = config.functionTable['unparseString'];
-        this.unparseStringML = config.functionTable['unparseStringML'];
-        this.removeQuotes = config.functionTable['removeQuotes'];
-        this.nodeNumber = config.functionTable['nodeNumber'];
-        this.newNumber = config.functionTable['newNumber'];
-        this.isNumber = config.functionTable['isNumber'];
-        this.unparseNumber = config.functionTable['unparseNumber'];
-        this.unparseNumberML = config.functionTable['unparseNumberML'];
-        this.isTensor = config.functionTable['isTensor'];
-        this.isRange = config.functionTable['isRange'];
-        this.unparseTensor = config.functionTable['unparseTensor'];
-        this.unparseTensorML = config.functionTable['unparseTensorML'];
-        this.evaluateTensor = config.functionTable['evaluateTensor'];
-        this.mapTensor = config.functionTable['mapTensor'];
-        this.subTensor = config.functionTable['subTensor'];
-        this.expandRange = config.functionTable['expandRange'];
-        this.firstRow = config.functionTable['firstRow'];
-        this.appendRow = config.functionTable['appendRow'];
-        this.tensor0x0 = config.functionTable['tensor0x0'];
         /* Set opTable aliases */
         this.opTable['.+'] = this.opTable['+'];
         this.opTable['.-'] = this.opTable['-'];
@@ -212,28 +195,64 @@ export class Evaluator {
         /* Load nativeNameTable and constantsTable in nameTable */
         this.ReloadNativeTable();
         /* Define function operators */
-        for (let func in config.functionListTable['tensorBinMoreOpFunction']) {
-            this.DefBinMoreOpFunction(func, config.functionListTable['tensorBinMoreOpFunction'][func]);
+        for (let func in Tensor.twoMoreOpFunction) {
+            this.DefBinMoreOpFunction(func, Tensor.twoMoreOpFunction[func]);
         }
-        for (let func in config.functionListTable['tensorBinOpFunction']) {
-            this.DefBinOpFunction(func, config.functionListTable['tensorBinOpFunction'][func]);
+        for (let func in Tensor.binaryOpFunction) {
+            this.DefBinOpFunction(func, Tensor.binaryOpFunction[func]);
         }
-        for (let func in config.functionListTable['tensorUnOpFunction']) {
-            this.DefUnOpFunction(func, config.functionListTable['tensorUnOpFunction'][func]);
+        for (let func in Tensor.unaryOpFunction) {
+            this.DefUnOpFunction(func, Tensor.unaryOpFunction[func]);
         }
         /* Define function mappers */
-        for (let func in config.functionListTable['numberMapFunction']) {
-            this.defFunction(func, config.functionListTable['numberMapFunction'][func], true);
+        for (let func in ComplexDecimal.mapFunction) {
+            this.defFunction(func, ComplexDecimal.mapFunction[func], true);
         }
         /* Define other functions */
-        for (let func in config.functionListTable['number2ArgFunction']) {
-            this.defFunction(func, config.functionListTable['number2ArgFunction'][func]);
+        for (let func in ComplexDecimal.twoArgFunction) {
+            this.defFunction(func, ComplexDecimal.twoArgFunction[func]);
         }
-        for (let func in config.functionListTable['tensorFunction']) {
-            this.defFunction(func, config.functionListTable['tensorFunction'][func]);
+        for (let func in MultiArray.functions) {
+            this.defFunction(func, MultiArray.functions[func]);
         }
-        Object.assign(this.baseFunctionTable, config.externalFuctionTable);
+        this.set(config);
     }
+
+    set(config?: TEvaluatorConfig): void {
+        if (config) {
+            if (config.aliasTable) {
+                this.aliasTable = config.aliasTable;
+                this.aliasName = (name: string): string => {
+                    let result = false;
+                    let aliasname = '';
+                    for (let i in this.aliasTable) {
+                        if (this.aliasTable[i].test(name)) {
+                            result = true;
+                            aliasname = i;
+                            break;
+                        }
+                    }
+                    if (result) {
+                        return aliasname;
+                    }
+                    else {
+                        return name;
+                    }
+                }
+            }
+            else {
+                this.aliasName = (name: string): string => name;
+            }
+            if (config.externalFuctionTable) {
+                Object.assign(this.baseFunctionTable, config.externalFuctionTable);
+            }
+        }
+        else {
+            this.aliasName = (name: string): string => name;
+        }
+    }
+
+    aliasName: (name: string) => string = (name: string): string => name;
 
     ReloadNativeTable(): void {
         // Insert nativeNameTable in nameTable
@@ -254,24 +273,6 @@ export class Evaluator {
 
     Parse(input: string): any {
         return this.parser.parse(input);
-    }
-
-    aliasName(name: string): string {
-        let result = false;
-        let aliasindex = 0;
-        for (let i = 0; i < this.aliasTable.length; i++) {
-            if (this.aliasTable[i][0].test(name)) {
-                result = true;
-                aliasindex = i;
-                break;
-            }
-        }
-        if (result) {
-            return this.aliasTable[aliasindex][1];
-        }
-        else {
-            return name;
-        }
     }
 
     nodeReserved(nodeid: string): NodeReserved {
@@ -379,7 +380,7 @@ export class Evaluator {
         return lnode;
     }
 
-    nodeFirstRow(row: any): TTensor {
+    nodeFirstRow(row: any): MultiArray {
         if (row) {
             return this.firstRow(row.list);
         }
@@ -388,7 +389,7 @@ export class Evaluator {
         }
     }
 
-    nodeAppendRow(matrix: any, row: any): TTensor {
+    nodeAppendRow(matrix: any, row: any): MultiArray {
         if (row) {
             return this.appendRow(matrix, row.list);
         }

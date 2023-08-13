@@ -1,7 +1,51 @@
 # MathJSLab
+
 > Interpreter with language syntax like MATLAB&reg;/Octave
 
+This package is a subset of MATLAB&reg;/Octave language.
+
+## Installation
+
+Install the `mathjslab` package:
+
+```bash
+npm install mathsjalab
+```
+
+Install `@types/mathjslab` package:
+
+```bash
+npm install --save-dev @type/mathjslab
+```
+
+## Usage
+
+The basic API is a instantiation of `Evaluator` with optional configuration.
+
+```typescript
+let evaluator = new Evaluator(EvaluatorConfiguration);
+```
+
+Examples:
+
++ Parsing
+```typescript
+let tree = evaluator.Parse('x=sqrt(1+2*3)');
+```
+
++ Evaluation
+```typescript
+let result = evaluator.Evaluate(tree);
+```
+
++ MathML generation
+```typescript
+let mathml = evaluator.UnparseML(tree);
+```
+
+
 # License
+
 >MIT License
 >
 >Copyright &copy; 2016-2023 Sergio Lindau
