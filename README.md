@@ -6,7 +6,7 @@ This package emulates a parser and evaluator for a subset of
 [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/)
 language.
 
-It can run in browser environment and implements a arbitrary precision arithmetics using
+It can run in browser environment and implements an arbitrary precision arithmetics using
 [decimal.js](https://www.npmjs.com/package/decimal.js) package. The package
 has functions to generate [MathML](https://www.w3.org/Math/) code of
 expressions parsed too.
