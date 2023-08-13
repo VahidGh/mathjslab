@@ -2,7 +2,7 @@
   "name": "mathjslab",
   "version": "1.0.0",
   "description": "MathJSLab - Interpreter with language syntax like MATLAB/Octave",
-  "private": false,
+  "types": "dist/src/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sergiolindau/mathjslab.git"
@@ -36,12 +36,14 @@
     "prebuild": "npm run build:parser",
     "build": "webpack --mode production",
     "clean": "rimraf dist src/parser.js",
+    "publish-mathlabjs": "npm publish --access public",
     "test:decimal": "ts-node-dev --respawn --transpile-only test/decimal-test.ts"
   },
   "dependencies": {
     "decimal.js": "^10.4.3"
   },
   "devDependencies": {
+    "@types/decimal.js": "^7.4.0",
     "@types/node": "^20.4.9",
     "@types/webpack": "^5.28.1",
     "jison": "^0.4.18",
