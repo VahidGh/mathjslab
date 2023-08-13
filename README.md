@@ -2,7 +2,10 @@
 
 > Interpreter with language syntax like MATLAB&reg;/Octave
 
-This package is a subset of MATLAB&reg;/Octave language.
+This package emulates a parser and evaluator for is a subset of
+MATLAB&reg;/Octave language. This can run in browser environment and
+implements a arbitrary precision arithmetics using
+[decimal.js](https://www.npmjs.com/package/decimal.js) package.
 
 ## Installation
 
