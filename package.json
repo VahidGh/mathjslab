@@ -1,7 +1,8 @@
 {
   "name": "mathjslab",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "MathJSLab - Interpreter with language syntax like MATLAB/Octave",
+  "main": "dist/mathjslab.js",
   "types": "dist/src/index.d.ts",
   "repository": {
     "type": "git",

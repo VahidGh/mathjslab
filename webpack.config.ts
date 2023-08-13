@@ -27,8 +27,10 @@ const config: webpack.Configuration = {
         },
     },
     output: {
-        filename: 'index.js',
         path: path.resolve(__dirname, 'dist'),
+        filename: 'mathjslab.js',
+        library: 'mathjslab',
+        libraryTarget: 'umd',
         clean: true,
     },
 };
