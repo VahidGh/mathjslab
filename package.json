@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@types/decimal.js": "^7.4.0",
-    "@types/node": "^20.4.10",
+    "@types/node": "^20.5.0",
     "@types/webpack": "^5.28.1",
     "jison": "^0.4.18",
     "rimraf": "^5.0.1",

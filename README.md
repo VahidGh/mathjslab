@@ -11,7 +11,9 @@ It can run in browser environment and implements an arbitrary precision arithmet
 has functions to generate [MathML](https://www.w3.org/Math/) code of
 expressions parsed too.
 
-This software is intended for educational purposes primarily.
+This software is intended for educational purposes to provide teachers and
+students with a CAD calculation tool that is capable of running in a browser
+environment. So it can be easily used on different devices.
 
 ## Installation
 
