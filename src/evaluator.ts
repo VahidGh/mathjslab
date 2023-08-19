@@ -154,6 +154,8 @@ export class Evaluator {
         '>=': Tensor.gte,
         '>': Tensor.gt,
         '!=': Tensor.ne,
+        '&&': Tensor.and,
+        '||': Tensor.or,
     };
 
     readonly nodeString = CharString.parse;

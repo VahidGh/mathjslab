@@ -202,20 +202,20 @@ export class ComplexDecimal {
         let right_prec = ComplexDecimal.toMaxPrecision(right);
         if (left_prec.im.eq(0) && right_prec.im.eq(0)) {
             return left_prec.re[cmp](right_prec.re) ?
-                new ComplexDecimal(1, 0, 'logical') :
-                new ComplexDecimal(0, 0, 'logical');
+                ComplexDecimal.true() :
+                ComplexDecimal.false();
         }
         let left_abs = ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.abs(left).re);
         let right_abs = ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.abs(right).re);
         if (!left_abs.eq(right_abs)) {
             return left_abs[cmp](right_abs) ?
-                new ComplexDecimal(1, 0, 'logical') :
-                new ComplexDecimal(0, 0, 'logical');
+                ComplexDecimal.true() :
+                ComplexDecimal.false();
         }
         else {
             return ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.arg(left).re)[cmp](ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.arg(right).re)) ?
-                new ComplexDecimal(1, 0, 'logical') :
-                new ComplexDecimal(0, 0, 'logical');
+                ComplexDecimal.true() :
+                ComplexDecimal.false();
         }
     }
 
@@ -241,6 +241,36 @@ export class ComplexDecimal {
 
     static true(): ComplexDecimal {
         return new ComplexDecimal(1, 0, 'logical');
+    }
+
+    static toLogical(value: ComplexDecimal): ComplexDecimal {
+        let value_prec = ComplexDecimal.toMaxPrecision(value);
+        return (!value_prec.re.eq(0) || !value_prec.im.eq(0)) ?
+            ComplexDecimal.true() :
+            ComplexDecimal.false();
+    }
+
+    static and(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+        let left_prec = ComplexDecimal.toMaxPrecision(left);
+        let right_prec = ComplexDecimal.toMaxPrecision(right);
+        return ((!left_prec.re.eq(0) || !left_prec.im.eq(0)) && (!right_prec.re.eq(0) || !right_prec.im.eq(0))) ?
+            ComplexDecimal.true() :
+            ComplexDecimal.false();
+    }
+
+    static or(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+        let left_prec = ComplexDecimal.toMaxPrecision(left);
+        let right_prec = ComplexDecimal.toMaxPrecision(right);
+        return ((!left_prec.re.eq(0) || !left_prec.im.eq(0)) || (!right_prec.re.eq(0) || !right_prec.im.eq(0))) ?
+            ComplexDecimal.true() :
+            ComplexDecimal.false();
+    }
+
+    static not(right: ComplexDecimal): ComplexDecimal {
+        let right_prec = ComplexDecimal.toMaxPrecision(right);
+        return ((!right_prec.re.eq(0) || !right_prec.im.eq(0))) ?
+            ComplexDecimal.false() :
+            ComplexDecimal.true();
     }
 
     static zero(): ComplexDecimal {

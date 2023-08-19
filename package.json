@@ -11,6 +11,7 @@
   "keywords": [
     "MATLAB",
     "Octave",
+    "MathML",
     "interpreter",
     "parser",
     "yacc",
@@ -31,28 +32,24 @@
     "git:push": "git push",
     "git:add:commit:push": "npm run git:add:all && npm run git:commit:initial && npm run git:push",
     "update": "npx ncu -u",
-    "tscbuild": "tsc -p tsconfig.build.json",
     "prebuild:parser": "rimraf src/parser.js",
     "build:parser": "jison src/parser.jison -o src/parser.js",
     "prebuild": "npm run build:parser",
     "build": "webpack --mode production",
     "clean": "rimraf dist src/parser.js",
-    "publish-mathlabjs": "npm publish --access public",
-    "test:decimal": "ts-node-dev --respawn --transpile-only test/decimal-test.ts"
+    "publish-mathlabjs": "npm publish --access public"
   },
   "dependencies": {
     "decimal.js": "^10.4.3"
   },
   "devDependencies": {
     "@types/decimal.js": "^7.4.0",
-    "@types/node": "^20.5.0",
+    "@types/node": "^20.5.1",
     "@types/webpack": "^5.28.1",
     "jison": "^0.4.18",
     "rimraf": "^5.0.1",
     "ts-loader": "^9.4.4",
     "ts-node": "^10.9.1",
-    "ts-node-dev": "^2.0.0",
-    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.6",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"

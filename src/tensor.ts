@@ -174,4 +174,33 @@ export class Tensor {
         return Tensor.ewiseOp('ne', left, right);
     }
 
+    static and(left: any, right: any): any {
+        if (('re' in left) && ('re' in right)) {
+            return ComplexDecimal.and(left, right);
+        }
+        else if (('re' in left) && ('array' in right)) {
+            return ComplexDecimal.and(left, MultiArray.toLogical(right));
+        }
+        else if (('array' in left) && ('re' in right)) {
+            return ComplexDecimal.and(MultiArray.toLogical(left), right);
+        }
+        else if (('array' in left) && ('array' in right)) {
+            return ComplexDecimal.and(MultiArray.toLogical(left), MultiArray.toLogical(right));
+        }
+    }
+
+    static or(left: any, right: any): any {
+        if (('re' in left) && ('re' in right)) {
+            return ComplexDecimal.or(left, right);
+        }
+        else if (('re' in left) && ('array' in right)) {
+            return ComplexDecimal.or(left, MultiArray.toLogical(right));
+        }
+        else if (('array' in left) && ('re' in right)) {
+            return ComplexDecimal.or(MultiArray.toLogical(left), right);
+        }
+        else if (('array' in left) && ('array' in right)) {
+            return ComplexDecimal.or(MultiArray.toLogical(left), MultiArray.toLogical(right));
+        }
+    }
 }

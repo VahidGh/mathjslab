@@ -181,6 +181,18 @@ export class MultiArray {
         return result;
     }
 
+    static toLogical(M: MultiArray): ComplexDecimal {
+        for (var i = 0; i < M.dim[0]; i++) {
+            for (var j = 0; j < M.dim[1]; j++) {
+                const value = ComplexDecimal.toMaxPrecision(M.array[i][j]);
+                if (value.re.eq(0) && value.im.eq(0)) {
+                    return ComplexDecimal.false();
+                }
+            }
+        }
+        return ComplexDecimal.true();
+    }
+
     static map(M: MultiArray, f: Function): MultiArray {
         var result = new MultiArray(M.dim.slice())
         for (var i = 0; i < M.dim[0]; i++) {
