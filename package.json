@@ -1,6 +1,6 @@
 {
   "name": "mathjslab",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "MathJSLab - Interpreter with language syntax like MATLAB/Octave",
   "main": "dist/mathjslab.js",
   "types": "dist/src/index.d.ts",
@@ -43,7 +43,6 @@
     "decimal.js": "^10.4.3"
   },
   "devDependencies": {
-    "@types/decimal.js": "^7.4.0",
     "@types/node": "^20.5.1",
     "@types/webpack": "^5.28.1",
     "jison": "^0.4.18",

@@ -7,13 +7,17 @@ This package emulates a parser and evaluator for a subset of
 language.
 
 It can run in browser environment and implements an arbitrary precision arithmetics using
-[decimal.js](https://www.npmjs.com/package/decimal.js) package. The package
+[decimal.js](https://www.npmjs.com/package/decimal.js) package. This package
 has functions to generate [MathML](https://www.w3.org/Math/) code of
 expressions parsed too.
 
 This software is intended for educational purposes to provide teachers and
-students with a CAD calculation tool that is capable of running in a browser
-environment. So it can be easily used on different devices.
+students with a computer aided calculation tool that is capable of running in
+a browser environment. So it can be easily adapted and used on different devices
+and environments.
+
+A functional [demo](https://mathjslab.netlify.app/) use of this package in a Web
+application can be found [here](https://github.com/sergiolindau/mathjslab-calculator).
 
 ## Installation
 
