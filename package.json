@@ -37,7 +37,7 @@
     "prebuild": "npm run build:parser",
     "build": "webpack --mode production",
     "clean": "rimraf dist src/parser.js",
-    "publish-mathlabjs": "npm publish --access public"
+    "publish-mathjslab": "npm publish --access public"
   },
   "dependencies": {
     "decimal.js": "^10.4.3"
