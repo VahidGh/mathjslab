@@ -3,49 +3,50 @@ import { MultiArray } from './multi-array';
 
 export abstract class Tensor {
     static unaryOpFunction: { [name: string]: Function } = {
-        'uplus': Tensor.uplus,
-        'uminus': Tensor.uminus,
-        'not': Tensor.not,
-        'transpose': Tensor.transpose,
-        'ctranspose': Tensor.ctranspose,
+        uplus: Tensor.uplus,
+        uminus: Tensor.uminus,
+        not: Tensor.not,
+        transpose: Tensor.transpose,
+        ctranspose: Tensor.ctranspose,
     };
 
     static binaryOpFunction: { [name: string]: Function } = {
-        'minus': Tensor.minus,
-        'rdivide': Tensor.rdivide,
-        'mrdivide': Tensor.mrdivide,
-        'ldivide': Tensor.ldivide,
-        'mldivide': Tensor.mldivide,
-        'power': Tensor.power,
-        'mpower': Tensor.mpower,
-        'lte': Tensor.lte,
-        'gte': Tensor.gte,
-        'gt': Tensor.gt,
-        'eq': Tensor.eq,
-        'ne': Tensor.ne,
+        minus: Tensor.minus,
+        rdivide: Tensor.rdivide,
+        mrdivide: Tensor.mrdivide,
+        ldivide: Tensor.ldivide,
+        mldivide: Tensor.mldivide,
+        power: Tensor.power,
+        mpower: Tensor.mpower,
+        lte: Tensor.lte,
+        gte: Tensor.gte,
+        gt: Tensor.gt,
+        eq: Tensor.eq,
+        ne: Tensor.ne,
     };
 
     static twoMoreOpFunction: { [name: string]: Function } = {
-        'plus': Tensor.plus,
-        'times': Tensor.times,
-        'mtimes': Tensor.mtimes,
-        'mand': Tensor.mand,
-        'mor': Tensor.mor,
-        'and': Tensor.and,
-        'or': Tensor.or,
+        plus: Tensor.plus,
+        times: Tensor.times,
+        mtimes: Tensor.mtimes,
+        mand: Tensor.mand,
+        mor: Tensor.mor,
+        and: Tensor.and,
+        or: Tensor.or,
     };
 
-    static ewiseOp(op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or', left: any, right: any): any {
-        if (('re' in left) && ('re' in right)) {
+    static ewiseOp(
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or',
+        left: any,
+        right: any,
+    ): any {
+        if ('re' in left && 're' in right) {
             return ComplexDecimal[op](left, right);
-        }
-        else if (('re' in left) && ('array' in right)) {
+        } else if ('re' in left && 'array' in right) {
             return MultiArray.scalarOpMultiArray(op, left, right);
-        }
-        else if (('array' in left) && ('re' in right)) {
+        } else if ('array' in left && 're' in right) {
             return MultiArray.MultiArrayOpScalar(op, left, right);
-        }
-        else if (('array' in left) && ('array' in right)) {
+        } else if ('array' in left && 'array' in right) {
             return MultiArray.ewiseOp(op, left, right);
         }
     }
@@ -53,8 +54,7 @@ export abstract class Tensor {
     static leftOp(op: 'clone' | 'neg' | 'not', right: any): any {
         if ('re' in right) {
             return ComplexDecimal[op](right);
-        }
-        else if ('array' in right) {
+        } else if ('array' in right) {
             return MultiArray.leftOp(op, right);
         }
     }
@@ -72,16 +72,13 @@ export abstract class Tensor {
     }
 
     static mtimes(left: any, right: any): any {
-        if (('re' in left) && ('re' in right)) {
+        if ('re' in left && 're' in right) {
             return ComplexDecimal.mul(left, right);
-        }
-        else if (('re' in left) && ('array' in right)) {
+        } else if ('re' in left && 'array' in right) {
             return MultiArray.scalarOpMultiArray('mul', left, right);
-        }
-        else if (('array' in left) && ('re' in right)) {
+        } else if ('array' in left && 're' in right) {
             return MultiArray.MultiArrayOpScalar('mul', left, right);
-        }
-        else if (('array' in left) && ('array' in right)) {
+        } else if ('array' in left && 'array' in right) {
             return MultiArray.mul(left, right);
         }
     }
@@ -91,16 +88,13 @@ export abstract class Tensor {
     }
 
     static mrdivide(left: any, right: any): any {
-        if (('re' in left) && ('re' in right)) {
+        if ('re' in left && 're' in right) {
             return ComplexDecimal.rdiv(left, right);
-        }
-        else if (('re' in left) && ('array' in right)) {
+        } else if ('re' in left && 'array' in right) {
             return MultiArray.scalarOpMultiArray('mul', left, MultiArray.inv(right));
-        }
-        else if (('array' in left) && ('re' in right)) {
+        } else if ('array' in left && 're' in right) {
             return MultiArray.scalarOpMultiArray('mul', ComplexDecimal.inv(right), left);
-        }
-        else if (('array' in left) && ('array' in right)) {
+        } else if ('array' in left && 'array' in right) {
             return MultiArray.mul(left, MultiArray.inv(right));
         }
     }
@@ -109,22 +103,18 @@ export abstract class Tensor {
         return Tensor.ewiseOp('ldiv', left, right);
     }
 
-    static mldivide(left: any, right: any): any {
-
-    }
+    static mldivide(left: any, right: any): any {}
 
     static power(left: any, right: any): any {
         return Tensor.ewiseOp('pow', left, right);
     }
 
     static mpower(left: any, right: any): any {
-        if (('re' in left) && ('re' in right)) {
+        if ('re' in left && 're' in right) {
             return ComplexDecimal.pow(left, right);
-        }
-        else if (('array' in left) && ('re' in right)) {
+        } else if ('array' in left && 're' in right) {
             return MultiArray.pow(left, right);
-        }
-        else {
+        } else {
             throw new Error("invalid exponent in '^'");
         }
     }
@@ -140,8 +130,7 @@ export abstract class Tensor {
     static transpose(left: any): any {
         if ('re' in left) {
             return Object.assign({}, left);
-        }
-        else if ('array' in left) {
+        } else if ('array' in left) {
             return MultiArray.transpose(left);
         }
     }
@@ -149,8 +138,7 @@ export abstract class Tensor {
     static ctranspose(left: any): any {
         if ('re' in left) {
             return ComplexDecimal.conj(left);
-        }
-        else if ('array' in left) {
+        } else if ('array' in left) {
             return MultiArray.ctranspose(left);
         }
     }
@@ -180,31 +168,25 @@ export abstract class Tensor {
     }
 
     static mand(left: any, right: any): any {
-        if (('re' in left) && ('re' in right)) {
+        if ('re' in left && 're' in right) {
             return ComplexDecimal.and(left, right);
-        }
-        else if (('re' in left) && ('array' in right)) {
+        } else if ('re' in left && 'array' in right) {
             return ComplexDecimal.and(left, MultiArray.toLogical(right));
-        }
-        else if (('array' in left) && ('re' in right)) {
+        } else if ('array' in left && 're' in right) {
             return ComplexDecimal.and(MultiArray.toLogical(left), right);
-        }
-        else if (('array' in left) && ('array' in right)) {
+        } else if ('array' in left && 'array' in right) {
             return ComplexDecimal.and(MultiArray.toLogical(left), MultiArray.toLogical(right));
         }
     }
 
     static mor(left: any, right: any): any {
-        if (('re' in left) && ('re' in right)) {
+        if ('re' in left && 're' in right) {
             return ComplexDecimal.or(left, right);
-        }
-        else if (('re' in left) && ('array' in right)) {
+        } else if ('re' in left && 'array' in right) {
             return ComplexDecimal.or(left, MultiArray.toLogical(right));
-        }
-        else if (('array' in left) && ('re' in right)) {
+        } else if ('array' in left && 're' in right) {
             return ComplexDecimal.or(MultiArray.toLogical(left), right);
-        }
-        else if (('array' in left) && ('array' in right)) {
+        } else if ('array' in left && 'array' in right) {
             return ComplexDecimal.or(MultiArray.toLogical(left), MultiArray.toLogical(right));
         }
     }
@@ -212,8 +194,7 @@ export abstract class Tensor {
     static not(right: any): any {
         if ('re' in right) {
             return ComplexDecimal.not(right);
-        }
-        else if ('array' in right) {
+        } else if ('array' in right) {
             return ComplexDecimal.not(MultiArray.toLogical(right));
         }
     }
@@ -225,5 +206,4 @@ export abstract class Tensor {
     static or(left: any, right: any): any {
         return Tensor.ewiseOp('or', left, right);
     }
-
 }
