@@ -1,10 +1,11 @@
 import { ComplexDecimal } from './complex-decimal';
 import { MultiArray } from './multi-array';
 
-export class Tensor {
+export abstract class Tensor {
     static unaryOpFunction: { [name: string]: Function } = {
         'uplus': Tensor.uplus,
         'uminus': Tensor.uminus,
+        'not': Tensor.not,
         'transpose': Tensor.transpose,
         'ctranspose': Tensor.ctranspose,
     };
@@ -28,9 +29,13 @@ export class Tensor {
         'plus': Tensor.plus,
         'times': Tensor.times,
         'mtimes': Tensor.mtimes,
+        'mand': Tensor.mand,
+        'mor': Tensor.mor,
+        'and': Tensor.and,
+        'or': Tensor.or,
     };
 
-    static ewiseOp(op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne', left: any, right: any): any {
+    static ewiseOp(op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or', left: any, right: any): any {
         if (('re' in left) && ('re' in right)) {
             return ComplexDecimal[op](left, right);
         }
@@ -45,7 +50,7 @@ export class Tensor {
         }
     }
 
-    static leftOp(op: 'clone' | 'neg', right: any): any {
+    static leftOp(op: 'clone' | 'neg' | 'not', right: any): any {
         if ('re' in right) {
             return ComplexDecimal[op](right);
         }
@@ -174,7 +179,7 @@ export class Tensor {
         return Tensor.ewiseOp('ne', left, right);
     }
 
-    static and(left: any, right: any): any {
+    static mand(left: any, right: any): any {
         if (('re' in left) && ('re' in right)) {
             return ComplexDecimal.and(left, right);
         }
@@ -189,7 +194,7 @@ export class Tensor {
         }
     }
 
-    static or(left: any, right: any): any {
+    static mor(left: any, right: any): any {
         if (('re' in left) && ('re' in right)) {
             return ComplexDecimal.or(left, right);
         }
@@ -203,4 +208,22 @@ export class Tensor {
             return ComplexDecimal.or(MultiArray.toLogical(left), MultiArray.toLogical(right));
         }
     }
+
+    static not(right: any): any {
+        if ('re' in right) {
+            return ComplexDecimal.not(right);
+        }
+        else if ('array' in right) {
+            return ComplexDecimal.not(MultiArray.toLogical(right));
+        }
+    }
+
+    static and(left: any, right: any): any {
+        return Tensor.ewiseOp('and', left, right);
+    }
+
+    static or(left: any, right: any): any {
+        return Tensor.ewiseOp('or', left, right);
+    }
+
 }

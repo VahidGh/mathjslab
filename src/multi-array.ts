@@ -44,20 +44,23 @@ export class MultiArray {
         'gauss': MultiArray.gauss,
     };
 
-    constructor(...args: any) {
-        if (!args.length) {
+    constructor(shape?: number[], fill?: ComplexDecimal) {
+        if (!shape) {
             this.dim = [0, 0];
             this.array = new Array();
         }
-        else if (args.length == 1) {
-            this.dim = args[0].slice();
+        else if (!fill) {
+            this.dim = shape.slice();
             this.array = new Array(this.dim[0]);
         }
         else {
-            this.dim = args[0].slice();
+            this.dim = shape.slice();
             this.array = new Array(this.dim[0]);
-            for (var n = 0; n < this.dim[0]; n++) {
-                this.array[n] = new Array(this.dim[1]).fill(args[1]);
+            for (let i = 0; i < this.dim[0]; i++) {
+                this.array[i] = new Array(this.dim[1]).fill(fill);
+                // for (let j = 0; j < this.dim[1]; j++) {
+                // this.array[i][j] = new ComplexDecimal(fill.re, fill.im);
+                // }
             }
         }
     }
@@ -76,8 +79,8 @@ export class MultiArray {
 
     static unparse(tree: MultiArray, that: any): string {
         let arraystr = "";
-        for (let i = 0; i < tree.array.length; i++) {
-            for (let j = 0; j < tree.array[i].length; j++) {
+        for (let i = 0; i < tree.dim[0]; i++) {
+            for (let j = 0; j < tree.dim[1]; j++) {
                 arraystr += that.Unparse(tree.array[i][j]) + ",";
             }
             arraystr = arraystr.substring(0, arraystr.length - 1);
@@ -90,9 +93,9 @@ export class MultiArray {
     static unparseML(tree: MultiArray, that: any): string {
         let temp = "";
         temp += "<mrow><mo>[</mo><mtable>";
-        for (let i = 0; i < tree.array.length; i++) {
+        for (let i = 0; i < tree.dim[0]; i++) {
             temp += "<mtr>";
-            for (let j = 0; j < tree.array[i].length; j++) {
+            for (let j = 0; j < tree.dim[1]; j++) {
                 temp += "<mtd>" + that.unparserML(tree.array[i][j]) + "</mtd>";
             }
             temp += "</mtr>";
@@ -166,7 +169,7 @@ export class MultiArray {
             let result = new MultiArray([1, 1]);
             result.array[0] = [value];
             return result;
-            //            return new MultiArray([1,1],value)
+            // return new MultiArray([1,1],value)
         }
     }
 
@@ -317,7 +320,7 @@ export class MultiArray {
         }
     }
 
-    static scalarOpMultiArray(op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne', left: ComplexDecimal, right: MultiArray): MultiArray {
+    static scalarOpMultiArray(op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or', left: ComplexDecimal, right: MultiArray): MultiArray {
         var result = new MultiArray(right.dim);
         for (var i = 0; i < result.dim[0]; i++) {
             result.array[i] = new Array(result.dim[1]);
@@ -328,7 +331,7 @@ export class MultiArray {
         return result;
     }
 
-    static MultiArrayOpScalar(op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne', left: MultiArray, right: ComplexDecimal): MultiArray {
+    static MultiArrayOpScalar(op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or', left: MultiArray, right: ComplexDecimal): MultiArray {
         var result = new MultiArray(left.dim);
         for (var i = 0; i < result.dim[0]; i++) {
             result.array[i] = new Array(result.dim[1]);
@@ -339,7 +342,7 @@ export class MultiArray {
         return result;
     }
 
-    static leftOp(op: 'clone' | 'neg', right: MultiArray): MultiArray {
+    static leftOp(op: 'clone' | 'neg' | 'not', right: MultiArray): MultiArray {
         var result = new MultiArray(right.dim);
         for (var i = 0; i < result.dim[0]; i++) {
             result.array[i] = new Array(result.dim[1]);
@@ -350,7 +353,7 @@ export class MultiArray {
         return result;
     }
 
-    static ewiseOp(op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne', left: MultiArray, right: MultiArray): MultiArray {
+    static ewiseOp(op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or', left: MultiArray, right: MultiArray): MultiArray {
         if (MultiArray.arrayEqual(left.dim.slice(0, 2), right.dim.slice(0, 2))) {
             // left and right has same number of rows and columns
             var result = new MultiArray(left.dim);
@@ -650,6 +653,7 @@ export class MultiArray {
         if (L.dim[0] == R.dim[0]) {
             var temp = new MultiArray([L.dim[0], L.dim[1] + R.dim[1]]);
             for (var i = 0; i < L.dim[0]; i++) {
+                temp.array[i] = new Array();
                 for (var j = 0; j < L.dim[1]; j++) {
                     temp.array[i][j] = Object.assign({}, L.array[i][j]);
                 }
@@ -668,11 +672,13 @@ export class MultiArray {
         if (U.dim[1] == D.dim[1]) {
             var temp = new MultiArray([U.dim[0] + D.dim[0], U.dim[1]]);
             for (var i = 0; i < U.dim[0]; i++) {
+                temp.array[i] = new Array();
                 for (var j = 0; j < U.dim[1]; j++) {
                     temp.array[i][j] = Object.assign({}, U.array[i][j]);
                 }
             }
             for (var i = 0; i < D.dim[0]; i++) {
+                temp.array[i + U.dim[0]] = new Array();
                 for (var j = 0; j < D.dim[1]; j++) {
                     temp.array[i + U.dim[0]][j] = Object.assign({}, D.array[i][j]);
                 }
@@ -761,72 +767,80 @@ export class MultiArray {
         return temp;
     }
 
-    static min(M: MultiArray): ComplexDecimal {
-        var DMin = Math.min(M.dim[0], M.dim[1]);
-        var temp: MultiArray = M;
-        var result: ComplexDecimal = M.array[0][0];
-        if (!M.array[0][0].im.eq(0)) throw new Error("complex number in min function");
-        if (DMin == 1) {
-            if (DMin == M.dim[1]) {
-                temp = MultiArray.transpose(M);
-            }
-            for (var i = 1; i < temp.dim[1]; i++) {
-                if (!temp.array[0][i].im.eq(0)) throw new Error("complex number in min function");
-                result = new ComplexDecimal(Decimal.min(result.re, temp.array[0][i].re), 0);
-            }
-            return result;
+    static min(M: MultiArray): MultiArray | ComplexDecimal {
+        let temp: MultiArray;
+        if (M.dim[0] === 1) {
+            temp = MultiArray.transpose(M);
         }
         else {
-            throw new Error("invalid dimensions in min function");
+            temp = M;
+        }
+        let result = new MultiArray([1, temp.dim[1]]);
+        // result.array = new Array(temp.dim[0]);
+        // result.array[0] = new Array();
+        result.array = [new Array(temp.dim[1])];
+        for (let j = 0; j < temp.dim[1]; j++) {
+            result.array[0][j] = temp.array[0][j];
+            for (let i = 1; i < temp.dim[0]; i++) {
+                result.array[0][j] = ComplexDecimal.min(result.array[0][j], temp.array[i][j])
+            }
+        }
+        if (temp.dim[1] === 1) {
+            return result.array[0][0];
+        }
+        else {
+            return result;
         }
     }
 
-    static max(M: MultiArray): ComplexDecimal {
-        var DMin = Math.min(M.dim[0], M.dim[1]);
-        var temp: MultiArray = M;
-        var result: ComplexDecimal = M.array[0][0];
-        if (!M.array[0][0].im.eq(0)) throw new Error("complex number in max function");
-        if (DMin == 1) {
-            if (DMin == M.dim[1]) {
-                temp = MultiArray.transpose(M);
-            }
-            for (var i = 1; i < temp.dim[1]; i++) {
-                if (!temp.array[0][i].im.eq(0)) throw new Error("complex number in max function");
-                result = new ComplexDecimal(Decimal.max(result.re, temp.array[0][i].re), 0);
-            }
-            return result;
+    static max(M: MultiArray): MultiArray | ComplexDecimal {
+        let temp: MultiArray;
+        if (M.dim[0] === 1) {
+            temp = MultiArray.transpose(M);
         }
         else {
-            throw new Error("invalid dimensions in max function");
+            temp = M;
+        }
+        let result = new MultiArray([1, temp.dim[1]]);
+        // result.array = new Array(temp.dim[0]);
+        result.array = [new Array(temp.dim[1])];
+        for (let j = 0; j < temp.dim[1]; j++) {
+            result.array[0][j] = temp.array[0][j];
+            for (let i = 1; i < temp.dim[0]; i++) {
+                result.array[0][j] = ComplexDecimal.max(result.array[0][j], temp.array[i][j])
+            }
+        }
+        if (temp.dim[1] === 1) {
+            return result.array[0][0];
+        }
+        else {
+            return result;
         }
     }
 
-    static mean(M: MultiArray): ComplexDecimal {
-        var DMin = Math.min(M.dim[0], M.dim[1]);
-        var temp: MultiArray = M;
-        var result: ComplexDecimal = ComplexDecimal.zero();
-        if (DMin == 1) {
-            if (DMin == M.dim[1]) {
-                temp = MultiArray.transpose(M);
-            }
-            for (var i = 0; i < temp.dim[1]; i++) {
-                result = ComplexDecimal.add(result, temp.array[0][i]);
-            }
-            return ComplexDecimal.rdiv(result, new ComplexDecimal(temp.dim[1], 0));
-        }
-        else if (DMin == 2) {
-            if (DMin == M.dim[1]) {
-                temp = MultiArray.transpose(M);
-            }
-            var denom: ComplexDecimal = ComplexDecimal.zero();
-            for (var i = 0; i < temp.dim[1]; i++) {
-                result = ComplexDecimal.add(result, ComplexDecimal.mul(temp.array[0][i], temp.array[1][i]));
-                denom = ComplexDecimal.add(denom, temp.array[1][i]);
-            }
-            return ComplexDecimal.rdiv(result, denom);
+    static mean(M: MultiArray): MultiArray | ComplexDecimal {
+        let temp: MultiArray;
+        if (M.dim[0] === 1) {
+            temp = MultiArray.transpose(M);
         }
         else {
-            throw new Error("invalid dimensions in mean");
+            temp = M;
+        }
+        let result = new MultiArray([1, temp.dim[1]]);
+        // result.array = new Array(temp.dim[0]);
+        result.array = [new Array(temp.dim[1])];
+        for (let j = 0; j < temp.dim[1]; j++) {
+            result.array[0][j] = temp.array[0][j];
+            for (let i = 1; i < temp.dim[0]; i++) {
+                result.array[0][j] = ComplexDecimal.add(result.array[0][j], temp.array[i][j])
+            }
+            result.array[0][j] = ComplexDecimal.rdiv(result.array[0][j], new ComplexDecimal(temp.dim[0], 0));
+        }
+        if (temp.dim[1] === 1) {
+            return result.array[0][0];
+        }
+        else {
+            return result;
         }
     }
 

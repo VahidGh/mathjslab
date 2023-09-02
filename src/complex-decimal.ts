@@ -137,7 +137,7 @@ export class ComplexDecimal {
         let value_prec = ComplexDecimal.toMaxPrecision(value);
         if (!value_prec.re.eq(0) && !value_prec.im.eq(0)) {
             return "<mo>(</mo>" + ComplexDecimal.unparseDecimalML(value_prec.re) + (value_prec.im.gt(0) ? "<mo>+</mo>" : "") + (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalML(value_prec.im) : "<mo>-</mo>") : "") + "<mi>i</mi><mo>)</mo>";
-        } else if (!value.re.eq(0)) {
+        } else if (!value_prec.re.eq(0)) {
             return ComplexDecimal.unparseDecimalML(value_prec.re);
         } else if (!value_prec.im.eq(0)) {
             return (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalML(value_prec.im) : "<mo>-</mo>") : "") + "<mi>i</mi>";
@@ -179,20 +179,64 @@ export class ComplexDecimal {
         return new ComplexDecimal(Decimal.pow(10, -Decimal.precision + 7), 0);
     }
 
+    static min(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+        if (left.im.eq(0) && right.im.eq(0)) {
+            return left.re.lte(right.re) ?
+                left :
+                right;
+        }
+        else {
+            let left_abs = ComplexDecimal.abs(left).re;
+            let right_abs = ComplexDecimal.abs(right).re;
+            if (left_abs.eq(right_abs)) {
+                return ComplexDecimal.arg(left).re.lte(ComplexDecimal.arg(right).re) ?
+                    left :
+                    right;
+            }
+            else {
+                return left_abs.lte(right_abs) ?
+                    left :
+                    right;
+            }
+        }
+    }
+
+    static max(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+        if (left.im.eq(0) && right.im.eq(0)) {
+            return left.re.gte(right.re) ?
+                left :
+                right;
+        }
+        else {
+            let left_abs = ComplexDecimal.abs(left).re;
+            let right_abs = ComplexDecimal.abs(right).re;
+            if (left_abs.eq(right_abs)) {
+                return ComplexDecimal.arg(left).re.gte(ComplexDecimal.arg(right).re) ?
+                    left :
+                    right;
+            }
+            else {
+                return left_abs.gte(right_abs) ?
+                    left :
+                    right;
+            }
+        }
+    }
+
     static eq(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         let left_prec = ComplexDecimal.toMaxPrecision(left);
         let right_prec = ComplexDecimal.toMaxPrecision(right);
         return (left_prec.re.eq(right_prec.re) && left_prec.im.eq(right_prec.im)) ?
-            new ComplexDecimal(1, 0, 'logical') :
-            new ComplexDecimal(0, 0, 'logical');
+            ComplexDecimal.true() :
+            ComplexDecimal.false();
     }
 
     static ne(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         let left_prec = ComplexDecimal.toMaxPrecision(left);
         let right_prec = ComplexDecimal.toMaxPrecision(right);
         return (!left_prec.re.eq(right_prec.re) || !left_prec.im.eq(right_prec.im)) ?
-            new ComplexDecimal(1, 0, 'logical') :
-            new ComplexDecimal(0, 0, 'logical');
+            ComplexDecimal.true() :
+            ComplexDecimal.false();
     }
 
     static cmp(cmp: 'lt' | 'lte' | 'gt' | 'gte', left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {

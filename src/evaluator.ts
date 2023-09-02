@@ -154,8 +154,11 @@ export class Evaluator {
         '>=': Tensor.gte,
         '>': Tensor.gt,
         '!=': Tensor.ne,
-        '&&': Tensor.and,
-        '||': Tensor.or,
+        '&': Tensor.and,
+        '|': Tensor.or,
+        '!': Tensor.not,
+        '&&': Tensor.mand,
+        '||': Tensor.mor,
     };
 
     readonly nodeString = CharString.parse;
@@ -194,6 +197,7 @@ export class Evaluator {
         this.opTable['**'] = this.opTable['^'];
         this.opTable['.**'] = this.opTable['.^'];
         this.opTable['~='] = this.opTable['!='];
+        this.opTable['~'] = this.opTable['!'];
         /* Load nativeNameTable and constantsTable in nameTable */
         this.ReloadNativeTable();
         /* Define function operators */
@@ -467,6 +471,9 @@ export class Evaluator {
 
     Unparse(tree: any): string {
         try {
+            if (tree === undefined) {
+                return "";
+            }
             if ('list' in tree) {
                 let list = "";
                 for (let i = 0; i < tree.list.length; i++) {
@@ -853,6 +860,9 @@ export class Evaluator {
 
     unparserML(tree: any): string {
         try {
+            if (tree === undefined) {
+                return "";
+            }
             if ('list' in tree) {
                 let list = "<mtable>";
                 for (let i = 0; i < tree.list.length; i++) {

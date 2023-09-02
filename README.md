@@ -13,7 +13,7 @@ expressions parsed too.
 
 This software is intended for educational purposes to provide teachers and
 students with a computer aided calculation tool that is capable of running in
-a browser environment. So it can be easily adapted and used on different devices
+a browser environment. So it can be easily adapted to be used on different devices
 and environments.
 
 A functional [demo](https://mathjslab.netlify.app/) use of this package in a Web
