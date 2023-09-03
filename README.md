@@ -1,4 +1,3 @@
-![NPM License](https://img.shields.io/npm/l/:mathjslab)
 # MathJSLab
 
 > Interpreter with language syntax like MATLAB&reg;/Octave
