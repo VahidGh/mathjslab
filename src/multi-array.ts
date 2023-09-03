@@ -15,8 +15,26 @@ export type ComplexDecimalRange = {
 };
 
 export class MultiArray {
-    dim: Array<number>;
-    array: Array<Array<ComplexDecimal>>;
+
+    dim: number[];
+    array: ComplexDecimal[][];
+
+    constructor(shape?: number[], fill?: ComplexDecimal) {
+        if (!shape) {
+            this.dim = [0, 0];
+            this.array = [];
+        } else {
+            this.dim = shape.slice();
+            if (!fill) {
+                this.array = new Array(this.dim[0]);
+            } else {
+                this.array = new Array(this.dim[0]);
+                for (let i = 0; i < this.dim[0]; i++) {
+                    this.array[i] = new Array(this.dim[1]).fill(fill);
+                }
+            }
+        }
+    }
 
     static functions: { [name: string]: Function } = {
         size: MultiArray.size,
@@ -42,25 +60,6 @@ export class MultiArray {
         vertcat: MultiArray.vertcat,
         gauss: MultiArray.gauss,
     };
-
-    constructor(shape?: number[], fill?: ComplexDecimal) {
-        if (!shape) {
-            this.dim = [0, 0];
-            this.array = [];
-        } else if (!fill) {
-            this.dim = shape.slice();
-            this.array = new Array(this.dim[0]);
-        } else {
-            this.dim = shape.slice();
-            this.array = new Array(this.dim[0]);
-            for (let i = 0; i < this.dim[0]; i++) {
-                this.array[i] = new Array(this.dim[1]).fill(fill);
-                // for (let j = 0; j < this.dim[1]; j++) {
-                // this.array[i][j] = new ComplexDecimal(fill.re, fill.im);
-                // }
-            }
-        }
-    }
 
     static firstRow(row: Array<any>): MultiArray {
         const result = new MultiArray([1, row.length]);
@@ -131,8 +130,9 @@ export class MultiArray {
             }
             k += h - 1;
             if (i != 0) {
-                if (result.array[i].length != result.array[0].length)
+                if (result.array[i].length != result.array[0].length) {
                     throw new Error('vertical dimensions mismatch (' + k + 'x' + result.array[0].length + ' vs 1x' + result.array[i].length + ')');
+                }
             }
         }
         result.dim = [result.array.length, result.array.length ? result.array[0].length : 0];
@@ -304,7 +304,19 @@ export class MultiArray {
     }
 
     static mul(left: MultiArray, right: MultiArray): MultiArray {
-        if (left.dim[1] == right.dim[0]) {
+        if (left.dim[1] !== right.dim[0]) {
+            throw new Error(
+                'operator *: nonconformant arguments (op1 is ' +
+                left.dim[0] +
+                'x' +
+                left.dim[1] +
+                ', op2 is ' +
+                right.dim[0] +
+                'x' +
+                right.dim[1] +
+                ')',
+            );
+        } else {
             //matrix multiplication
             const result = new MultiArray([left.dim[0], right.dim[1]]);
             for (let i = 0; i < left.dim[0]; i++) {
@@ -316,18 +328,6 @@ export class MultiArray {
                 }
             }
             return result;
-        } else {
-            throw new Error(
-                'operator *: nonconformant arguments (op1 is ' +
-                    left.dim[0] +
-                    'x' +
-                    left.dim[1] +
-                    ', op2 is ' +
-                    right.dim[0] +
-                    'x' +
-                    right.dim[1] +
-                    ')',
-            );
         }
     }
 
@@ -387,30 +387,30 @@ export class MultiArray {
                 }
             }
             return result;
-        } else if (left.dim[0] == right.dim[0]) {
+        } else if (left.dim[0] === right.dim[0]) {
             // left and right has same number of rows
             let col, matrix;
-            if (left.dim[1] == 1) {
+            if (left.dim[1] === 1) {
                 // left has one column
                 col = left;
                 matrix = right;
-            } else if (right.dim[1] == 1) {
+            } else if (right.dim[1] === 1) {
                 // right has one column
                 col = right;
                 matrix = left;
             } else {
                 throw new Error(
                     'operator ' +
-                        op +
-                        ': nonconformant arguments (op1 is ' +
-                        left.dim[0] +
-                        'x' +
-                        left.dim[1] +
-                        ', op2 is ' +
-                        right.dim[0] +
-                        'x' +
-                        right.dim[1] +
-                        ')',
+                    op +
+                    ': nonconformant arguments (op1 is ' +
+                    left.dim[0] +
+                    'x' +
+                    left.dim[1] +
+                    ', op2 is ' +
+                    right.dim[0] +
+                    'x' +
+                    right.dim[1] +
+                    ')',
                 );
             }
             const result = new MultiArray([col.dim[0], matrix.dim[1]]);
@@ -421,30 +421,30 @@ export class MultiArray {
                 }
             }
             return result;
-        } else if (left.dim[1] == right.dim[1]) {
+        } else if (left.dim[1] === right.dim[1]) {
             // left and right has same number of columns
             let row, matrix;
             if (left.dim[0] == 1) {
                 // left has one row
                 row = left;
                 matrix = right;
-            } else if (right.dim[0] == 1) {
+            } else if (right.dim[0] === 1) {
                 // right has one row
                 row = right;
                 matrix = left;
             } else {
                 throw new Error(
                     'operator ' +
-                        op +
-                        ': nonconformant arguments (op1 is ' +
-                        left.dim[0] +
-                        'x' +
-                        left.dim[1] +
-                        ', op2 is ' +
-                        right.dim[0] +
-                        'x' +
-                        right.dim[1] +
-                        ')',
+                    op +
+                    ': nonconformant arguments (op1 is ' +
+                    left.dim[0] +
+                    'x' +
+                    left.dim[1] +
+                    ', op2 is ' +
+                    right.dim[0] +
+                    'x' +
+                    right.dim[1] +
+                    ')',
                 );
             }
             const result = new MultiArray([matrix.dim[0], row.dim[1]]);
@@ -455,7 +455,7 @@ export class MultiArray {
                 }
             }
             return result;
-        } else if (left.dim[0] == 1 && right.dim[1] == 1) {
+        } else if (left.dim[0] === 1 && right.dim[1] === 1) {
             // left has one row and right has one column
             const result = new MultiArray([right.dim[0], left.dim[1]]);
             for (let i = 0; i < right.dim[0]; i++) {
@@ -465,7 +465,7 @@ export class MultiArray {
                 }
             }
             return result;
-        } else if (left.dim[1] == 1 && right.dim[0] == 1) {
+        } else if (left.dim[1] === 1 && right.dim[0] === 1) {
             // left has one column and right has one row
             const result = new MultiArray([left.dim[0], right.dim[1]]);
             for (let i = 0; i < left.dim[0]; i++) {
@@ -478,16 +478,16 @@ export class MultiArray {
         } else {
             throw new Error(
                 'operator ' +
-                    op +
-                    ': nonconformant arguments (op1 is ' +
-                    left.dim[0] +
-                    'x' +
-                    left.dim[1] +
-                    ', op2 is ' +
-                    right.dim[0] +
-                    'x' +
-                    right.dim[1] +
-                    ')',
+                op +
+                ': nonconformant arguments (op1 is ' +
+                left.dim[0] +
+                'x' +
+                left.dim[1] +
+                ', op2 is ' +
+                right.dim[0] +
+                'x' +
+                right.dim[1] +
+                ')',
             );
         }
     }
@@ -933,39 +933,91 @@ export class MultiArray {
     }
 
     static lu(M: MultiArray): any {
-        const n = M.dim[0];
-        const lower = new MultiArray([M.dim[0], M.dim[1]], ComplexDecimal.zero());
-        const upper = new MultiArray([M.dim[0], M.dim[1]], ComplexDecimal.zero());
-        // Decomposing matrix into Upper and
-        // Lower triangular matrix
+        if (M.dim[0] !== M.dim[1]) {
+            throw new Error("LU decomposition can only be applied to square matrices.");
+        }
+        const n = M.dim[0]; // Size of the square M
+        const L = new MultiArray([n, n], ComplexDecimal.zero()); // Initialize the lower triangular matrix
+        const U = new MultiArray([n, n], ComplexDecimal.zero()); // Initialize the upper triangular matrix
         for (let i = 0; i < n; i++) {
+            // Initialize the diagonal of L to 1
+            L.array[i][i] = ComplexDecimal.one();
             // Upper Triangular
-            for (let k = i; k < n; k++) {
-                // Summation of L(i, j) * U(j, k)
+            for (let j = i; j < n; j++) {
+                // Summation of L(i, k) * U(k, j)
                 let sum: ComplexDecimal = ComplexDecimal.zero();
-                for (let j = 0; j < i; j++) {
-                    sum = ComplexDecimal.add(sum, ComplexDecimal.mul(lower.array[i][j], upper.array[j][k]));
+                for (let k = 0; k < i; k++) {
+                    sum = ComplexDecimal.add(sum, ComplexDecimal.mul(L.array[i][k], U.array[k][j]));
                 }
-                // Evaluating U(i, k)
-                upper.array[i][k] = ComplexDecimal.sub(M.array[i][k], sum);
+                // Evaluating U(i, j)
+                U.array[i][j] = ComplexDecimal.sub(M.array[i][j], sum);
             }
             // Lower Triangular
-            for (let k = i; k < n; k++) {
-                if (i == k) {
-                    // Diagonal as 1
-                    lower.array[i][i] = ComplexDecimal.one();
-                } else {
-                    // Summation of L(k, j) * U(j, i)
-                    let sum: ComplexDecimal = ComplexDecimal.zero();
-                    for (let j = 0; j < i; j++) {
-                        sum = ComplexDecimal.add(sum, ComplexDecimal.mul(lower.array[k][j], upper.array[j][i]));
-                    }
-                    // Evaluating L(k, i)
-                    lower.array[k][i] = ComplexDecimal.rdiv(ComplexDecimal.sub(M.array[k][i], sum), upper.array[i][i]);
+            for (let j = i + 1; j < n; j++) {
+                // Summation of L(j, k) * U(k, i)
+                let sum: ComplexDecimal = ComplexDecimal.zero();
+                for (let k = 0; k < i; k++) {
+                    sum = ComplexDecimal.add(sum, ComplexDecimal.mul(L.array[j][k], U.array[k][i]));
+                }
+                // Evaluating L(j, i)
+                L.array[j][i] = ComplexDecimal.rdiv(ComplexDecimal.sub(M.array[j][i], sum), U.array[i][i]);
+            }
+        }
+        return EvaluatorPointer.nodeOp('*', L, U);
+    }
+
+    static swapRows(M: MultiArray, m: number, n: number): void {
+        let temp = M.array[m];
+        M.array[m] = M.array[n];
+        M.array[n] = temp;
+    }
+
+    static plu(matrix: MultiArray): { L: MultiArray; U: MultiArray; P: MultiArray } {
+        const m = matrix.dim[0]; // Number of rows
+        const n = matrix.dim[1]; // Number of columns
+
+        // Initialize L as an identity matrix with the appropriate dimensions
+        const L = MultiArray.eye(new ComplexDecimal(m));
+
+        // Initialize U as a copy of the input matrix
+        const U = MultiArray.clone(matrix);
+
+        // Initialize P as an identity matrix with the appropriate dimensions
+        const P = MultiArray.eye(new ComplexDecimal(m));
+
+        for (let k = 0; k < Math.min(m, n); k++) {
+            // Find the pivot element (maximum absolute value) in the current column
+            let maxVal = ComplexDecimal.abs(U.array[k][k]);
+            let maxIdx = k;
+
+            for (let i = k + 1; i < m; i++) {
+                const absVal = ComplexDecimal.abs(U.array[i][k]);
+                if (ComplexDecimal.gt(absVal, maxVal)) {
+                    maxVal = absVal;
+                    maxIdx = i;
+                }
+            }
+
+            // Swap rows in U, L, and P
+            if (maxIdx !== k) {
+                MultiArray.swapRows(U, k, maxIdx);
+                MultiArray.swapRows(L, k, maxIdx);
+                MultiArray.swapRows(P, k, maxIdx);
+            }
+
+            for (let i = k + 1; i < m; i++) {
+                // Compute the multiplier
+                const multiplier = ComplexDecimal.rdiv(U.array[i][k], U.array[k][k]);
+
+                // Update L and U
+                L.array[i][k] = multiplier;
+                for (let j = k; j < n; j++) {
+                    U.array[i][j] = ComplexDecimal.sub(U.array[i][j], ComplexDecimal.mul(multiplier, U.array[k][j]));
                 }
             }
         }
-        return EvaluatorPointer.nodeOp('*', lower, upper);
+
+        return EvaluatorPointer.nodeOp('*', P, EvaluatorPointer.nodeOp('*', L, U));
     }
 
     static pivot(M: MultiArray): MultiArray {

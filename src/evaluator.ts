@@ -264,7 +264,7 @@ export class Evaluator {
         }
         // Insert constantsTable in nameTable
         for (const name in constantsTable) {
-            this.nameTable[constantsTable[name][0]] = { args: [], expr: this.newNumber(constantsTable[name][1], 0) };
+            this.nameTable[constantsTable[name][0]] = { args: [], expr: constantsTable[name][1] };
         }
     }
 

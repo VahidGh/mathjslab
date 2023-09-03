@@ -1,15 +1,21 @@
 import { Decimal } from 'decimal.js';
 
 const DecimalPrecision = 336; // to correct rounding of trigonometric functions
+const DecimalPrecisionCompare = 7;
 const DecimalRounding = Decimal.ROUND_HALF_DOWN;
 const DecimaltoExpPos = 20;
 const DecimaltoExpNeg = -7;
+
+Decimal.set({ precision: DecimalPrecision, rounding: DecimalRounding, toExpNeg: DecimaltoExpNeg, toExpPos: DecimaltoExpPos });
 
 export class ComplexDecimal {
     public re: Decimal;
     public im: Decimal;
     public cl: 'decimal' | 'logical';
 
+    /**
+     * Functions with one argument (mappings)
+     */
     static mapFunction: { [name: string]: Function } = {
         abs: ComplexDecimal.abs,
         arg: ComplexDecimal.arg,
@@ -23,12 +29,20 @@ export class ComplexDecimal {
         exp: ComplexDecimal.exp,
         log: ComplexDecimal.log,
         log10: ComplexDecimal.log10,
+        deg2rad: ComplexDecimal.deg2rad,
+        rad2deg: ComplexDecimal.rad2deg,
         sin: ComplexDecimal.sin,
+        sind: ComplexDecimal.sind,
         cos: ComplexDecimal.cos,
+        cosd: ComplexDecimal.cosd,
         tan: ComplexDecimal.tan,
+        tand: ComplexDecimal.tand,
         csc: ComplexDecimal.csc,
+        cscd: ComplexDecimal.cscd,
         sec: ComplexDecimal.sec,
+        secd: ComplexDecimal.secd,
         cot: ComplexDecimal.cot,
+        cotd: ComplexDecimal.cotd,
         asin: ComplexDecimal.asin,
         acos: ComplexDecimal.acos,
         atan: ComplexDecimal.atan,
@@ -51,34 +65,52 @@ export class ComplexDecimal {
         factorial: ComplexDecimal.factorial,
     };
 
+    /**
+     * Functions with two arguments.
+     */
     static twoArgFunction: { [name: string]: Function } = {
         root: ComplexDecimal.root,
         pow: ComplexDecimal.pow,
         logbl: ComplexDecimal.logbl,
     };
 
-    constructor(re: number | string | Decimal, im: number | string | Decimal, cl?: 'decimal' | 'logical') {
-        this.re = new Decimal(re);
-        this.im = new Decimal(im);
-        this.cl = cl ? cl : 'decimal';
+    /**
+     * ComplexDecimal constructor
+     * @param re Real part (optional).
+     * @param im Imaginary part (optional).
+     * @param cl Class 'decimal' | 'logical' (optional).
+     */
+    constructor(re?: number | string | Decimal, im?: number | string | Decimal, cl?: 'decimal' | 'logical') {
+        this.re = re ? new Decimal(re): new Decimal(0);
+        this.im = im ? new Decimal(im) : new Decimal(0);
+        this.cl = cl ?? 'decimal';
     }
 
-    static set(config?: Decimal.Config) {
-        if (config) {
-            Decimal.set(config);
-        } else {
-            Decimal.set({ precision: DecimalPrecision, rounding: DecimalRounding, toExpNeg: DecimaltoExpNeg, toExpPos: DecimaltoExpPos });
-        }
-    }
-
+    /**
+     * Check if object is a ComplexDecimal compatible.
+     * @param obj Any object to check if is CompleDecimal compatible.
+     * @returns boolean result.
+     */
     static isThis(obj: any): boolean {
         return 're' in obj;
     }
 
-    static newThis(re: number | string | Decimal, im: number | string | Decimal, cl?: 'decimal' | 'logical'): ComplexDecimal {
+    /**
+     * Create new ComplexDecimal.
+     * @param re Real part (optional).
+     * @param im Imaginary part (optional).
+     * @param cl Class 'decimal' | 'logical' (optional).
+     * @returns new ComplexDecimal(re, im, cl).
+     */
+    static newThis(re?: number | string | Decimal, im?: number | string | Decimal, cl?: 'decimal' | 'logical'): ComplexDecimal {
         return new ComplexDecimal(re, im, cl);
     }
 
+    /**
+     * Parse string returning its ComplexDecimal value.
+     * @param value string to parse.
+     * @returns ComplexDecimal parsed value.
+     */
     static parse(value: string): ComplexDecimal {
         const num = (value as string).toLowerCase().replace('d', 'e');
         if (num[num.length - 1] == 'i' || num[num.length - 1] == 'j') {
@@ -102,21 +134,29 @@ export class ComplexDecimal {
     }
 
     static unparse(value: ComplexDecimal): string {
-        const value_prec = ComplexDecimal.toMaxPrecision(value);
-        if (!value_prec.re.eq(0) && !value_prec.im.eq(0)) {
-            return (
-                '(' +
-                ComplexDecimal.unparseDecimal(value_prec.re) +
-                (value_prec.im.gt(0) ? '+' : '') +
-                (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimal(value_prec.im) : '-') : '') +
-                'i)'
-            );
-        } else if (!value_prec.re.eq(0)) {
-            return ComplexDecimal.unparseDecimal(value_prec.re);
-        } else if (!value_prec.im.eq(0)) {
-            return (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimal(value_prec.im) : '-') : '') + 'i';
+        if (value.cl !== 'logical') {
+            const value_prec = ComplexDecimal.toMaxPrecision(value);
+            if (!value_prec.re.eq(0) && !value_prec.im.eq(0)) {
+                return (
+                    '(' +
+                    ComplexDecimal.unparseDecimal(value_prec.re) +
+                    (value_prec.im.gt(0) ? '+' : '') +
+                    (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimal(value_prec.im) : '-') : '') +
+                    'i)'
+                );
+            } else if (!value_prec.re.eq(0)) {
+                return ComplexDecimal.unparseDecimal(value_prec.re);
+            } else if (!value_prec.im.eq(0)) {
+                return (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimal(value_prec.im) : '-') : '') + 'i';
+            } else {
+                return '0';
+            }
         } else {
-            return '0';
+            if (value.re.eq(0)) {
+                return 'false';
+            } else {
+                return 'true';
+            }
         }
     }
 
@@ -140,23 +180,32 @@ export class ComplexDecimal {
     }
 
     static unparseML(value: ComplexDecimal): string {
-        const value_prec = ComplexDecimal.toMaxPrecision(value);
-        if (!value_prec.re.eq(0) && !value_prec.im.eq(0)) {
-            return (
-                '<mo>(</mo>' +
-                ComplexDecimal.unparseDecimalML(value_prec.re) +
-                (value_prec.im.gt(0) ? '<mo>+</mo>' : '') +
-                (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalML(value_prec.im) : '<mo>-</mo>') : '') +
-                '<mi>i</mi><mo>)</mo>'
-            );
-        } else if (!value_prec.re.eq(0)) {
-            return ComplexDecimal.unparseDecimalML(value_prec.re);
-        } else if (!value_prec.im.eq(0)) {
-            return (
-                (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalML(value_prec.im) : '<mo>-</mo>') : '') + '<mi>i</mi>'
-            );
+        if (value.cl !== 'logical') {
+            const value_prec = ComplexDecimal.toMaxPrecision(value);
+            if (!value_prec.re.eq(0) && !value_prec.im.eq(0)) {
+                return (
+                    '<mo>(</mo>' +
+                    ComplexDecimal.unparseDecimalML(value_prec.re) +
+                    (value_prec.im.gt(0) ? '<mo>+</mo>' : '') +
+                    (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalML(value_prec.im) : '<mo>-</mo>') : '') +
+                    '<mi>i</mi><mo>)</mo>'
+                );
+            } else if (!value_prec.re.eq(0)) {
+                return ComplexDecimal.unparseDecimalML(value_prec.re);
+            } else if (!value_prec.im.eq(0)) {
+                return (
+                    (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalML(value_prec.im) : '<mo>-</mo>') : '') +
+                    '<mi>i</mi>'
+                );
+            } else {
+                return '<mn>0</mn>';
+            }
         } else {
-            return '<mn>0</mn>';
+            if (value.re.eq(0)) {
+                return '<mi>false</mi>';
+            } else {
+                return '<mi>true</mi>';
+            }
         }
     }
 
@@ -174,22 +223,22 @@ export class ComplexDecimal {
     }
 
     static toMaxPrecisionDecimal(value: Decimal): Decimal {
-        return value.toSignificantDigits(Decimal.precision - 7).toDecimalPlaces(Decimal.precision - 7);
+        return value.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare);
     }
 
     static toMaxPrecision(value: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(
-            value.re.toSignificantDigits(Decimal.precision - 7).toDecimalPlaces(Decimal.precision - 7),
-            value.im.toSignificantDigits(Decimal.precision - 7).toDecimalPlaces(Decimal.precision - 7),
+            value.re.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare),
+            value.im.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare),
         );
     }
 
     static epsilonDecimal(): Decimal {
-        return Decimal.pow(10, -Decimal.precision + 7);
+        return Decimal.pow(10, -Decimal.precision + DecimalPrecisionCompare);
     }
 
     static epsilon(): ComplexDecimal {
-        return new ComplexDecimal(Decimal.pow(10, -Decimal.precision + 7), 0);
+        return new ComplexDecimal(Decimal.pow(10, -Decimal.precision + DecimalPrecisionCompare), 0);
     }
 
     static min(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
@@ -556,9 +605,22 @@ export class ComplexDecimal {
         return ComplexDecimal.logbl(new ComplexDecimal(10, 0), z);
     }
 
+    static deg2rad(z: ComplexDecimal): ComplexDecimal {
+        return new ComplexDecimal(Decimal.mul(Decimal.div(Decimal.acos(-1), 180), z.re), Decimal.mul(Decimal.div(Decimal.acos(-1), 180), z.im));
+    }
+
+    static rad2deg(z: ComplexDecimal): ComplexDecimal {
+        return new ComplexDecimal(Decimal.mul(Decimal.div(180, Decimal.acos(-1)), z.re), Decimal.mul(Decimal.div(180, Decimal.acos(-1)), z.im));
+    }
+
     static sin(z: ComplexDecimal): ComplexDecimal {
         // trignometric sine
         return new ComplexDecimal(Decimal.mul(Decimal.sin(z.re), Decimal.cosh(z.im)), Decimal.mul(Decimal.cos(z.re), Decimal.sinh(z.im)));
+    }
+
+    static sind(z: ComplexDecimal): ComplexDecimal {
+        // trignometric sine in degrees
+        return ComplexDecimal.sin(ComplexDecimal.deg2rad(z));
     }
 
     static cos(z: ComplexDecimal): ComplexDecimal {
@@ -566,9 +628,19 @@ export class ComplexDecimal {
         return new ComplexDecimal(Decimal.mul(Decimal.cos(z.re), Decimal.cosh(z.im)), Decimal.mul(Decimal.sin(z.re), Decimal.sinh(z.im)).neg());
     }
 
+    static cosd(z: ComplexDecimal): ComplexDecimal {
+        // trigonometric cosine in degrees
+        return ComplexDecimal.cos(ComplexDecimal.deg2rad(z));
+    }
+
     static tan(z: ComplexDecimal): ComplexDecimal {
         // trigonometric tangent: tan(z) = sin(z)/cos(z)
         return ComplexDecimal.rdiv(ComplexDecimal.sin(z), ComplexDecimal.cos(z));
+    }
+
+    static tand(z: ComplexDecimal): ComplexDecimal {
+        // trigonometric tangent iun degrees
+        return ComplexDecimal.tan(ComplexDecimal.deg2rad(z));
     }
 
     static csc(z: ComplexDecimal): ComplexDecimal {
@@ -576,14 +648,29 @@ export class ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.sin(z));
     }
 
+    static cscd(z: ComplexDecimal): ComplexDecimal {
+        // trigonometric cosecant in degrees
+        return ComplexDecimal.csc(ComplexDecimal.deg2rad(z));
+    }
+
     static sec(z: ComplexDecimal): ComplexDecimal {
         // trigonometric secant: sec(z) = 1/cos(z)
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.cos(z));
     }
 
+    static secd(z: ComplexDecimal): ComplexDecimal {
+        // trigonometric secant in degrees
+        return ComplexDecimal.sec(ComplexDecimal.deg2rad(z));
+    }
+
     static cot(z: ComplexDecimal): ComplexDecimal {
         // trigonometric cotangent: cot(z) = cos(z)/sin(z)
         return ComplexDecimal.rdiv(ComplexDecimal.cos(z), ComplexDecimal.sin(z));
+    }
+
+    static cotd(z: ComplexDecimal): ComplexDecimal {
+        // trigonometric cotangent in degrees
+        return ComplexDecimal.cot(ComplexDecimal.deg2rad(z));
     }
 
     static asin(z: ComplexDecimal): ComplexDecimal {

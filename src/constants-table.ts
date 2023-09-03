@@ -1,28 +1,30 @@
-export const constantsTable: Array<[string, number]> = [
+import { ComplexDecimal } from './complex-decimal';
+
+export const constantsTable: Array<[string, ComplexDecimal]> = [
     // Mathematical Constants
-    ['cte.pi', Math.PI],
-    ['cte.e', Math.E],
+    ['cte.pi', ComplexDecimal.pi()],
+    ['cte.e', ComplexDecimal.e()],
     // Physical Constants
     // source: http://physics.nist.gov/cuu/Constants/Table/allascii.txt
-    ['cte.g', 9.80665], // standard acceleration of gravity
-    ['cte.G', 6.67408e-11], // Newtonian constant of gravitation
-    ['cte.N0', 6.022140857e23], // Avogadro constant
-    ['cte.atm', 1.01325e5], // standard atmosphere
-    ['cte.R', 8.3144598], // molar gas constant
-    ['cte.k', 1.38064852e-23], // Boltzmann constant
-    ['cte.e', 1.6021766208e-19], // elementary charge
-    ['cte.me', 9.10938356e-31], // electron mass
-    ['cte.ep0', 8.854187817e-12], // vacuum electric permittivity
-    ['cte.mi0', Math.PI * 4.0e-7], // vacuum magnetic permeability
-    ['cte.c', 2.99792458e8], // speed of light in vacuum
-    ['cte.h', 6.62607004e-34], // Planck constant
+    ['cte.g', ComplexDecimal.newThis(9.80665)], // standard acceleration of gravity
+    ['cte.G', ComplexDecimal.newThis(6.67408e-11)], // Newtonian constant of gravitation
+    ['cte.N0', ComplexDecimal.newThis(6.022140857e23)], // Avogadro constant
+    ['cte.atm', ComplexDecimal.newThis(1.01325e5)], // standard atmosphere
+    ['cte.R', ComplexDecimal.newThis(8.3144598)], // molar gas constant
+    ['cte.k', ComplexDecimal.newThis(1.38064852e-23)], // Boltzmann constant
+    ['cte.e0', ComplexDecimal.newThis(1.6021766208e-19)], // elementary charge
+    ['cte.me', ComplexDecimal.newThis(9.10938356e-31)], // electron mass
+    ['cte.ep0', ComplexDecimal.newThis(8.854187817e-12)], // vacuum electric permittivity
+    ['cte.mi0', ComplexDecimal.mul(ComplexDecimal.newThis(4.0e-7), ComplexDecimal.pi())], // vacuum magnetic permeability
+    ['cte.c', ComplexDecimal.newThis(2.99792458e8)], // speed of light in vacuum
+    ['cte.h', ComplexDecimal.newThis(6.62607004e-34)], // Planck constant
     // Unit conversion factors
-    ['cte.cal', 4.1868], // calorie in Joules
-    ['cte.kWh', 3.6e6], // kWh in Joules
-    ['cte.BTU', 252.2 * 4.1868], // British Thermal Unit
-    ['cte.hp', 745.7], // Horse Power in Watts
-    ['cte.cv', 735.3], // Cavalo Vapor
-    ['cte.in', 2.54e-2], // Inch in meters
+    ['cte.cal', ComplexDecimal.newThis(4.1868)], // calorie in Joules
+    ['cte.kWh', ComplexDecimal.newThis(3.6e6)], // kWh in Joules
+    ['cte.BTU', ComplexDecimal.newThis(252.2 * 4.1868)], // British Thermal Unit
+    ['cte.hp', ComplexDecimal.newThis(745.7)], // Horse Power in Watts
+    ['cte.cv', ComplexDecimal.newThis(735.3)], // Cavalo Vapor
+    ['cte.in', ComplexDecimal.newThis(2.54e-2)], // Inch in meters
 ];
 
 const atomsTable: Array<[string, number]> = [
@@ -151,7 +153,7 @@ const atomsTable: Array<[string, number]> = [
 // Insert chemical elements properties in constantsTable (molar mass and atomic number)
 for (let i = 1; i < atomsTable.length; i++) {
     // Molar mass
-    constantsTable.push(['cte.' + atomsTable[i][0] + '_M', atomsTable[i][1]]);
+    constantsTable.push(['cte.' + atomsTable[i][0] + '_M', ComplexDecimal.newThis(atomsTable[i][1])]);
     // Atomic number
-    constantsTable.push(['cte.' + atomsTable[i][0] + '_Z', i]);
+    constantsTable.push(['cte.' + atomsTable[i][0] + '_Z', ComplexDecimal.newThis(i)]);
 }

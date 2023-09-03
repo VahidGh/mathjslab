@@ -1,3 +1,4 @@
+![NPM License](https://img.shields.io/npm/l/:mathjslab)
 # MathJSLab
 
 > Interpreter with language syntax like MATLAB&reg;/Octave
@@ -19,18 +20,24 @@ and environments.
 A functional [demo](https://mathjslab.netlify.app/) use of this package in a Web
 application can be found [here](https://github.com/sergiolindau/mathjslab-calculator).
 
+## Features
+
+- Runs on any JavaScript engine.
+- Comes with a large set of built-in functions and constants.
+- Is easily extensible.
+- Open source.
+- Test suites.
+
+## Browser support
+
+MathJSLab works on any ES6 compatible JavaScript engine, including Node.js, Chrome, Firefox, Safari, and Edge.
+
 ## Installation
 
 Install the `mathjslab` package:
 
 ```bash
 npm install mathjslab
-```
-
-Install `@types/mathjslab` package:
-
-```bash
-npm install --save-dev @type/mathjslab
 ```
 
 ## Usage
@@ -56,6 +63,20 @@ let result = evaluator.Evaluate(tree);
 * MathML generation
 ```typescript
 let mathml = evaluator.UnparseML(tree);
+```
+
+## Test and Build
+
+Run the `mathjslab` tests:
+
+```bash
+npm run test
+```
+
+Build `mathjslab`:
+
+```bash
+npm run build
 ```
 
 # License

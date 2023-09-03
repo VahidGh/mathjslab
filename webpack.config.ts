@@ -6,7 +6,7 @@ const config: webpack.Configuration = {
     module: {
         rules: [
             {
-                test: /(\.ts)|(\.js)$/,
+                test: /\.[tj]s$/,
                 use: [
                     {
                         loader: 'ts-loader',
@@ -15,7 +15,7 @@ const config: webpack.Configuration = {
                         },
                     },
                 ],
-                exclude: [/node_modules/, /test/],
+                exclude: [/node_modules/, /.*\.spec\.[tj]s/],
             },
         ],
     },
