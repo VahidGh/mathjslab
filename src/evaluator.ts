@@ -159,7 +159,8 @@ export class Evaluator {
     public debug: boolean = false;
 
     /**
-     * Native name table.
+     * Native name table. It's inserted in nameTable when
+     * `Evaluator.initialize` executed.
      */
     private readonly nativeNameTable: { [k: string]: any } = {
         false: ComplexDecimal.false(),

@@ -7,11 +7,11 @@ This package emulates a parser and evaluator for a subset of
 language.
 
 It can run in browser environment and implements an arbitrary precision arithmetics using
-[decimal.js](https://www.npmjs.com/package/decimal.js) package. This package
+[decimal.js](https://www.npmjs.com/package/decimal.js) package. MathJSLab
 has functions to generate [MathML](https://www.w3.org/Math/) code of
 expressions parsed too.
 
-This software is intended for educational purposes to provide teachers and
+This software is intended for educational purposes, to provide teachers and
 students with a computer aided calculation tool that is capable of running in
 a browser environment. So it can be easily adapted to be used on different devices
 and environments.
@@ -41,10 +41,11 @@ npm install mathjslab
 
 ## Usage
 
-The basic API is a instantiation of `Evaluator` with optional configuration.
+The basic API is an instantiation of `Evaluator` with optional configuration.
+Initialize evaluator with:
 
 ```typescript
-let evaluator = new Evaluator(EvaluatorConfiguration);
+let evaluator = Evaluator.initialize(EvaluatorConfiguration);
 ```
 
 Examples:
