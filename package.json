@@ -1,6 +1,6 @@
 {
   "name": "mathjslab",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "MathJSLab - Interpreter with language syntax like MATLAB/Octave",
   "main": "dist/mathjslab.js",
   "types": "dist/src/index.d.ts",
@@ -35,6 +35,7 @@
     "git:push": "git push",
     "git:add:commit:push": "npm run git:add:all && npm run git:commit:initial && npm run git:push",
     "update": "npx ncu -u",
+    "pretest": "npm run build:parser",
     "test": "jest --verbose",
     "test:watch": "jest --watch",
     "lint": "eslint \"**/*.ts{,x}\" --fix",

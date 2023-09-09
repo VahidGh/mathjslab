@@ -5,7 +5,6 @@ import { MultiArray } from './multi-array';
 let evaluator: Evaluator;
 
 describe('MultiArray', () => {
-
     beforeEach(async () => {
         evaluator = new Evaluator();
     });
@@ -15,7 +14,7 @@ describe('MultiArray', () => {
     });
 
     it('MultiArray should be defined', () => {
-      expect(MultiArray).toBeDefined();
+        expect(MultiArray).toBeDefined();
     }, 100);
 
     it('Evaluator should be defined', () => {
@@ -39,5 +38,4 @@ describe('MultiArray', () => {
         const value = evaluator.Evaluate(tree);
         expect(value.list[0].re.toNumber()).toBe(-444);
     }, 1000);
-
 });

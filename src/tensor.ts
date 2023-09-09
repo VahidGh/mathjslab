@@ -2,7 +2,7 @@ import { ComplexDecimal } from './complex-decimal';
 import { MultiArray } from './multi-array';
 
 export abstract class Tensor {
-    static unaryOpFunction: { [name: string]: Function } = {
+    public static unaryOpFunction: { [name: string]: Function } = {
         uplus: Tensor.uplus,
         uminus: Tensor.uminus,
         not: Tensor.not,
@@ -10,8 +10,10 @@ export abstract class Tensor {
         ctranspose: Tensor.ctranspose,
     };
 
-    static binaryOpFunction: { [name: string]: Function } = {
+    public static binaryOpFunction: { [name: string]: Function } = {
         minus: Tensor.minus,
+        mod: Tensor.mod,
+        rem: Tensor.rem,
         rdivide: Tensor.rdivide,
         mrdivide: Tensor.mrdivide,
         ldivide: Tensor.ldivide,
@@ -25,7 +27,7 @@ export abstract class Tensor {
         ne: Tensor.ne,
     };
 
-    static twoMoreOpFunction: { [name: string]: Function } = {
+    public static twoMoreOpFunction: { [name: string]: Function } = {
         plus: Tensor.plus,
         times: Tensor.times,
         mtimes: Tensor.mtimes,
@@ -35,8 +37,8 @@ export abstract class Tensor {
         or: Tensor.or,
     };
 
-    static ewiseOp(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or',
+    public static ewiseOp(
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
         left: any,
         right: any,
     ): any {
@@ -51,7 +53,7 @@ export abstract class Tensor {
         }
     }
 
-    static leftOp(op: 'clone' | 'neg' | 'not', right: any): any {
+    public static leftOp(op: 'copy' | 'neg' | 'not', right: any): any {
         if ('re' in right) {
             return ComplexDecimal[op](right);
         } else if ('array' in right) {
@@ -59,19 +61,27 @@ export abstract class Tensor {
         }
     }
 
-    static plus(left: any, right: any): any {
+    public static plus(left: any, right: any): any {
         return Tensor.ewiseOp('add', left, right);
     }
 
-    static minus(left: any, right: any): any {
+    public static minus(left: any, right: any): any {
         return Tensor.ewiseOp('sub', left, right);
     }
 
-    static times(left: any, right: any): any {
+    public static mod(left: any, right: any): any {
+        return Tensor.ewiseOp('mod', left, right);
+    }
+
+    public static rem(left: any, right: any): any {
+        return Tensor.ewiseOp('rem', left, right);
+    }
+
+    public static times(left: any, right: any): any {
         return Tensor.ewiseOp('mul', left, right);
     }
 
-    static mtimes(left: any, right: any): any {
+    public static mtimes(left: any, right: any): any {
         if ('re' in left && 're' in right) {
             return ComplexDecimal.mul(left, right);
         } else if ('re' in left && 'array' in right) {
@@ -83,11 +93,11 @@ export abstract class Tensor {
         }
     }
 
-    static rdivide(left: any, right: any): any {
+    public static rdivide(left: any, right: any): any {
         return Tensor.ewiseOp('rdiv', left, right);
     }
 
-    static mrdivide(left: any, right: any): any {
+    public static mrdivide(left: any, right: any): any {
         if ('re' in left && 're' in right) {
             return ComplexDecimal.rdiv(left, right);
         } else if ('re' in left && 'array' in right) {
@@ -99,17 +109,17 @@ export abstract class Tensor {
         }
     }
 
-    static ldivide(left: any, right: any): any {
+    public static ldivide(left: any, right: any): any {
         return Tensor.ewiseOp('ldiv', left, right);
     }
 
-    static mldivide(left: any, right: any): any {}
+    public static mldivide(left: any, right: any): any {}
 
-    static power(left: any, right: any): any {
+    public static power(left: any, right: any): any {
         return Tensor.ewiseOp('pow', left, right);
     }
 
-    static mpower(left: any, right: any): any {
+    public static mpower(left: any, right: any): any {
         if ('re' in left && 're' in right) {
             return ComplexDecimal.pow(left, right);
         } else if ('array' in left && 're' in right) {
@@ -119,15 +129,15 @@ export abstract class Tensor {
         }
     }
 
-    static uplus(right: any): any {
-        return Tensor.leftOp('clone', right);
+    public static uplus(right: any): any {
+        return Tensor.leftOp('copy', right);
     }
 
-    static uminus(right: any): any {
+    public static uminus(right: any): any {
         return Tensor.leftOp('neg', right);
     }
 
-    static transpose(left: any): any {
+    public static transpose(left: any): any {
         if ('re' in left) {
             return Object.assign({}, left);
         } else if ('array' in left) {
@@ -135,7 +145,7 @@ export abstract class Tensor {
         }
     }
 
-    static ctranspose(left: any): any {
+    public static ctranspose(left: any): any {
         if ('re' in left) {
             return ComplexDecimal.conj(left);
         } else if ('array' in left) {
@@ -143,31 +153,31 @@ export abstract class Tensor {
         }
     }
 
-    static lt(left: any, right: any): any {
+    public static lt(left: any, right: any): any {
         return Tensor.ewiseOp('lt', left, right);
     }
 
-    static lte(left: any, right: any): any {
+    public static lte(left: any, right: any): any {
         return Tensor.ewiseOp('lte', left, right);
     }
 
-    static eq(left: any, right: any): any {
+    public static eq(left: any, right: any): any {
         return Tensor.ewiseOp('eq', left, right);
     }
 
-    static gte(left: any, right: any): any {
+    public static gte(left: any, right: any): any {
         return Tensor.ewiseOp('gte', left, right);
     }
 
-    static gt(left: any, right: any): any {
+    public static gt(left: any, right: any): any {
         return Tensor.ewiseOp('gt', left, right);
     }
 
-    static ne(left: any, right: any): any {
+    public static ne(left: any, right: any): any {
         return Tensor.ewiseOp('ne', left, right);
     }
 
-    static mand(left: any, right: any): any {
+    public static mand(left: any, right: any): any {
         if ('re' in left && 're' in right) {
             return ComplexDecimal.and(left, right);
         } else if ('re' in left && 'array' in right) {
@@ -179,7 +189,7 @@ export abstract class Tensor {
         }
     }
 
-    static mor(left: any, right: any): any {
+    public static mor(left: any, right: any): any {
         if ('re' in left && 're' in right) {
             return ComplexDecimal.or(left, right);
         } else if ('re' in left && 'array' in right) {
@@ -191,7 +201,7 @@ export abstract class Tensor {
         }
     }
 
-    static not(right: any): any {
+    public static not(right: any): any {
         if ('re' in right) {
             return ComplexDecimal.not(right);
         } else if ('array' in right) {
@@ -199,11 +209,11 @@ export abstract class Tensor {
         }
     }
 
-    static and(left: any, right: any): any {
+    public static and(left: any, right: any): any {
         return Tensor.ewiseOp('and', left, right);
     }
 
-    static or(left: any, right: any): any {
+    public static or(left: any, right: any): any {
         return Tensor.ewiseOp('or', left, right);
     }
 }

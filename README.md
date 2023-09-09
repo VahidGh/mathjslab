@@ -24,7 +24,7 @@ application can be found [here](https://github.com/sergiolindau/mathjslab-calcul
 - Runs on any JavaScript engine.
 - Comes with a large set of built-in functions and constants.
 - Is easily extensible.
-- Open source.
+- Open source with fully documented code.
 - Test suites.
 
 ## Browser support
@@ -77,6 +77,18 @@ Build `mathjslab`:
 ```bash
 npm run build
 ```
+
+## Language subset
+
+Currently only the mathematical expressions of the language are implemented.
+
+The control and loop structures are not yet implemented.
+
+Some differences from the original MATLAB&reg;/Octave language are
+
+* Defining functions is done simply using:
+function_name(argument, argument, ...) = <expression>
+* Parsing is executed line-by-line.
 
 # License
 

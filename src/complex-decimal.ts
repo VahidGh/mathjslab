@@ -1,24 +1,68 @@
 import { Decimal } from 'decimal.js';
 
-const DecimalPrecision = 336; // to correct rounding of trigonometric functions
+/**
+ * decimal.js and ComplexDecimal configuration parameters.
+ */
+
+/**
+ * The maximum number of significant digits of the result of an operation.
+ * Values equal to or greater than 336 is used to produce correct rounding of
+ * trigonometric functions.
+ */
+const DecimalPrecision = 336;
+
+/**
+ * Number of significant digits to reduce precision in compare operations and
+ * unparse.
+ */
 const DecimalPrecisionCompare = 7;
+
+/**
+ * The default rounding mode used when rounding the result of an operation to
+ * precision significant digits.
+ */
 const DecimalRounding = Decimal.ROUND_HALF_DOWN;
+
+/**
+ * The positive exponent value at and above which toString returns exponential
+ * notation.
+ */
 const DecimaltoExpPos = 20;
+
+/**
+ * The negative exponent value at and below which toString returns exponential
+ * notation.
+ */
 const DecimaltoExpNeg = -7;
 
-Decimal.set({ precision: DecimalPrecision, rounding: DecimalRounding, toExpNeg: DecimaltoExpNeg, toExpPos: DecimaltoExpPos });
+/**
+ * decimal.js setup.
+ */
+Decimal.set({
+    precision: DecimalPrecision,
+    rounding: DecimalRounding,
+    toExpNeg: DecimaltoExpNeg,
+    toExpPos: DecimaltoExpPos,
+});
 
+/**
+ * # ComplexDecimal
+ *
+ * An arbitrary precision complex number library.
+ *
+ * ## References
+ * * https://mathworld.wolfram.com/ComplexNumber.html
+ */
 export class ComplexDecimal {
-    public re: Decimal;
-    public im: Decimal;
-    public cl: 'decimal' | 'logical';
-
     /**
      * Functions with one argument (mappings)
      */
-    static mapFunction: { [name: string]: Function } = {
+    public static mapFunction: { [name: string]: Function } = {
+        real: ComplexDecimal.real,
+        imag: ComplexDecimal.imag,
+        logical: ComplexDecimal.logical,
         abs: ComplexDecimal.abs,
-        arg: ComplexDecimal.arg,
+        angle: ComplexDecimal.angle,
         conj: ComplexDecimal.conj,
         fix: ComplexDecimal.fix,
         ceil: ComplexDecimal.ceil,
@@ -44,11 +88,17 @@ export class ComplexDecimal {
         cot: ComplexDecimal.cot,
         cotd: ComplexDecimal.cotd,
         asin: ComplexDecimal.asin,
+        asind: ComplexDecimal.asind,
         acos: ComplexDecimal.acos,
+        acosd: ComplexDecimal.acosd,
         atan: ComplexDecimal.atan,
+        atand: ComplexDecimal.atand,
         acsc: ComplexDecimal.acsc,
+        acscd: ComplexDecimal.acscd,
         asec: ComplexDecimal.asec,
+        asecd: ComplexDecimal.asecd,
         acot: ComplexDecimal.acot,
+        acotd: ComplexDecimal.acotd,
         sinh: ComplexDecimal.sinh,
         cosh: ComplexDecimal.cosh,
         tanh: ComplexDecimal.tanh,
@@ -68,11 +118,19 @@ export class ComplexDecimal {
     /**
      * Functions with two arguments.
      */
-    static twoArgFunction: { [name: string]: Function } = {
+    public static twoArgFunction: { [name: string]: Function } = {
         root: ComplexDecimal.root,
+        hypot: ComplexDecimal.hypot,
         pow: ComplexDecimal.pow,
-        logbl: ComplexDecimal.logbl,
+        logb: ComplexDecimal.logb,
     };
+
+    /**
+     * Real, imaginary and class properties.
+     */
+    public re: Decimal;
+    public im: Decimal;
+    public cl: 'decimal' | 'logical';
 
     /**
      * ComplexDecimal constructor
@@ -80,10 +138,28 @@ export class ComplexDecimal {
      * @param im Imaginary part (optional).
      * @param cl Class 'decimal' | 'logical' (optional).
      */
-    constructor(re?: number | string | Decimal, im?: number | string | Decimal, cl?: 'decimal' | 'logical') {
-        this.re = re ? new Decimal(re): new Decimal(0);
+    public constructor(re?: number | string | Decimal, im?: number | string | Decimal, cl?: 'decimal' | 'logical') {
+        this.re = re ? new Decimal(re) : new Decimal(0);
         this.im = im ? new Decimal(im) : new Decimal(0);
         this.cl = cl ?? 'decimal';
+    }
+
+    /**
+     * Real part of complex number.
+     * @param z value.
+     * @returns Real part of z
+     */
+    public static real(z: ComplexDecimal): ComplexDecimal {
+        return new ComplexDecimal(z.re);
+    }
+
+    /**
+     * Imaginary part of complex number.
+     * @param z value.
+     * @returns Imaginary part of z
+     */
+    public static imag(z: ComplexDecimal): ComplexDecimal {
+        return new ComplexDecimal(z.im);
     }
 
     /**
@@ -91,7 +167,7 @@ export class ComplexDecimal {
      * @param obj Any object to check if is CompleDecimal compatible.
      * @returns boolean result.
      */
-    static isThis(obj: any): boolean {
+    public static isThis(obj: any): boolean {
         return 're' in obj;
     }
 
@@ -102,16 +178,16 @@ export class ComplexDecimal {
      * @param cl Class 'decimal' | 'logical' (optional).
      * @returns new ComplexDecimal(re, im, cl).
      */
-    static newThis(re?: number | string | Decimal, im?: number | string | Decimal, cl?: 'decimal' | 'logical'): ComplexDecimal {
+    public static newThis(re?: number | string | Decimal, im?: number | string | Decimal, cl?: 'decimal' | 'logical'): ComplexDecimal {
         return new ComplexDecimal(re, im, cl);
     }
 
     /**
      * Parse string returning its ComplexDecimal value.
-     * @param value string to parse.
+     * @param value String to parse.
      * @returns ComplexDecimal parsed value.
      */
-    static parse(value: string): ComplexDecimal {
+    public static parse(value: string): ComplexDecimal {
         const num = (value as string).toLowerCase().replace('d', 'e');
         if (num[num.length - 1] == 'i' || num[num.length - 1] == 'j') {
             return new ComplexDecimal(0, num.substring(0, num.length - 1));
@@ -120,7 +196,12 @@ export class ComplexDecimal {
         }
     }
 
-    static unparseDecimal(value: Decimal): string {
+    /**
+     * Unparse real or imaginary part.
+     * @param value Decimal value
+     * @returns String of unparsed value
+     */
+    private static unparseDecimal(value: Decimal): string {
         if (value.isFinite()) {
             const value_unparsed = value.toString().split('e');
             if (value_unparsed.length == 1) {
@@ -133,7 +214,15 @@ export class ComplexDecimal {
         }
     }
 
-    static unparse(value: ComplexDecimal): string {
+    /**
+     * Unparse ComplexDecimal value. Show true/false if logical value,
+     * otherwise show real and imaginary parts enclosed by parenthesis. If
+     * some part is zero the null part is ommited (and parenthesis is ommited
+     * too).
+     * @param value Value to unparse.
+     * @returns String of unparsed value.
+     */
+    public static unparse(value: ComplexDecimal): string {
         if (value.cl !== 'logical') {
             const value_prec = ComplexDecimal.toMaxPrecision(value);
             if (!value_prec.re.eq(0) && !value_prec.im.eq(0)) {
@@ -160,7 +249,12 @@ export class ComplexDecimal {
         }
     }
 
-    static unparseDecimalML(value: Decimal): string {
+    /**
+     * Unparse real or imaginary part.
+     * @param value Decimal value
+     * @returns string of value unparsed
+     */
+    private static unparseDecimalML(value: Decimal): string {
         if (value.isFinite()) {
             const value_unparsed = value.toString().split('e');
             if (value_unparsed.length == 1) {
@@ -179,7 +273,15 @@ export class ComplexDecimal {
         }
     }
 
-    static unparseML(value: ComplexDecimal): string {
+    /**
+     * Unparse ComplexDecimal value as MathML language. Show true/false if
+     * logical value, otherwise show real and imaginary parts enclosed by
+     * parenthesis. If some part is zero the null part is ommited (and
+     * parenthesis is ommited too).
+     * @param value value to unparse.
+     * @returns string of unparsed value.
+     */
+    public static unparseML(value: ComplexDecimal): string {
         if (value.cl !== 'logical') {
             const value_prec = ComplexDecimal.toMaxPrecision(value);
             if (!value_prec.re.eq(0) && !value_prec.im.eq(0)) {
@@ -209,81 +311,132 @@ export class ComplexDecimal {
         }
     }
 
-    static clone(value: ComplexDecimal): ComplexDecimal {
+    /**
+     * Creates a copy of the value.
+     * @param value ComplexDecimal value
+     * @returns copy of value
+     */
+    public static copy(value: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(value.re, value.im, value.cl);
     }
 
-    static cast(value: ComplexDecimal, cl?: 'decimal' | 'logical'): ComplexDecimal {
-        if (cl) {
-            value.cl = cl;
-        } else {
-            value.cl = 'decimal';
-        }
-        return value;
-    }
-
-    static toMaxPrecisionDecimal(value: Decimal): Decimal {
-        return value.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare);
-    }
-
-    static toMaxPrecision(value: ComplexDecimal): ComplexDecimal {
-        return new ComplexDecimal(
-            value.re.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare),
-            value.im.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare),
-        );
-    }
-
-    static epsilonDecimal(): Decimal {
-        return Decimal.pow(10, -Decimal.precision + DecimalPrecisionCompare);
-    }
-
-    static epsilon(): ComplexDecimal {
-        return new ComplexDecimal(Decimal.pow(10, -Decimal.precision + DecimalPrecisionCompare), 0);
-    }
-
-    static min(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Returns the minimum of arguments. The arguments are in polar
+     * lexicographical ordering (ordered by absolute value, or by polar angle
+     * in (-pi,pi] when absolute values are equal).
+     * @param left Value to compare.
+     * @param right Value to compare.
+     * @returns Minimum of left and right
+     */
+    public static min(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         if (left.im.eq(0) && right.im.eq(0)) {
             return left.re.lte(right.re) ? left : right;
         } else {
             const left_abs = ComplexDecimal.abs(left).re;
             const right_abs = ComplexDecimal.abs(right).re;
             if (left_abs.eq(right_abs)) {
-                return ComplexDecimal.arg(left).re.lte(ComplexDecimal.arg(right).re) ? left : right;
+                return ComplexDecimal.angle(left).re.lte(ComplexDecimal.angle(right).re) ? left : right;
             } else {
                 return left_abs.lte(right_abs) ? left : right;
             }
         }
     }
 
-    static max(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Returns the maximum of arguments. The arguments are in polar
+     * lexicographical ordering (ordered by absolute value, or by polar angle
+     * in (-pi,pi] when absolute values are equal).
+     * @param left Value to compare.
+     * @param right Value to compare.
+     * @returns Maximum of left and right
+     */
+    public static max(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         if (left.im.eq(0) && right.im.eq(0)) {
             return left.re.gte(right.re) ? left : right;
         } else {
             const left_abs = ComplexDecimal.abs(left).re;
             const right_abs = ComplexDecimal.abs(right).re;
             if (left_abs.eq(right_abs)) {
-                return ComplexDecimal.arg(left).re.gte(ComplexDecimal.arg(right).re) ? left : right;
+                return ComplexDecimal.angle(left).re.gte(ComplexDecimal.angle(right).re) ? left : right;
             } else {
                 return left_abs.gte(right_abs) ? left : right;
             }
         }
     }
 
-    static eq(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Reduce precision of real or imaginary part.
+     * @param value Full precision value.
+     * @returns Reduced precision value.
+     */
+    private static toMaxPrecisionDecimal(value: Decimal): Decimal {
+        return value.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare);
+    }
+
+    /**
+     * Reduce precision.
+     * @param value Full precision value.
+     * @returns Reduced precision value.
+     */
+    public static toMaxPrecision(value: ComplexDecimal): ComplexDecimal {
+        return new ComplexDecimal(
+            value.re.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare),
+            value.im.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare),
+        );
+    }
+
+    /**
+     * Get the minimal diference of two consecutive numbers for real or
+     * imaginary part, the floating-point relative accuracy.
+     * @returns Minimal diference of two consecutive numbers.
+     */
+    private static epsilonDecimal(): Decimal {
+        return Decimal.pow(10, -Decimal.precision + DecimalPrecisionCompare);
+    }
+
+    /**
+     * Get the minimal diference of two consecutive numbers, the
+     * floating-point relative accuracy.
+     * @returns Minimal diference of two consecutive numbers.
+     */
+    public static epsilon(): ComplexDecimal {
+        return new ComplexDecimal(ComplexDecimal.epsilonDecimal());
+    }
+
+    /**
+     * Test for equality.
+     * @param left Value.
+     * @param right Value.
+     * @returns Returns ComplexDecimal.true() if left and right are equals.
+     */
+    public static eq(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
         return left_prec.re.eq(right_prec.re) && left_prec.im.eq(right_prec.im) ? ComplexDecimal.true() : ComplexDecimal.false();
     }
 
-    static ne(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Test for inequality.
+     * @param left Value.
+     * @param right Value.
+     * @returns Returns ComplexDecimal.true() if left and right are different.
+     */
+    public static ne(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return !left_prec.re.eq(right_prec.re) || !left_prec.im.eq(right_prec.im) ? ComplexDecimal.true() : ComplexDecimal.false();
+        return left_prec.re.eq(right_prec.re) && left_prec.im.eq(right_prec.im) ? ComplexDecimal.false() : ComplexDecimal.true();
     }
 
-    static cmp(cmp: 'lt' | 'lte' | 'gt' | 'gte', left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        // Comparisons made in polar lexicographical ordering
-        // (ordered by absolute value, or by polar angle in (-pi,pi] when absolute values are equal)
+    /**
+     * Comparison made in polar lexicographical ordering. It's ordered by
+     * absolute value, or by polar angle in (-pi,pi] when absolute values are
+     * equal.
+     * @param cmp Type of comparison.
+     * @param left Value.
+     * @param right Value.
+     * @returns Result of comparison as ComplexDecimal.true() or ComplexDecimal.false().
+     */
+    private static cmp(cmp: 'lt' | 'lte' | 'gt' | 'gte', left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
         if (left_prec.im.eq(0) && right_prec.im.eq(0)) {
@@ -291,144 +444,285 @@ export class ComplexDecimal {
         }
         const left_abs = ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.abs(left).re);
         const right_abs = ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.abs(right).re);
-        if (!left_abs.eq(right_abs)) {
-            return left_abs[cmp](right_abs) ? ComplexDecimal.true() : ComplexDecimal.false();
-        } else {
-            return ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.arg(left).re)[cmp](
-                ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.arg(right).re),
+        if (left_abs.eq(right_abs)) {
+            return ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.angle(left).re)[cmp](
+                ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.angle(right).re),
             )
                 ? ComplexDecimal.true()
                 : ComplexDecimal.false();
+        } else {
+            return left_abs[cmp](right_abs) ? ComplexDecimal.true() : ComplexDecimal.false();
         }
     }
 
-    static lt(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Less than comparison (lexicographical ordering).
+     * @param left Value.
+     * @param right Value.
+     * @returns Result of comparison left<right as ComplexDecimal.true() or ComplexDecimal.false().
+     */
+    public static lt(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.cmp('lt', left, right);
     }
 
-    static lte(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Less than or equal comparison (lexicographical ordering).
+     * @param left Value.
+     * @param right Value.
+     * @returns Result of comparison left<=right as ComplexDecimal.true() or ComplexDecimal.false().
+     */
+    public static lte(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.cmp('lte', left, right);
     }
 
-    static gte(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        return ComplexDecimal.cmp('gte', left, right);
-    }
-
-    static gt(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Greater than comparison (lexicographical ordering).
+     * @param left Value.
+     * @param right Value.
+     * @returns Result of comparison left>right as ComplexDecimal.true() or ComplexDecimal.false().
+     */
+    public static gt(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.cmp('gt', left, right);
     }
 
-    static false(): ComplexDecimal {
+    /**
+     * Greater than or equal comparison (lexicographical ordering).
+     * @param left Value.
+     * @param right Value.
+     * @returns Result of comparison left>=right as ComplexDecimal.true() or ComplexDecimal.false().
+     */
+    public static gte(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+        return ComplexDecimal.cmp('gte', left, right);
+    }
+
+    /**
+     * ComplexDecimal logical false.
+     * @returns new ComplexDecimal(0, 0, 'logical')
+     */
+    public static false(): ComplexDecimal {
         return new ComplexDecimal(0, 0, 'logical');
     }
 
-    static true(): ComplexDecimal {
+    /**
+     * ComplexDecimal logical true.
+     * @returns new ComplexDecimal(1, 0, 'logical')
+     */
+    public static true(): ComplexDecimal {
         return new ComplexDecimal(1, 0, 'logical');
     }
 
-    static toLogical(value: ComplexDecimal): ComplexDecimal {
+    /**
+     * Convert numeric values to logicals.
+     * @param value ComplexDecimal decimal value.
+     * @returns ComplexDecimal logical value.
+     */
+    public static logical(value: ComplexDecimal): ComplexDecimal {
         const value_prec = ComplexDecimal.toMaxPrecision(value);
-        return !value_prec.re.eq(0) || !value_prec.im.eq(0) ? ComplexDecimal.true() : ComplexDecimal.false();
+        return new ComplexDecimal(value_prec.re.eq(0) && value_prec.im.eq(0) ? 0 : 1, 0, 'logical');
     }
 
-    static and(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Logical AND.
+     * @param left Value.
+     * @param right Value.
+     * @returns left AND right.
+     */
+    public static and(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return (!left_prec.re.eq(0) || !left_prec.im.eq(0)) && (!right_prec.re.eq(0) || !right_prec.im.eq(0))
-            ? ComplexDecimal.true()
-            : ComplexDecimal.false();
+        return (left_prec.re.eq(0) && left_prec.im.eq(0)) || (right_prec.re.eq(0) && right_prec.im.eq(0))
+            ? ComplexDecimal.false()
+            : ComplexDecimal.true();
     }
 
-    static or(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Logical OR.
+     * @param left Value.
+     * @param right Value.
+     * @returns left OR right.
+     */
+    public static or(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return !left_prec.re.eq(0) || !left_prec.im.eq(0) || !right_prec.re.eq(0) || !right_prec.im.eq(0)
-            ? ComplexDecimal.true()
-            : ComplexDecimal.false();
+        return left_prec.re.eq(0) && left_prec.im.eq(0) && right_prec.re.eq(0) && right_prec.im.eq(0)
+            ? ComplexDecimal.false()
+            : ComplexDecimal.true();
     }
 
-    static not(right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Logical NOT.
+     * @param right Value.
+     * @returns NOT right.
+     */
+    public static not(right: ComplexDecimal): ComplexDecimal {
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return !right_prec.re.eq(0) || !right_prec.im.eq(0) ? ComplexDecimal.false() : ComplexDecimal.true();
+        return right_prec.re.eq(0) && right_prec.im.eq(0) ? ComplexDecimal.true() : ComplexDecimal.false();
     }
 
-    static zero(): ComplexDecimal {
+    /**
+     * 0
+     * @returns 0 as ComplexDecimal.
+     */
+    public static zero(): ComplexDecimal {
         return new ComplexDecimal(0, 0);
     }
 
-    static one(): ComplexDecimal {
+    /**
+     * 1
+     * @returns 1 as ComplexDecimal.
+     */
+    public static one(): ComplexDecimal {
         return new ComplexDecimal(1, 0);
     }
 
-    static onediv2(): ComplexDecimal {
+    /**
+     * 1/2
+     * @returns 1/2 as ComplexDecimal.
+     */
+    public static onediv2(): ComplexDecimal {
         return new ComplexDecimal(1 / 2, 0);
     }
 
-    static minusonediv2(): ComplexDecimal {
+    /**
+     * -1/2
+     * @returns -1/2 as ComplexDecimal.
+     */
+    public static minusonediv2(): ComplexDecimal {
         return new ComplexDecimal(-1 / 2, 0);
     }
 
-    static minusone(): ComplexDecimal {
+    /**
+     * -1
+     * @returns -1 as ComplexDecimal.
+     */
+    public static minusone(): ComplexDecimal {
         return new ComplexDecimal(-1, 0);
     }
 
-    static pi(): ComplexDecimal {
+    /**
+     * pi
+     * @returns pi as ComplexDecimal.
+     */
+    public static pi(): ComplexDecimal {
         return new ComplexDecimal(Decimal.acos(-1), 0);
     }
 
-    static pidiv2(): ComplexDecimal {
+    /**
+     * pi/2
+     * @returns pi/2 as ComplexDecimal.
+     */
+    public static pidiv2(): ComplexDecimal {
         return new ComplexDecimal(Decimal.div(Decimal.acos(-1), 2), 0);
     }
 
-    static onei(): ComplexDecimal {
+    /**
+     * i
+     * @returns i as ComplexDecimal.
+     */
+    public static onei(): ComplexDecimal {
         return new ComplexDecimal(0, 1);
     }
 
-    static onediv2i(): ComplexDecimal {
+    /**
+     * i/2
+     * @returns i/2 as ComplexDecimal.
+     */
+    public static onediv2i(): ComplexDecimal {
         return new ComplexDecimal(0, 1 / 2);
     }
 
-    static minusonediv2i(): ComplexDecimal {
+    /**
+     * -i/2
+     * @returns -i/2 as ComplexDecimal.
+     */
+    public static minusonediv2i(): ComplexDecimal {
         return new ComplexDecimal(0, -1 / 2);
     }
 
-    static minusonei(): ComplexDecimal {
+    /**
+     * -i
+     * @returns -i as ComplexDecimal.
+     */
+    public static minusonei(): ComplexDecimal {
         return new ComplexDecimal(0, -1);
     }
 
-    static two(): ComplexDecimal {
+    /**
+     * 2
+     * @returns 2 as ComplexDecimal.
+     */
+    public static two(): ComplexDecimal {
         return new ComplexDecimal(2, 0);
     }
 
-    static sqrt2pi(): ComplexDecimal {
+    /**
+     * sqrt(2*pi)
+     * @returns sqrt(2*pi) as ComplexDecimal.
+     */
+    public static sqrt2pi(): ComplexDecimal {
         return new ComplexDecimal(Decimal.sqrt(Decimal.mul(2, Decimal.acos(-1))), 0);
     }
 
-    static e(): ComplexDecimal {
+    /**
+     * e (Napier number).
+     * @returns e as ComplexDecimal.
+     */
+    public static e(): ComplexDecimal {
         return new ComplexDecimal(Decimal.exp(1), 0);
     }
 
-    static NaN_0(): ComplexDecimal {
+    /**
+     * NaN
+     * @returns NaN as ComplexDecimal.
+     */
+    public static NaN_0(): ComplexDecimal {
         return new ComplexDecimal(NaN, 0);
     }
 
-    static inf_0(): ComplexDecimal {
+    /**
+     * Inf
+     * @returns Inf as ComplexDecimal.
+     */
+    public static inf_0(): ComplexDecimal {
         return new ComplexDecimal(Infinity, 0);
     }
 
-    static add(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Addition of ComplexDecimal numbers.
+     * @param left Value.
+     * @param right Value.
+     * @returns left + right
+     */
+    public static add(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.add(left.re, right.re), Decimal.add(left.im, right.im));
     }
 
-    static sub(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Subtraction of ComplexDecimal numbers.
+     * @param left Value
+     * @param right Value
+     * @returns left - right
+     */
+    public static sub(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.sub(left.re, right.re), Decimal.sub(left.im, right.im));
     }
 
-    static neg(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Negates the ComplexDecimal number.
+     * @param z Value.
+     * @returns -z
+     */
+    public static neg(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(z.re.neg(), z.im.neg());
     }
 
-    static mul(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Multiplication of ComplexDecimal numbers.
+     * @param left Value.
+     * @param right Value.
+     * @returns left * right
+     */
+    public static mul(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         if (left.im.eq(0) && right.im.eq(0)) {
             return new ComplexDecimal(Decimal.mul(left.re, right.re), new Decimal(0));
         } else {
@@ -439,7 +733,13 @@ export class ComplexDecimal {
         }
     }
 
-    static rdiv(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    /**
+     * Right Division.
+     * @param left Dividend.
+     * @param right Divisor.
+     * @returns left / right.
+     */
+    public static rdiv(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const denom = Decimal.add(Decimal.mul(right.re, right.re), Decimal.mul(right.im, right.im));
         if (denom.isFinite()) {
             if (denom.eq(0)) {
@@ -452,10 +752,10 @@ export class ComplexDecimal {
             }
         } else {
             if (denom.isNaN()) {
-                if ((!right.re.isFinite() && !right.re.isNaN()) || (!right.im.isFinite() && !right.im.isNaN())) {
-                    return ComplexDecimal.zero();
-                } else {
+                if ((right.re.isFinite() || right.re.isNaN()) && (right.im.isFinite() || right.im.isNaN())) {
                     return new ComplexDecimal(NaN, 0);
+                } else {
+                    return ComplexDecimal.zero();
                 }
             } else if (left.re.isFinite() && left.im.isFinite()) {
                 return ComplexDecimal.zero();
@@ -465,21 +765,33 @@ export class ComplexDecimal {
         }
     }
 
-    static inv(right: ComplexDecimal): ComplexDecimal {
-        //        return ComplexDecimal.rdiv(ComplexDecimal.one(),right);
-        const denom = Decimal.add(Decimal.mul(right.re, right.re), Decimal.mul(right.im, right.im));
+    /**
+     * Left division. For ComplexDecimal the left division is the same of right division.
+     * @param left Dividend.
+     * @param right Divisor.
+     * @returns left \ right.
+     */
+    public static ldiv = ComplexDecimal.rdiv;
+
+    /**
+     * Inverse.
+     * @param x Denominator
+     * @returns 1/x
+     */
+    public static inv(x: ComplexDecimal): ComplexDecimal {
+        const denom = Decimal.add(Decimal.mul(x.re, x.re), Decimal.mul(x.im, x.im));
         if (denom.isFinite()) {
             if (denom.eq(0)) {
                 return new ComplexDecimal(Infinity, 0);
             } else {
-                return new ComplexDecimal(Decimal.div(right.re, denom), Decimal.div(right.im, denom).neg());
+                return new ComplexDecimal(Decimal.div(x.re, denom), Decimal.div(x.im, denom).neg());
             }
         } else {
             if (denom.isNaN()) {
-                if ((!right.re.isFinite() && !right.re.isNaN()) || (!right.im.isFinite() && !right.im.isNaN())) {
-                    return ComplexDecimal.zero();
-                } else {
+                if ((x.re.isFinite() || x.re.isNaN()) && (x.im.isFinite() || x.im.isNaN())) {
                     return new ComplexDecimal(NaN, 0);
+                } else {
+                    return ComplexDecimal.zero();
                 }
             } else {
                 return ComplexDecimal.zero();
@@ -487,12 +799,13 @@ export class ComplexDecimal {
         }
     }
 
-    static ldiv(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        return ComplexDecimal.rdiv(right, left);
-    }
-
-    static pow(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        // pow(base,exponent)
+    /**
+     * Power of ComplexDecimal numbers.
+     * @param left Base.
+     * @param right Exponent.
+     * @returns left^right
+     */
+    public static pow(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         if (left.im.eq(0) && right.im.eq(0) && left.re.gte(0)) {
             return new ComplexDecimal(Decimal.pow(left.re, right.re), new Decimal(0));
         } else {
@@ -507,41 +820,135 @@ export class ComplexDecimal {
         }
     }
 
-    static root(x: ComplexDecimal, y: ComplexDecimal): ComplexDecimal {
-        return ComplexDecimal.pow(x, ComplexDecimal.rdiv(ComplexDecimal.one(), y));
+    /**
+     * Root of ComplexDecimal numbers.
+     * @param x Radicand.
+     * @param n Index.
+     * @returns nth root of x.
+     */
+    public static root(x: ComplexDecimal, n: ComplexDecimal): ComplexDecimal {
+        return ComplexDecimal.pow(x, ComplexDecimal.inv(n));
     }
 
-    static abs(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Absolute value and complex magnitude.
+     * @param z value
+     * @returns Absolute value of z
+     */
+    public static abs(z: ComplexDecimal): ComplexDecimal {
         return z.im.eq(0)
-            ? new ComplexDecimal(Decimal.abs(z.re), 0)
-            : new ComplexDecimal(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im))), 0);
+            ? new ComplexDecimal(Decimal.abs(z.re))
+            : new ComplexDecimal(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im))));
     }
 
-    static arg(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Square root of sum of squares (hypotenuse)
+     * @param x vertex.
+     * @param y vertex.
+     * @returns hypotenuse of the two orthogonal vertex x and y.
+     */
+    public static hypot(x: ComplexDecimal, y: ComplexDecimal): ComplexDecimal {
+        const abs_x = Decimal.sqrt(Decimal.add(Decimal.mul(x.re, x.re), Decimal.mul(x.im, x.im)));
+        const abs_y = Decimal.sqrt(Decimal.add(Decimal.mul(y.re, y.re), Decimal.mul(y.im, y.im)));
+        return new ComplexDecimal(Decimal.sqrt(Decimal.add(Decimal.mul(abs_x, abs_x), Decimal.mul(abs_y, abs_y))));
+    }
+
+    /**
+     * Phase angle.
+     * @param z value.
+     * @returns Phase angle of z.
+     */
+    public static angle(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.atan2(z.im.eq(0) ? 0 : z.im, z.re) /*test if imaginary part is 0 to change -0 to 0*/, 0);
     }
 
-    static conj(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Complex conjugate
+     * @param z value.
+     * @returns Complex conjugate of z
+     */
+    public static conj(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(new Decimal(z.re), z.im.neg());
     }
 
-    static fix(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Remainder after division (modulo operation). By convention
+     * mod(a,0) = a.
+     * @param x Dividend.
+     * @param y Divisor.
+     * @returns Remainder after division.
+     */
+    public static mod(x: ComplexDecimal, y: ComplexDecimal): ComplexDecimal {
+        if (!(x.im.eq(0) && y.im.eq(0))) {
+            throw new Error('mod: not defined for complex numbers');
+        }
+        if (y.re.eq(0)) {
+            return x;
+        } else {
+            return new ComplexDecimal(Decimal.mod(x.re, y.re));
+        }
+    }
+
+    /**
+     * Remainder after division. By convention rem(a,0) = NaN.
+     * @param x Dividend.
+     * @param y Divisor.
+     * @returns Remainder after division.
+     */
+    public static rem(x: ComplexDecimal, y: ComplexDecimal): ComplexDecimal {
+        if (!(x.im.eq(0) && y.im.eq(0))) {
+            throw new Error('rem: not defined for complex numbers');
+        }
+        return new ComplexDecimal(Decimal.mod(x.re, y.re));
+    }
+
+    /**
+     * Round toward zero. This operation effectively truncates the number to
+     * integer by removing the decimal portion.
+     * @param z Value.
+     * @returns Integer portion of z.
+     */
+    public static fix(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.trunc(z.re), Decimal.trunc(z.im));
     }
 
-    static ceil(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Round toward positive infinity.
+     * @param z Value
+     * @returns Smallest integer greater than or equal to z.
+     */
+    public static ceil(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.ceil(z.re), Decimal.ceil(z.im));
     }
 
-    static floor(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Round toward negative infinity.
+     * @param z Value
+     * @returns Largest integer less than or equal to z.
+     */
+    public static floor(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.floor(z.re), Decimal.floor(z.im));
     }
 
-    static round(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Round to nearest integer.
+     * @param z Value.
+     * @returns Nearest integer of z.
+     */
+    public static round(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.round(z.re), Decimal.round(z.im));
     }
 
-    static sign(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Sign function (signum function).
+     * @param z Value.
+     * @returns
+     * * 1 if the corresponding element of z is greater than 0.
+     * * 0 if the corresponding element of z equals 0.
+     * * -1 if the corresponding element of z is less than 0.
+     * * z/abs(z) if z is complex.
+     */
+    public static sign(z: ComplexDecimal): ComplexDecimal {
         if (z.re.eq(0)) {
             if (z.im.eq(0)) {
                 return ComplexDecimal.zero();
@@ -560,8 +967,12 @@ export class ComplexDecimal {
         }
     }
 
-    static sqrt(z: ComplexDecimal): ComplexDecimal {
-        // square root
+    /**
+     * Square root.
+     * @param z Value.
+     * @returns Square root of z.
+     */
+    public static sqrt(z: ComplexDecimal): ComplexDecimal {
         const mod_z = Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im)));
         const arg_z = Decimal.atan2(z.im.eq(0) ? 0 : z.im, z.re);
         return new ComplexDecimal(
@@ -570,21 +981,35 @@ export class ComplexDecimal {
         );
     }
 
-    static exp(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Exponential
+     * @param z Value.
+     * @returns Exponential of z.
+     */
+    public static exp(z: ComplexDecimal): ComplexDecimal {
         // E^x (exponential)
         return new ComplexDecimal(Decimal.mul(Decimal.exp(z.re), Decimal.cos(z.im)), Decimal.mul(Decimal.exp(z.re), Decimal.sin(z.im)));
     }
 
-    static log(z: ComplexDecimal): ComplexDecimal {
-        // natural logarithm
+    /**
+     * Natural logarithm.
+     * @param z Value.
+     * @returns Natural logarithm of z.
+     */
+    public static log(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(
             Decimal.ln(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im)))),
             Decimal.atan2(z.im.eq(0) ? 0 : z.im, z.re),
         );
     }
 
-    static logbl(b: ComplexDecimal, l: ComplexDecimal): ComplexDecimal {
-        // logarithm(base,logarithm)
+    /**
+     * Calculate the log using a specified base.
+     * @param b Base.
+     * @param l Value.
+     * @returns Logarith base b of l.
+     */
+    public static logb(b: ComplexDecimal, l: ComplexDecimal): ComplexDecimal {
         const mod_b = Decimal.sqrt(Decimal.add(Decimal.mul(b.re, b.re), Decimal.mul(b.im, b.im)));
         if (mod_b.eq(0)) {
             return ComplexDecimal.zero();
@@ -600,81 +1025,147 @@ export class ComplexDecimal {
         }
     }
 
-    static log10(z: ComplexDecimal): ComplexDecimal {
-        // logarithm base 10
-        return ComplexDecimal.logbl(new ComplexDecimal(10, 0), z);
+    /**
+     * Common logarithm (base 10)
+     * @param z Value
+     * @returns logarithm base 10 of z.
+     */
+    public static log10(z: ComplexDecimal): ComplexDecimal {
+        return ComplexDecimal.logb(new ComplexDecimal(10), z);
     }
 
-    static deg2rad(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Convert angle from degrees to radians.
+     * @param z Angle in degrees.
+     * @returns Angle in radians.
+     */
+    public static deg2rad(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.mul(Decimal.div(Decimal.acos(-1), 180), z.re), Decimal.mul(Decimal.div(Decimal.acos(-1), 180), z.im));
     }
 
-    static rad2deg(z: ComplexDecimal): ComplexDecimal {
+    /**
+     * Convert angle from radians to degrees.
+     * @param z Angle in radians.
+     * @returns Angle in degrees.
+     */
+    public static rad2deg(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.mul(Decimal.div(180, Decimal.acos(-1)), z.re), Decimal.mul(Decimal.div(180, Decimal.acos(-1)), z.im));
     }
 
-    static sin(z: ComplexDecimal): ComplexDecimal {
-        // trignometric sine
+    /**
+     * Trignometric sine.
+     * @param z Argument in radians.
+     * @returns Sine of z.
+     */
+    public static sin(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.mul(Decimal.sin(z.re), Decimal.cosh(z.im)), Decimal.mul(Decimal.cos(z.re), Decimal.sinh(z.im)));
     }
 
-    static sind(z: ComplexDecimal): ComplexDecimal {
-        // trignometric sine in degrees
+    /**
+     * Trignometric sine in degrees.
+     * @param z Argument in degrees.
+     * @returns Sine of z
+     */
+    public static sind(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.sin(ComplexDecimal.deg2rad(z));
     }
 
-    static cos(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric cosine
+    /**
+     * Trignometric cosine.
+     * @param z Argument in radians.
+     * @returns Cosine of z.
+     */
+    public static cos(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.mul(Decimal.cos(z.re), Decimal.cosh(z.im)), Decimal.mul(Decimal.sin(z.re), Decimal.sinh(z.im)).neg());
     }
 
-    static cosd(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric cosine in degrees
+    /**
+     * Trignometric cosine in degrees.
+     * @param z Argument in degrees.
+     * @returns Cosine of z
+     */
+    public static cosd(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.cos(ComplexDecimal.deg2rad(z));
     }
 
-    static tan(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric tangent: tan(z) = sin(z)/cos(z)
+    /**
+     * Trigonometric tangent. Implemented as: tan(z) = sin(z)/cos(z)
+     * @param z Argument in radians.
+     * @returns Tangent of z.
+     */
+    public static tan(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.sin(z), ComplexDecimal.cos(z));
     }
 
-    static tand(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric tangent iun degrees
+    /**
+     * Trigonometric tangent in degrees.
+     * @param z Argument in degrees.
+     * @returns Tangent of z.
+     */
+    public static tand(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.tan(ComplexDecimal.deg2rad(z));
     }
 
-    static csc(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric cosecant: csc(z)=1/sin(z)
+    /**
+     * Trigonometric cosecant. Implemented as csc(z)=1/sin(z)
+     * @param z Argument in radians.
+     * @returns Cosecant of z.
+     */
+    public static csc(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.sin(z));
     }
 
-    static cscd(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric cosecant in degrees
+    /**
+     * Trigonometric cosecant in degrees.
+     * @param z Argument in degrees.
+     * @returns Cosecant of z.
+     */
+    public static cscd(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.csc(ComplexDecimal.deg2rad(z));
     }
 
-    static sec(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric secant: sec(z) = 1/cos(z)
+    /**
+     * Trigonometric secant. Implemented as: sec(z) = 1/cos(z)
+     * @param z Argument in radians.
+     * @returns Secant of z.
+     */
+    public static sec(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.cos(z));
     }
 
-    static secd(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric secant in degrees
+    /**
+     * Trigonometric secant in degrees.
+     * @param z Argument in degrees.
+     * @returns Secant of z.
+     */
+    public static secd(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.sec(ComplexDecimal.deg2rad(z));
     }
 
-    static cot(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric cotangent: cot(z) = cos(z)/sin(z)
+    /**
+     * Trigonometric cotangent. Implemented as: cot(z) = cos(z)/sin(z)
+     * @param z Argument in radians.
+     * @returns Cotangent of z.
+     */
+    public static cot(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.cos(z), ComplexDecimal.sin(z));
     }
 
-    static cotd(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric cotangent in degrees
+    /**
+     * Trigonometric cotangent in degrees.
+     * @param z Argument in degrees.
+     * @returns Cotangent of z.
+     */
+    public static cotd(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.cot(ComplexDecimal.deg2rad(z));
     }
 
-    static asin(z: ComplexDecimal): ComplexDecimal {
-        // arc sine: asin(z) = I*ln(sqrt(1-z^2)-I*z)
+    /**
+     * Inverse (arc) sine. Implemented as: asin(z) = I*ln(sqrt(1-z^2)-I*z)
+     * @param z Argument (unitless).
+     * @returns Inverse sine of z in radians.
+     */
+    public static asin(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(
             ComplexDecimal.onei(),
             ComplexDecimal.log(
@@ -686,121 +1177,239 @@ export class ComplexDecimal {
         );
     }
 
-    static acos(z: ComplexDecimal): ComplexDecimal {
-        // arc cosine: acos(z) = pi/2-asin(z)
+    /**
+     * Inverse (arc) sine in degrees.
+     * @param z Argument (unitless).
+     * @returns Inverse sine of z in degrees.
+     */
+    public static asind(z: ComplexDecimal): ComplexDecimal {
+        return ComplexDecimal.rad2deg(ComplexDecimal.asin(z));
+    }
+
+    /**
+     * Inverse (arc) cosine. Implemented as: acos(z) = pi/2-asin(z)
+     * @param z Argument (unitless).
+     * @returns Inverse cosine of z in radians.
+     */
+    public static acos(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.sub(ComplexDecimal.pidiv2(), ComplexDecimal.asin(z));
     }
 
-    static atan(z: ComplexDecimal): ComplexDecimal {
-        // arc tangent: atan(z) = -I/2*ln((I-z)/(I+z))
+    /**
+     * Inverse (arc) cosine in degrees.
+     * @param z Argument (unitless).
+     * @returns Inverse cosine of z in degrees.
+     */
+    public static acosd(z: ComplexDecimal): ComplexDecimal {
+        return ComplexDecimal.rad2deg(ComplexDecimal.acos(z));
+    }
+
+    /**
+     * Inverse (arc) tangent. Implemented as: atan(z) = -I/2*ln((I-z)/(I+z))
+     * @param z Argument (unitless).
+     * @returns Inverse tangent of z in radians.
+     */
+    public static atan(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.mul(
             ComplexDecimal.minusonediv2i(),
             ComplexDecimal.log(ComplexDecimal.rdiv(ComplexDecimal.sub(ComplexDecimal.onei(), z), ComplexDecimal.add(ComplexDecimal.onei(), z))),
         );
     }
 
-    static acsc(z: ComplexDecimal): ComplexDecimal {
-        // arc cosecant: acsc(z) = asin(1/z)
+    /**
+     * Inverse (arc) tangent in degrees.
+     * @param z Argument (unitless).
+     * @returns Inverse tangent of z in degrees.
+     */
+    public static atand(z: ComplexDecimal): ComplexDecimal {
+        return ComplexDecimal.rad2deg(ComplexDecimal.atan(z));
+    }
+
+    /**
+     * Inverse (arc) cosecant. Implemented as: acsc(z) = asin(1/z)
+     * @param z Argument (unitless).
+     * @returns Inverse cosecant of z in radians.
+     */
+    public static acsc(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.asin(z));
     }
 
-    static asec(z: ComplexDecimal): ComplexDecimal {
-        // arc secant: asec(z) = acos(1/z)
+    /**
+     * Inverse (arc) cosecant in degrees.
+     * @param z Argument (unitless).
+     * @returns Inverse cosecant of z in degrees.
+     */
+    public static acscd(z: ComplexDecimal): ComplexDecimal {
+        return ComplexDecimal.rad2deg(ComplexDecimal.acsc(z));
+    }
+
+    /**
+     * Inverse (arc) secant. Implemented as: asec(z) = acos(1/z)
+     * @param z Argument (unitless).
+     * @returns Inverse secant of z in radians.
+     */
+    public static asec(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.acos(z));
     }
 
-    static acot(z: ComplexDecimal): ComplexDecimal {
-        // arc cotangent: acot(z) = atan(1/z)
+    /**
+     * Inverse (arc) secant in degrees.
+     * @param z Argument (unitless).
+     * @returns Inverse secant of z in degrees.
+     */
+    public static asecd(z: ComplexDecimal): ComplexDecimal {
+        return ComplexDecimal.rad2deg(ComplexDecimal.asec(z));
+    }
+
+    /**
+     * Inverse (arc) cotangent. Implemented as: acot(z) = atan(1/z)
+     * @param z Argument (unitless).
+     * @returns Inverse cotangent of z in radians.
+     */
+    public static acot(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.atan(z));
     }
 
-    static sinh(z: ComplexDecimal): ComplexDecimal {
-        // hyperbolic sine
+    /**
+     * Inverse (arc) cotangent in degrees.
+     * @param z Argument (unitless).
+     * @returns Inverse cotangent of z in degrees.
+     */
+    public static acotd(z: ComplexDecimal): ComplexDecimal {
+        return ComplexDecimal.rad2deg(ComplexDecimal.acot(z));
+    }
+
+    /**
+     * Hyperbolic sine.
+     * @param z Argument.
+     * @returns Hyperbolic sine of z.
+     */
+    public static sinh(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.mul(Decimal.sinh(z.re), Decimal.cos(z.im)), Decimal.mul(Decimal.cosh(z.re), Decimal.sin(z.im)));
     }
 
-    static cosh(z: ComplexDecimal): ComplexDecimal {
-        // hyperbolic cosine
+    /**
+     * Hyperbolic cosine.
+     * @param z Argument.
+     * @returns Hyperbolic cosine of z.
+     */
+    public static cosh(z: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(Decimal.mul(Decimal.cosh(z.re), Decimal.cos(z.im)), Decimal.mul(Decimal.sinh(z.re), Decimal.sin(z.im)));
     }
 
-    static tanh(z: ComplexDecimal): ComplexDecimal {
-        // hyperbolic tangent: tanh(z) = sinh(z)/cosh(z)
+    /**
+     * Hyperbolic tangent. Implemented as: tanh(z) = sinh(z)/cosh(z)
+     * @param z Argument.
+     * @returns Hyperbolic tangent of z.
+     */
+    public static tanh(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.sinh(z), ComplexDecimal.cosh(z));
     }
 
-    static csch(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric cosecant: csch(z)=1/sinh(z)
+    /**
+     * Hyperbolic cosecant. Implemented as: csch(z) = 1/sinh(z)
+     * @param z Argument.
+     * @returns Hyperbolic cosecant of z.
+     */
+    public static csch(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.sinh(z));
     }
 
-    static sech(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric secant: sech(z) = 1/cosh(z)
+    /**
+     * Hyperbolic secant. Implemented as: sech(z) = 1/cosh(z)
+     * @param z Argument.
+     * @returns Hyperbolic secant of z.
+     */
+    public static sech(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.cosh(z));
     }
 
-    static coth(z: ComplexDecimal): ComplexDecimal {
-        // trigonometric cotangent: coth(z) = cosh(z)/sinh(z)
+    /**
+     * Hyperbolic cotangent. Implemented as: coth(z) = cosh(z)/sinh(z)
+     * @param z Argument.
+     * @returns Hyperbolic cotangent of z.
+     */
+    public static coth(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.cosh(z), ComplexDecimal.sinh(z));
     }
 
-    static asinh(z: ComplexDecimal): ComplexDecimal {
-        // area hyperbolic sine: asinh(z) = ln(sqrt(1+z^2)+z)
+    /**
+     * Inverse (area) hyperbolic sine. Implemented as: asinh(z) = ln(sqrt(1+z^2)+z)
+     * @param z Argument.
+     * @returns Inverse hyperbolic sine of z.
+     */
+    public static asinh(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.log(
             ComplexDecimal.add(ComplexDecimal.sqrt(ComplexDecimal.add(ComplexDecimal.one(), ComplexDecimal.pow(z, ComplexDecimal.two()))), z),
         );
     }
 
-    static acosh(z: ComplexDecimal): ComplexDecimal {
-        // area hyperbolic cosine: acosh(z) = ln(sqrt(-1+z^2)+z)
+    /**
+     * Inverse (area) hyperbolic cosine. Implemented as: acosh(z) = ln(sqrt(-1+z^2)+z)
+     * @param z Argument.
+     * @returns Inverse hyperbolic cosine of z.
+     */
+    public static acosh(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.log(
             ComplexDecimal.add(ComplexDecimal.sqrt(ComplexDecimal.add(ComplexDecimal.minusone(), ComplexDecimal.pow(z, ComplexDecimal.two()))), z),
         );
     }
 
-    static atanh(z: ComplexDecimal): ComplexDecimal {
-        // area hyperbolic tangent: atanh(z) = 1/2*ln((1+z)/(1-z))
+    /**
+     * Inverse (area) hyperbolic tangent. Implemented as: atanh(z) = 1/2*ln((1+z)/(1-z))
+     * @param z Argument.
+     * @returns Inverse hyperbolic tangent of z.
+     */
+    public static atanh(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.mul(
             ComplexDecimal.onediv2(),
             ComplexDecimal.log(ComplexDecimal.rdiv(ComplexDecimal.add(ComplexDecimal.one(), z), ComplexDecimal.sub(ComplexDecimal.one(), z))),
         );
     }
 
-    static acsch(z: ComplexDecimal): ComplexDecimal {
-        // area hyperbolic cosecant: acsch(z) = asinh(1/z)
+    /**
+     * Inverse (area) hyperbolic cosecant. Implemented as: acsch(z) = asinh(1/z)
+     * @param z Argument.
+     * @returns Inverse hyperbolic cosecant of z.
+     */
+    public static acsch(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.asinh(z));
     }
 
-    static asech(z: ComplexDecimal): ComplexDecimal {
-        // area hyperbolic secant: asech(z) = acosh(1/z)
+    /**
+     * Inverse (area) hyperbolic secant. Implemented as: asech(z) = acosh(1/z)
+     * @param z Argument.
+     * @returns Inverse hyperbolic secant of z.
+     */
+    public static asech(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.acosh(z));
     }
 
-    static acoth(z: ComplexDecimal): ComplexDecimal {
-        // area hyperbolic cotangent: acoth(z) = atanh(1/z)
+    /**
+     * Inverse (area) hyperbolic cotangent. Implemented as: acoth(z) = atanh(1/z)
+     * @param z Argument.
+     * @returns Inverse hyperbolic cotangent of z.
+     */
+    public static acoth(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.atanh(z));
     }
 
     /**
-     * -- gamma (Z)
      * Compute the Gamma function.
-     * The Gamma function is defined as
-     *                   infinity
-     *                  /
-     *      gamma (z) = | t^(z-1) exp (-t) dt.
-     *                  /
-     *               t=0
-     * https://rosettacode.org/wiki/Gamma_function#JavaScript
-     * https://en.wikipedia.org/wiki/Lanczos_approximation
-     * https://math.stackexchange.com/questions/19236/algorithm-to-compute-gamma-function
-     * https://en.wikipedia.org/wiki/Gamma_function#Stirling's_formula
-     * https://mathworld.wolfram.com/GammaFunction.html
-     * https://www.geeksforgeeks.org/gamma-function/
-     * https://octave.org/doxygen/dev/d0/d77/gamma_8f_source.html
+     * The Gamma function is defined as integral with t from 0 to infinity of t^(z-1)*exp(-t)
+     *
+     * ## References
+     * * https://rosettacode.org/wiki/Gamma_function#JavaScript
+     * * https://en.wikipedia.org/wiki/Lanczos_approximation
+     * * https://math.stackexchange.com/questions/19236/algorithm-to-compute-gamma-function
+     * * https://en.wikipedia.org/wiki/Gamma_function#Stirling's_formula
+     * * https://mathworld.wolfram.com/GammaFunction.html
+     * * https://www.geeksforgeeks.org/gamma-function/
+     * * https://octave.org/doxygen/dev/d0/d77/gamma_8f_source.html
      * @param z
      * @returns
      */
-    static gamma(z: ComplexDecimal): ComplexDecimal {
+    public static gamma(z: ComplexDecimal): ComplexDecimal {
         const p = [
             '0.99999999999980993',
             '676.5203681218851',
@@ -822,21 +1431,28 @@ export class ComplexDecimal {
             );
         } else {
             z = ComplexDecimal.sub(z, ComplexDecimal.one());
-            let x = new ComplexDecimal(p[0], 0);
-            const t = ComplexDecimal.add(z, new ComplexDecimal(new Decimal(p.length - 1.5), new Decimal(0)));
+            let x = new ComplexDecimal(p[0]);
+            const t = ComplexDecimal.add(z, new ComplexDecimal(new Decimal(p.length - 1.5)));
             for (let i = 1; i < p.length; i++) {
-                x = ComplexDecimal.add(x, ComplexDecimal.rdiv(new ComplexDecimal(p[i], 0), ComplexDecimal.add(z, new ComplexDecimal(i, 0))));
+                x = ComplexDecimal.add(x, ComplexDecimal.rdiv(new ComplexDecimal(p[i]), ComplexDecimal.add(z, new ComplexDecimal(i))));
             }
             return ComplexDecimal.mul(
-                ComplexDecimal.mul(ComplexDecimal.sqrt2pi(), ComplexDecimal.pow(t, ComplexDecimal.add(z, new ComplexDecimal(0.5, 0)))),
+                ComplexDecimal.mul(ComplexDecimal.sqrt2pi(), ComplexDecimal.pow(t, ComplexDecimal.add(z, new ComplexDecimal(0.5)))),
                 ComplexDecimal.mul(ComplexDecimal.exp(ComplexDecimal.neg(t)), x),
             );
         }
     }
 
-    static factorial(x: ComplexDecimal) {
-        if (x.re.lt(0) || !x.re.trunc().eq(x.re) || !x.im.eq(0)) throw new Error('factorial: all N must be real non-negative integers');
-        const result = ComplexDecimal.gamma(ComplexDecimal.add(new ComplexDecimal(x.re.round(), 0), ComplexDecimal.one()));
+    /**
+     * Factorial.
+     * @param x Argument.
+     * @returns Factorial of x.
+     */
+    public static factorial(x: ComplexDecimal) {
+        if (!(x.re.gte(0) && x.re.trunc().eq(x.re) && x.im.eq(0))) {
+            throw new Error('factorial: all N must be real non-negative integers');
+        }
+        const result = ComplexDecimal.gamma(ComplexDecimal.add(new ComplexDecimal(x.re.round()), ComplexDecimal.one()));
         result.re = result.re.trunc();
         return result;
     }
