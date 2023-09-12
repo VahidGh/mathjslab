@@ -21,7 +21,6 @@ export type dimRange = {
  * * https://mathworld.wolfram.com/LinearAlgebra.html
  */
 export class MultiArray {
-
     /**
      * Functions
      */
@@ -54,10 +53,10 @@ export class MultiArray {
     /**
      * Linearized functions
      */
-    public static linearizedFunctions: { [name: string]: { func: Function, lin: boolean[] } } = {
+    public static linearizedFunctions: { [name: string]: { func: Function; lin: boolean[] } } = {
         size: {
             func: MultiArray.size,
-            lin: [false, true]
+            lin: [false, true],
         },
     };
 
@@ -625,73 +624,66 @@ export class MultiArray {
     public static size(M: MultiArray, ...DIM: ComplexDecimal[] | ComplexDecimal[][]): MultiArray | ComplexDecimal {
         const testDimension = (dimension: ComplexDecimal): number => {
             const dim = dimension.re.toNumber();
-            if ((dim < 1) || !dimension.re.trunc().eq(dimension.re)) {
-                throw new Error(`size: requested dimension DIM (= ${Math.trunc(dimension.re.toNumber())}) out of range. DIM must be a positive integer`);
+            if (dim < 1 || !dimension.re.trunc().eq(dimension.re)) {
+                throw new Error(
+                    `size: requested dimension DIM (= ${Math.trunc(dimension.re.toNumber())}) out of range. DIM must be a positive integer`,
+                );
             }
             return dim;
-        }
+        };
         if (DIM.length === 0) {
             if ('re' in M) {
                 const result = new MultiArray([1, 2]);
                 result.array = [[ComplexDecimal.one(), ComplexDecimal.one()]];
                 return result;
-            }
-            else {
+            } else {
                 const result = new MultiArray([1, 2]);
                 result.array = [[new ComplexDecimal(M.dim[0]), new ComplexDecimal(M.dim[1])]];
                 return result;
             }
-        }
-        else {
+        } else {
             if (DIM.length === 1) {
                 if ('re' in M) {
-                    return ComplexDecimal.one()
-                }
-                else {
+                    return ComplexDecimal.one();
+                } else {
                     if ('re' in DIM[0]) {
                         const dim = testDimension(DIM[0]);
                         if (dim > M.dim.length) {
                             return ComplexDecimal.one();
-                        }
-                        else {
+                        } else {
                             return new ComplexDecimal(M.dim[dim - 1]);
                         }
-                    }
-                    else {
+                    } else {
                         const result = new MultiArray([1, DIM[0].length]);
                         result.array = [[]];
                         DIM[0].forEach((dimension) => {
                             const dim = testDimension(dimension);
                             if (dim > M.dim.length) {
                                 result.array[0].push(ComplexDecimal.one());
-                            }
-                            else {
+                            } else {
                                 result.array[0].push(new ComplexDecimal(M.dim[dim - 1]));
                             }
                         });
                         return result;
                     }
                 }
-            }
-            else {
+            } else {
                 if ('re' in M) {
                     const result = new MultiArray([1, DIM.length]);
                     result.array = [[]];
                     (DIM as ComplexDecimal[]).forEach((dimension) => {
                         testDimension(dimension);
                         result.array[0].push(ComplexDecimal.one());
-                    })
+                    });
                     return result;
-                }
-                else {
+                } else {
                     const result = new MultiArray([1, DIM.length]);
                     result.array = [[]];
                     DIM.forEach((dimension) => {
                         const dim = testDimension(dimension as ComplexDecimal);
                         if (dim > M.dim.length) {
                             result.array[0].push(ComplexDecimal.one());
-                        }
-                        else {
+                        } else {
                             result.array[0].push(new ComplexDecimal(M.dim[dim - 1]));
                         }
                     });

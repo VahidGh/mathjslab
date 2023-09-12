@@ -1,15 +1,10 @@
-import { ComplexDecimal } from './complex-decimal';
 import { Evaluator } from './evaluator';
 
 let evaluator: Evaluator;
 
 describe('Evaluator', () => {
     beforeEach(async () => {
-        evaluator = new Evaluator();
-    });
-
-    it('ComplexDecimal should be defined', () => {
-        expect(ComplexDecimal).toBeDefined();
+        evaluator = Evaluator.initialize();
     });
 
     it('Evaluator should be defined', () => {

@@ -139,7 +139,6 @@ declare global {
  * simultaneously. Instance is given by `Evaluator.initialize` static method.
  */
 export class Evaluator {
-
     /**
      * After run Parser or Evaluate method, the exitStatus property will contains
      * exit state of method.
@@ -344,8 +343,7 @@ export class Evaluator {
             if (config.externalFuctionTable) {
                 Object.assign(evaluator.baseFunctionTable, config.externalFuctionTable);
             }
-        }
-        else {
+        } else {
             evaluator.aliasName = (name: string): string => name;
         }
         return evaluator;
@@ -435,7 +433,7 @@ export class Evaluator {
      * @returns
      */
     public nodeRange(left: any, ...right: any): NodeRange {
-        //https://www.mathworks.com/help/matlab/ref/end.html
+        /* https://www.mathworks.com/help/matlab/ref/end.html */
         if (right.length == 1) {
             return { start: left, stop: right[0], stride: null };
         } else if (right.length == 2) {
@@ -860,8 +858,7 @@ export class Evaluator {
                                 } else {
                                     return this.baseFunctionTable[aliasTreeName].func(...argumentsList);
                                 }
-                            }
-                            else {
+                            } else {
                                 /* arguments selectively evaluated */
                                 for (let i = 0; i < tree.args.length; i++) {
                                     /* Evaluate arguments list selectively */
@@ -1313,5 +1310,4 @@ export class Evaluator {
         result = result.replace(/\<mo\>\(\<\/mo\>\<mi\>error\<\/mi\><\mi\>error\<\/mi\>\<mi\>i\<\/mi\>\<mo\>\)\<\/mo\>/gi, '<mi>error</mi>');
         return "<math xmlns = 'http://www.w3.org/1998/Math/MathML' display='block'>" + result + '</math>';
     }
-
 }

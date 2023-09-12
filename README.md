@@ -1,6 +1,6 @@
 # MathJSLab
 
-> Interpreter with language syntax like MATLAB&reg;/Octave
+> An interpreter with language syntax like MATLAB&reg;/Octave written in TypeScript.
 
 This package emulates a parser and evaluator for a subset of
 [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/)
