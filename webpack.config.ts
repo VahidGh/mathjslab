@@ -15,7 +15,10 @@ const config: webpack.Configuration = {
                         },
                     },
                 ],
-                exclude: [/node_modules/, /.*\.spec\.[tj]s/],
+                exclude: [
+                    /node_modules/,
+                    /.*\.spec\.[tj]s/
+                ],
             },
         ],
     },
@@ -26,7 +29,7 @@ const config: webpack.Configuration = {
         },
     },
     output: {
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, 'build'),
         filename: 'mathjslab.js',
         library: 'mathjslab',
         libraryTarget: 'umd',

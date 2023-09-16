@@ -210,10 +210,7 @@ const keywordsTable = [
 /**
  * Word-list commands
  */
-const commandsTable = [
-	'help',
-	'doc'
-];
+global.commandsTable = [];
 
 %}
 

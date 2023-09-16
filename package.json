@@ -1,9 +1,9 @@
 {
   "name": "mathjslab",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "MathJSLab - An interpreter with language syntax like MATLAB/Octave",
-  "main": "dist/mathjslab.js",
-  "types": "dist/src/index.d.ts",
+  "main": "build/mathjslab.js",
+  "types": "build/src/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sergiolindau/mathjslab.git"
@@ -45,7 +45,7 @@
     "build:parser": "jison src/parser.jison -o src/parser.js",
     "prebuild": "npm run build:parser",
     "build": "webpack --mode production",
-    "clean": "rimraf dist src/parser.js",
+    "clean": "rimraf build src/parser.js",
     "publish-mathjslab": "npm publish --access public"
   },
   "dependencies": {
