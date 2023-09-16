@@ -15,10 +15,7 @@ const config: webpack.Configuration = {
                         },
                     },
                 ],
-                exclude: [
-                    /node_modules/,
-                    /.*\.spec\.[tj]s/
-                ],
+                exclude: [/node_modules/, /.*\.spec\.[tj]s/],
             },
         ],
     },
