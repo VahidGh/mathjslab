@@ -71,7 +71,7 @@ interface PrimaryNode {
 /**
  * Reserved node.
  */
-interface NodeReserved extends PrimaryNode {}
+interface NodeReserved extends PrimaryNode { }
 
 /**
  * Name node.
@@ -193,7 +193,9 @@ export class Evaluator {
     /**
      * Name table.
      */
-    private nameTable: { [k: string]: any } = {};
+    public nameTable: { [k: string]: { args: Array<any>, expr: any } } = {};
+
+    public readonlyNameTable: string[] = [];
 
     /**
      * Alias table.
@@ -204,6 +206,10 @@ export class Evaluator {
      * Base function table.
      */
     public baseFunctionTable: TBaseFunctionTable = {};
+
+    public get baseFunctionList(): string[] {
+        return Object.keys(this.baseFunctionTable);
+    }
 
     /**
      * Local table.
@@ -241,9 +247,9 @@ export class Evaluator {
         ".'": Tensor.transpose,
         "'": Tensor.ctranspose,
         '<': Tensor.lt,
-        '<=': Tensor.lte,
+        '<=': Tensor.le,
         '==': Tensor.eq,
-        '>=': Tensor.gte,
+        '>=': Tensor.ge,
         '>': Tensor.gt,
         '!=': Tensor.ne,
         '&': Tensor.and,
@@ -252,6 +258,10 @@ export class Evaluator {
         '&&': Tensor.mand,
         '||': Tensor.mor,
     };
+
+    public get opList(): string[] {
+        return Object.keys(this.opTable);
+    }
 
     /**
      * Parser AST (Abstract Syntax Tree) constructor methods.
@@ -381,10 +391,12 @@ export class Evaluator {
         /* Insert nativeNameTable in nameTable */
         for (const name in this.nativeNameTable) {
             this.nameTable[name] = { args: [], expr: this.nativeNameTable[name] };
+            this.readonlyNameTable.push(name);
         }
         /* Insert constantsTable in nameTable */
         for (const name in constantsTable) {
             this.nameTable[constantsTable[name][0]] = { args: [], expr: constantsTable[name][1] };
+            this.readonlyNameTable.push(constantsTable[name][0]);
         }
     }
 
@@ -591,7 +603,7 @@ export class Evaluator {
         if (tree.type == 'NAME' || (tree.type == 'ARG' && tree.expr.type == 'NAME')) {
             return tree;
         } else {
-            throw new Error('parse error: invalid left hand side of assignment.');
+            throw new Error('error: invalid left hand side of assignment.');
         }
     }
 
@@ -722,6 +734,9 @@ export class Evaluator {
                     tree.list[i]['args'] = [];
                 }
                 result.list[i] = this.Evaluator(tree.list[i], local, fname);
+                if (typeof result.list[i].type === 'number') {
+                    this.nameTable['ans'] = { args: [], expr: result.list[i] };
+                }
             }
             return result;
         } else if (this.isNumber(tree) || this.isString(tree)) {
@@ -795,7 +810,8 @@ export class Evaluator {
                 case '.**=':
                 case '&=':
                 case '|=':
-                    const op = tree.type.substring(0, tree.type.length - 1);
+                    this.validateAssignment(tree.left);
+                    const op: string = tree.type.substring(0, tree.type.length - 1);
                     let left;
                     let id;
                     let args;
@@ -816,11 +832,12 @@ export class Evaluator {
                     } else {
                         if (args.length == 0) {
                             /* Name definition */
+                            const expr = op.length ? this.nodeOp(op, left, tree.right) : tree.right;
                             try {
-                                this.nameTable[id] = { args: [], expr: this.Evaluator(tree.right, false, fname) };
+                                this.nameTable[id] = { args: [], expr: this.Evaluator(expr, false, fname) };
                                 return this.nodeOp('=', left, this.nameTable[id].expr);
                             } catch (e) {
-                                this.nameTable[id] = { args: [], expr: tree.right };
+                                this.nameTable[id] = { args: [], expr: expr };
                                 throw e;
                             }
                         } else {
@@ -886,7 +903,7 @@ export class Evaluator {
                                         ? this.Evaluator(tree.args[i], local, fname)
                                         : tree.args[i];
                                 }
-                                return this.baseFunctionTable[aliasTreeName].func(...argumentsList, this);
+                                return this.baseFunctionTable[aliasTreeName].func(...argumentsList);
                             }
                         } else if (local && this.localTable[fname] && this.localTable[fname][tree.expr.id]) {
                             /* Defined in localTable **** */
@@ -955,13 +972,7 @@ export class Evaluator {
     public Evaluate(tree: any): any {
         try {
             this.exitStatus = Evaluator.response.OK;
-            const result = this.Evaluator(tree, false, '');
-            /* If not an assignment then assign result to `ans` name. */
-            const assign_op = ['=', '+=', '.+=', '-=', '.-=', '*=', '/=', '\\=', '^=', '.*=', './=', '.\\=', '.^=', '.**=', '|=', '&='];
-            if (assign_op.indexOf(result.type) == -1) {
-                this.nameTable['ans'] = { args: [], expr: result };
-            }
-            return result;
+            return this.Evaluator(tree, false, '');
         } catch (e) {
             this.exitStatus = Evaluator.response.EVAL_ERROR;
             throw e;
@@ -1314,13 +1325,13 @@ export class Evaluator {
      * @param tree Expression tree.
      * @returns String of expression unparsed as MathML language.
      */
-    public UnparseML(tree: any): string {
+    public UnparseML(tree: any, display: 'inline' | 'block' = 'block'): string {
         let result: string = this.unparserML(tree);
         result = result.replace(/\<mo\>\(\<\/mo\>\<mi\>error\<\/mi\><\mi\>error\<\/mi\>\<mi\>i\<\/mi\>\<mo\>\)\<\/mo\>/gi, '<mi>error</mi>');
-        return "<math xmlns = 'http://www.w3.org/1998/Math/MathML' display='block'>" + result + '</math>';
+        return `<math xmlns = "http://www.w3.org/1998/Math/MathML" display="${display}">${result}</math>`;
     }
 
-    public toMathML(text: string): string {
-        return this.UnparseML(this.Parse(text));
+    public toMathML(text: string, display: 'inline' | 'block' = 'block'): string {
+        return this.UnparseML(this.Parse(text), display);
     }
 }

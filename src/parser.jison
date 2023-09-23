@@ -502,35 +502,35 @@ simple_expr
 
 assign_expr
         : simple_expr '=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '+=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '-=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '*=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '/=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '\\=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '^=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '**=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '.*=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr './=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '.\\=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '.^=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '.**=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '&=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | simple_expr '|=' expression
-                {$$ = EvaluatorPointer.nodeOp($2,EvaluatorPointer.validateAssignment($1),$3);}
+                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         ;
 
 expression
@@ -692,12 +692,12 @@ stash_comment
 parse_error
         : INVALID
                 {
-                        EvaluatorPointer.exitStatus = EvaluatorResponse.LEX_ERROR;
+                        EvaluatorPointer.exitStatus = 1; // Evaluator.response.LEX_ERROR; (Evaluator not defined)
                         throw new Error("invalid syntax")
                 }
         | error
                 {
-                        EvaluatorPointer.exitStatus = EvaluatorResponse.PARSER_ERROR;
+                        EvaluatorPointer.exitStatus = 2; // Evaluator.response.PARSER_ERROR;
                         throw new Error("parse error")
                 }
         ;

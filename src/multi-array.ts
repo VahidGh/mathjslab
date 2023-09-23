@@ -37,6 +37,7 @@ export class MultiArray {
         min: MultiArray.min,
         max: MultiArray.max,
         mean: MultiArray.mean,
+        sumsq: MultiArray.sumsq,
         trace: MultiArray.trace,
         det: MultiArray.det,
         inv: MultiArray.inv,
@@ -64,10 +65,16 @@ export class MultiArray {
      * Dimension property.
      */
     dim: number[];
+
     /**
      * Array property.
      */
     array: ComplexDecimal[][];
+
+    /**
+     * Type property.
+     */
+    type: number;
 
     /**
      * MultiArray constructor.
@@ -78,12 +85,15 @@ export class MultiArray {
         if (!shape) {
             this.dim = [0, 0];
             this.array = [];
+            this.type = -1;
         } else {
             this.dim = shape.slice();
             if (!fill) {
                 this.array = new Array(this.dim[0]);
+                this.type = -1;
             } else {
                 this.array = new Array(this.dim[0]);
+                this.type = fill.type;
                 for (let i = 0; i < this.dim[0]; i++) {
                     this.array[i] = new Array(this.dim[1]).fill(fill);
                 }
@@ -229,6 +239,7 @@ export class MultiArray {
             }
         }
         result.dim = [result.array.length, result.array.length ? result.array[0].length : 0];
+        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -467,7 +478,7 @@ export class MultiArray {
      * @returns
      */
     public static scalarOpMultiArray(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
         left: ComplexDecimal,
         right: MultiArray,
     ): MultiArray {
@@ -489,7 +500,7 @@ export class MultiArray {
      * @returns
      */
     public static MultiArrayOpScalar(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
         left: MultiArray,
         right: ComplexDecimal,
     ): MultiArray {
@@ -528,7 +539,7 @@ export class MultiArray {
      * @returns
      */
     public static ewiseOp(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
         left: MultiArray,
         right: MultiArray,
     ): MultiArray {
@@ -1039,6 +1050,10 @@ export class MultiArray {
         }
     }
 
+    public static sumsq(M: MultiArray, DIM: ComplexDecimal): MultiArray | ComplexDecimal {
+        return ComplexDecimal.one();
+    }
+
     /**
      * Sum of diagonal elements.
      * @param M
@@ -1206,7 +1221,7 @@ export class MultiArray {
     }
 
     /**
-     * Calculates the adjugate (adjoint) matrix for a square matrix.
+     * Compute the adjugate (adjoint) matrix for a square matrix.
      * @param M
      * @returns
      */
@@ -1215,7 +1230,7 @@ export class MultiArray {
     }
 
     /**
-     * Computes the minor of a matrix.
+     * Compute the minor of a matrix.
      * @param M Matrix.
      * @param p Line.
      * @param q Column.
@@ -1234,7 +1249,7 @@ export class MultiArray {
     }
 
     /**
-     * Computes the cofactors of a matrix.
+     * Compute the matrix of cofactors.
      * @param M
      * @returns
      */

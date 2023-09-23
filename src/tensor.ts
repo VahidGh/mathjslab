@@ -20,8 +20,8 @@ export abstract class Tensor {
         mldivide: Tensor.mldivide,
         power: Tensor.power,
         mpower: Tensor.mpower,
-        lte: Tensor.lte,
-        gte: Tensor.gte,
+        le: Tensor.le,
+        ge: Tensor.ge,
         gt: Tensor.gt,
         eq: Tensor.eq,
         ne: Tensor.ne,
@@ -31,14 +31,12 @@ export abstract class Tensor {
         plus: Tensor.plus,
         times: Tensor.times,
         mtimes: Tensor.mtimes,
-        mand: Tensor.mand,
-        mor: Tensor.mor,
         and: Tensor.and,
         or: Tensor.or,
     };
 
     public static ewiseOp(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
         left: any,
         right: any,
     ): any {
@@ -157,16 +155,16 @@ export abstract class Tensor {
         return Tensor.ewiseOp('lt', left, right);
     }
 
-    public static lte(left: any, right: any): any {
-        return Tensor.ewiseOp('lte', left, right);
+    public static le(left: any, right: any): any {
+        return Tensor.ewiseOp('le', left, right);
     }
 
     public static eq(left: any, right: any): any {
         return Tensor.ewiseOp('eq', left, right);
     }
 
-    public static gte(left: any, right: any): any {
-        return Tensor.ewiseOp('gte', left, right);
+    public static ge(left: any, right: any): any {
+        return Tensor.ewiseOp('ge', left, right);
     }
 
     public static gt(left: any, right: any): any {
