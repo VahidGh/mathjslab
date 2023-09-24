@@ -469,7 +469,7 @@ export class Evaluator {
         } else if (right.length == 2) {
             return { start: left, stop: right[1], stride: right[0] };
         } else {
-            throw new Error('invalid range');
+            throw new Error('invalid range.');
         }
     }
 
@@ -567,6 +567,10 @@ export class Evaluator {
         return lnode;
     }
 
+    public listToArray(lnode: any): any[] {
+        return lnode.list;
+    }
+
     /**
      * Create first row of a matrix MultiArray.
      * @param row
@@ -600,10 +604,20 @@ export class Evaluator {
      * @returns
      */
     public validateAssignment(tree: any): any {
-        if (tree.type == 'NAME' || (tree.type == 'ARG' && tree.expr.type == 'NAME')) {
+        const invalidMessage = 'invalid left hand side of assignment';
+        if (tree.type == 'NAME') {
+            if (this.readonlyNameTable.includes(tree.id)) {
+                throw new Error(`${invalidMessage}: cannot assign to a read only value: ${tree.id}.`);
+            }
             return tree;
-        } else {
-            throw new Error('error: invalid left hand side of assignment.');
+        } else if (tree.type == 'ARG' && tree.expr.type == 'NAME') {
+            if (this.readonlyNameTable.includes(tree.expr.id)) {
+                throw new Error(`${invalidMessage}: cannot assign to a read only value: ${tree.expr.id}.`);
+            }
+            return tree;
+        }
+        else {
+            throw new Error(`${invalidMessage}.`);
         }
     }
 
@@ -828,7 +842,7 @@ export class Evaluator {
                         args = tree.left.args;
                     }
                     if (aliasTreeName in this.baseFunctionTable) {
-                        throw new Error('assign to reserved name: ' + aliasTreeName);
+                        throw new Error(`cannot assign to reserved name: ${aliasTreeName}.`);
                     } else {
                         if (args.length == 0) {
                             /* Name definition */
@@ -850,7 +864,7 @@ export class Evaluator {
                                 let pass = true;
                                 for (let i = 0; i < args.length; i++) {
                                     pass = pass && args[i].type == 'NAME';
-                                    if (!pass) throw new Error('invalid arguments in function definition');
+                                    if (!pass) throw new Error('invalid arguments in function definition.');
                                 }
                                 this.nameTable[id] = { args: args, expr: tree.right };
                                 return tree;
@@ -869,7 +883,7 @@ export class Evaluator {
                             return this.Evaluator(this.nameTable[tree.id].expr, false, fname);
                         } else {
                             /* Defined as function name */
-                            throw new Error('calling ' + tree.id + ' function without arguments list');
+                            throw new Error('calling ' + tree.id + ' function without arguments list.');
                         }
                     }
                 case 'ARG':
@@ -924,12 +938,12 @@ export class Evaluator {
                                     }
                                     return this.subTensor(temp, tree.expr.id, argumentsList);
                                 } else {
-                                    throw new Error('invalid matrix indexing or function arguments');
+                                    throw new Error('invalid matrix indexing or function arguments.');
                                 }
                             } else {
                                 /* Else is defined function */
                                 if (this.nameTable[tree.expr.id].args.length != tree.args.length) {
-                                    throw new Error('invalid number of arguments in function ' + tree.expr.id);
+                                    throw new Error(`invalid number of arguments in function ${tree.expr.id}.`);
                                 }
                                 /* Create localTable entry */
                                 this.localTable[tree.expr.id] = {};
@@ -947,7 +961,7 @@ export class Evaluator {
                                 return temp;
                             }
                         } else {
-                            throw new Error("'" + tree.id + "' undefined");
+                            throw new Error("'" + tree.id + "' undefined.");
                         }
                     } else {
                         /* literal indexing, ex: [1,2;3,4](1,2) */
@@ -959,7 +973,7 @@ export class Evaluator {
                     this.exitStatus = Evaluator.response.EXTERNAL;
                     return tree;
                 default:
-                    throw new Error("evaluating undefined type '" + tree.type + "'");
+                    throw new Error("evaluating undefined type '" + tree.type + "'.");
             }
         }
     }

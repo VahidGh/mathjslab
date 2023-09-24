@@ -57,7 +57,7 @@ export class ComplexDecimal {
     /**
      * Functions with one argument (mappings)
      */
-    public static mapFunction: Record<string,Function> = {
+    public static mapFunction: Record<string, Function> = {
         real: ComplexDecimal.real,
         imag: ComplexDecimal.imag,
         logical: ComplexDecimal.logical,
@@ -118,7 +118,7 @@ export class ComplexDecimal {
     /**
      * Functions with two arguments.
      */
-    public static twoArgFunction: Record<string,Function> = {
+    public static twoArgFunction: Record<string, Function> = {
         root: ComplexDecimal.root,
         hypot: ComplexDecimal.hypot,
         pow: ComplexDecimal.pow,
@@ -128,7 +128,7 @@ export class ComplexDecimal {
     /**
      * Most restricted number class.
      */
-    public static numberClass: Record<string,number> = {
+    public static numberClass: Record<string, number> = {
         logical: 0,
         real: 1,
         complex: 2,
@@ -426,13 +426,13 @@ export class ComplexDecimal {
     }
 
     public static minMaxComplex(cmp: 'lt' | 'gt', left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-            const left_abs = ComplexDecimal.abs(left).re;
-            const right_abs = ComplexDecimal.abs(right).re;
-            if (left_abs.eq(right_abs)) {
-                return ComplexDecimal.arg(left).re[cmp](ComplexDecimal.arg(right).re) ? left : right;
-            } else {
-                return left_abs[cmp](right_abs) ? left : right;
-            }
+        const left_abs = ComplexDecimal.abs(left).re;
+        const right_abs = ComplexDecimal.abs(right).re;
+        if (left_abs.eq(right_abs)) {
+            return ComplexDecimal.arg(left).re[cmp](ComplexDecimal.arg(right).re) ? left : right;
+        } else {
+            return left_abs[cmp](right_abs) ? left : right;
+        }
     }
 
     /**
@@ -467,29 +467,28 @@ export class ComplexDecimal {
         return Math.max(...args.map(arg => arg.type));
     }
 
-    public static minMaxArray(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): ComplexDecimal {
+    public static minMaxArrayReal(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): ComplexDecimal {
         let result = args[0];
-        if (ComplexDecimal.maxNumberType(...args) === ComplexDecimal.numberClass.complex) {
-            /* Complex comparison */
-            for (let i=1; i < args.length; i++) {
-                const result_abs = ComplexDecimal.abs(result).re;
-                const arg_abs = ComplexDecimal.abs(args[i]).re;
-                if (result_abs.eq(arg_abs)) {
-                    result = ComplexDecimal.arg(result).re[cmp](ComplexDecimal.arg(args[i]).re) ? result : args[i];
-                    if (ComplexDecimal.arg(args[i]).re[cmp](ComplexDecimal.arg(result).re)) {
-                        result = args[i];
-                    }
-                } else {
-                    if (arg_abs[cmp](result_abs)) {
-                        result = args[i];
-                    }
-                }
+        for (let i = 1; i < args.length; i++) {
+            if (args[i].re[cmp](result.re)) {
+                result = args[i];
             }
         }
-        else {
-            /* Real comparison */
-            for (let i=1; i < args.length; i++) {
-                if (args[i].re[cmp](result.re)) {
+        return result;
+    }
+
+    public static minMaxArrayComplex(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): ComplexDecimal {
+        let result = args[0];
+        for (let i = 1; i < args.length; i++) {
+            const result_abs = ComplexDecimal.abs(result).re;
+            const arg_abs = ComplexDecimal.abs(args[i]).re;
+            if (result_abs.eq(arg_abs)) {
+                result = ComplexDecimal.arg(result).re[cmp](ComplexDecimal.arg(args[i]).re) ? result : args[i];
+                if (ComplexDecimal.arg(args[i]).re[cmp](ComplexDecimal.arg(result).re)) {
+                    result = args[i];
+                }
+            } else {
+                if (arg_abs[cmp](result_abs)) {
                     result = args[i];
                 }
             }

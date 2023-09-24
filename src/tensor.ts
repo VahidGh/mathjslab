@@ -123,7 +123,7 @@ export abstract class Tensor {
         } else if ('array' in left && 're' in right) {
             return MultiArray.pow(left, right);
         } else {
-            throw new Error("invalid exponent in '^'");
+            throw new Error('invalid exponent in \'^\'.');
         }
     }
 

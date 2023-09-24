@@ -1,6 +1,6 @@
 {
   "name": "mathjslab",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "MathJSLab - An interpreter with language syntax like MATLAB/Octave",
   "main": "build/mathjslab.js",
   "types": "build/src/index.d.ts",

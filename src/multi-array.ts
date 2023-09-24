@@ -234,7 +234,7 @@ export class MultiArray {
             k += h - 1;
             if (i != 0) {
                 if (result.array[i].length != result.array[0].length) {
-                    throw new Error(`vertical dimensions mismatch (${k}x${result.array[0].length} vs 1x${result.array[i].length})`);
+                    throw new Error(`vertical dimensions mismatch (${k}x${result.array[0].length} vs 1x${result.array[i].length}).`);
                 }
             }
         }
@@ -288,6 +288,7 @@ export class MultiArray {
         } else if ('re' in value) {
             const result = new MultiArray([1, 1]);
             result.array[0] = [value];
+            result.type = value.type;
             return result;
         }
     }
@@ -309,6 +310,7 @@ export class MultiArray {
                 }
             }
         }
+        result.type = M.type;
         return result;
     }
 
@@ -342,6 +344,7 @@ export class MultiArray {
         for (let i = 0; i < M.dim[0]; i++) {
             result.array[i] = M.array[i].map(f as any);
         }
+        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -353,15 +356,16 @@ export class MultiArray {
         }
         const result = new MultiArray([1, temp.length]);
         result.array = [temp];
+        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
     public static testIndex(k: ComplexDecimal, bound: number, matrix: MultiArray, input: string): number {
-        if (!k.re.isInteger() || !k.re.gte(1)) throw new Error(`${input}: subscripts must be either integers greater than or equal 1 or logicals`);
-        if (!k.im.eq(0)) throw new Error(`${input}: subscripts must be real`);
+        if (!k.re.isInteger() || !k.re.gte(1)) throw new Error(`${input}: subscripts must be either integers greater than or equal 1 or logicals.`);
+        if (!k.im.eq(0)) throw new Error(`${input}: subscripts must be real.`);
         const result = k.re.toNumber() - 1;
         if (result >= bound) {
-            throw new Error(`${input}: out of bound ${bound} (dimensions are ${matrix.dim[0]}x${matrix.dim[1]})`);
+            throw new Error(`${input}: out of bound ${bound} (dimensions are ${matrix.dim[0]}x${matrix.dim[1]}).`);
         }
         return result;
     }
@@ -399,6 +403,7 @@ export class MultiArray {
                         result.array[i][j] = temp.array[n % temp.dim[1]][Math.floor(n / temp.dim[1])];
                     }
                 }
+                result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
                 return result;
             } else {
                 const n = MultiArray.testIndex(argumentsList[0], temp.dim[0] * temp.dim[1], temp, id + '(' + argumentsList[0].re.toNumber() + ')');
@@ -437,13 +442,14 @@ export class MultiArray {
                     }
                 }
             }
+            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
             if (result.dim[0] == 1 && result.dim[1] == 1) {
                 return result.array[0][0];
             } else {
                 return result;
             }
         } else {
-            throw new Error(`${id}(_,_,...): out of bounds (dimensions are ${temp.dim[0]}x${temp.dim[1]})`);
+            throw new Error(`${id}(_,_,...): out of bounds (dimensions are ${temp.dim[0]}x${temp.dim[1]}).`);
         }
     }
 
@@ -455,7 +461,7 @@ export class MultiArray {
      */
     public static mul(left: MultiArray, right: MultiArray): MultiArray {
         if (left.dim[1] !== right.dim[0]) {
-            throw new Error(`operator *: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]})`);
+            throw new Error(`operator *: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]}).`);
         } else {
             const result = new MultiArray([left.dim[0], right.dim[1]]);
             for (let i = 0; i < left.dim[0]; i++) {
@@ -466,6 +472,7 @@ export class MultiArray {
                     }
                 }
             }
+            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
             return result;
         }
     }
@@ -489,6 +496,7 @@ export class MultiArray {
                 result.array[i][j] = ComplexDecimal[op](left, right.array[i][j]);
             }
         }
+        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -511,6 +519,7 @@ export class MultiArray {
                 result.array[i][j] = ComplexDecimal[op](left.array[i][j], right);
             }
         }
+        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -528,6 +537,7 @@ export class MultiArray {
                 result.array[i][j] = ComplexDecimal[op](right.array[i][j]);
             }
         }
+        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -552,6 +562,7 @@ export class MultiArray {
                     result.array[i][j] = ComplexDecimal[op](left.array[i][j], right.array[i][j]);
                 }
             }
+            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else if (left.dim[0] === right.dim[0]) {
             // left and right has same number of rows
@@ -566,7 +577,7 @@ export class MultiArray {
                 matrix = left;
             } else {
                 throw new Error(
-                    `operator ${op}: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]})`,
+                    `operator ${op}: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]}).`,
                 );
             }
             const result = new MultiArray([col.dim[0], matrix.dim[1]]);
@@ -576,6 +587,7 @@ export class MultiArray {
                     result.array[i][j] = ComplexDecimal[op](col.array[i][0], matrix.array[i][j]);
                 }
             }
+            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else if (left.dim[1] === right.dim[1]) {
             // left and right has same number of columns
@@ -590,7 +602,7 @@ export class MultiArray {
                 matrix = left;
             } else {
                 throw new Error(
-                    `operator ${op}: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]})`,
+                    `operator ${op}: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]}).`,
                 );
             }
             const result = new MultiArray([matrix.dim[0], row.dim[1]]);
@@ -600,6 +612,7 @@ export class MultiArray {
                     result.array[i][j] = ComplexDecimal[op](row.array[0][j], matrix.array[i][j]);
                 }
             }
+            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else if (left.dim[0] === 1 && right.dim[1] === 1) {
             // left has one row and right has one column
@@ -610,6 +623,7 @@ export class MultiArray {
                     result.array[i][j] = ComplexDecimal[op](left.array[0][j], right.array[i][0]);
                 }
             }
+            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else if (left.dim[1] === 1 && right.dim[0] === 1) {
             // left has one column and right has one row
@@ -620,9 +634,10 @@ export class MultiArray {
                     result.array[i][j] = ComplexDecimal[op](left.array[i][0], right.array[0][j]);
                 }
             }
+            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else {
-            throw new Error(`operator ${op}: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]})`);
+            throw new Error(`operator ${op}: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]}).`);
         }
     }
 
@@ -637,7 +652,7 @@ export class MultiArray {
             const dim = dimension.re.toNumber();
             if (dim < 1 || !dimension.re.trunc().eq(dimension.re)) {
                 throw new Error(
-                    `size: requested dimension DIM (= ${Math.trunc(dimension.re.toNumber())}) out of range. DIM must be a positive integer`,
+                    `size: requested dimension DIM (= ${Math.trunc(dimension.re.toNumber())}) out of range. DIM must be a positive integer.`,
                 );
             }
             return dim;
@@ -646,10 +661,12 @@ export class MultiArray {
             if ('re' in M) {
                 const result = new MultiArray([1, 2]);
                 result.array = [[ComplexDecimal.one(), ComplexDecimal.one()]];
+                result.type = ComplexDecimal.numberClass.real;
                 return result;
             } else {
                 const result = new MultiArray([1, 2]);
                 result.array = [[new ComplexDecimal(M.dim[0]), new ComplexDecimal(M.dim[1])]];
+                result.type = ComplexDecimal.numberClass.real;
                 return result;
             }
         } else {
@@ -675,6 +692,7 @@ export class MultiArray {
                                 result.array[0].push(new ComplexDecimal(M.dim[dim - 1]));
                             }
                         });
+                        result.type = ComplexDecimal.numberClass.real;
                         return result;
                     }
                 }
@@ -686,6 +704,7 @@ export class MultiArray {
                         testDimension(dimension);
                         result.array[0].push(ComplexDecimal.one());
                     });
+                    result.type = ComplexDecimal.numberClass.real;
                     return result;
                 } else {
                     const result = new MultiArray([1, DIM.length]);
@@ -698,6 +717,7 @@ export class MultiArray {
                             result.array[0].push(new ComplexDecimal(M.dim[dim - 1]));
                         }
                     });
+                    result.type = ComplexDecimal.numberClass.real;
                     return result;
                 }
             }
@@ -815,6 +835,7 @@ export class MultiArray {
                 result.array[i][j] = new ComplexDecimal(Math.random());
             }
         }
+        result.type = ComplexDecimal.numberClass.real;
         return result;
     }
 
@@ -826,10 +847,10 @@ export class MultiArray {
      */
     public static randi(imax: ComplexDecimal, ...args: any): MultiArray | ComplexDecimal {
         if (imax.re.lt(1)) {
-            throw new Error(`randi: require imax >= 1`);
+            throw new Error(`randi: require imax >= 1.`);
         }
         if (!imax.re.trunc().eq(imax.re)) {
-            throw new Error(`randi: must be integer bounds`);
+            throw new Error(`randi: must be integer bounds.`);
         }
         let result: MultiArray;
         const max = Math.trunc(imax.re.toNumber());
@@ -853,6 +874,7 @@ export class MultiArray {
                 result.array[i][j] = new ComplexDecimal(getRandom());
             }
         }
+        result.type = ComplexDecimal.numberClass.real;
         return result;
     }
 
@@ -881,7 +903,7 @@ export class MultiArray {
             }
             return temp1;
         } else {
-            throw new Error(`exponent must be integer real in matrix '^'`);
+            throw new Error(`exponent must be integer real in matrix '^'.`);
         }
     }
 
@@ -898,6 +920,7 @@ export class MultiArray {
                 result.array[i][j] = Object.assign({}, left.array[j][i]);
             }
         }
+        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -914,6 +937,7 @@ export class MultiArray {
                 result.array[i][j] = ComplexDecimal.conj(left.array[j][i]);
             }
         }
+        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -937,7 +961,7 @@ export class MultiArray {
             }
             return temp;
         } else {
-            throw new Error(`invalid dimensions in horzcat function`);
+            throw new Error(`invalid dimensions in horzcat function.`);
         }
     }
 
@@ -962,9 +986,47 @@ export class MultiArray {
                     temp.array[i + U.dim[0]][j] = Object.assign({}, D.array[i][j]);
                 }
             }
+            temp.type = Math.max(...temp.array.map(row => ComplexDecimal.maxNumberType(...row)));
             return temp;
         } else {
-            throw new Error(`invalid dimensions in vertcat function`);
+            throw new Error(`invalid dimensions in vertcat function.`);
+        }
+    }
+
+    /**
+     * Minimum (lt) or maximum (gt) elements of array.
+     * @param M
+     * @returns
+     */
+    public static minMax(cmp: 'lt' | 'gt', M: MultiArray | ComplexDecimal): MultiArray | ComplexDecimal {
+        let temp: MultiArray;
+        if ('array' in M) {
+            if (M.dim[0] === 1) {
+                temp = MultiArray.transpose(M);
+            } else {
+                temp = M;
+            }
+            const result = new MultiArray([1, temp.dim[1]]);
+            result.array = [new Array(temp.dim[1])];
+            if (temp.type === ComplexDecimal.numberClass.complex) {
+                for (let j = 0; j < temp.dim[1]; j++) {
+                    result.array[0][j] = ComplexDecimal.minMaxArrayComplex(cmp, ...temp.array.map(row => row[j]));
+                }
+            }
+            else {
+                for (let j = 0; j < temp.dim[1]; j++) {
+                    result.array[0][j] = ComplexDecimal.minMaxArrayReal(cmp, ...temp.array.map(row => row[j]));
+                }
+            }
+            result.type = temp.type;
+            if (temp.dim[1] === 1) {
+                return result.array[0][0];
+            } else {
+                return result;
+            }
+        }
+        else {
+            return M;
         }
     }
 
@@ -973,26 +1035,11 @@ export class MultiArray {
      * @param M
      * @returns
      */
-    public static min(M: MultiArray): MultiArray | ComplexDecimal {
-        let temp: MultiArray;
-        if (M.dim[0] === 1) {
-            temp = MultiArray.transpose(M);
-        } else {
-            temp = M;
+    public static min(...args: any[]): MultiArray | ComplexDecimal {
+        if (args.length !== 1) {
+            throw new Error('min: second argument is ignored.');
         }
-        const result = new MultiArray([1, temp.dim[1]]);
-        result.array = [new Array(temp.dim[1])];
-        for (let j = 0; j < temp.dim[1]; j++) {
-            result.array[0][j] = temp.array[0][j];
-            for (let i = 1; i < temp.dim[0]; i++) {
-                result.array[0][j] = ComplexDecimal.min(result.array[0][j], temp.array[i][j]);
-            }
-        }
-        if (temp.dim[1] === 1) {
-            return result.array[0][0];
-        } else {
-            return result;
-        }
+        return MultiArray.minMax('lt', args[0]);
     }
 
     /**
@@ -1000,26 +1047,11 @@ export class MultiArray {
      * @param M
      * @returns
      */
-    public static max(M: MultiArray): MultiArray | ComplexDecimal {
-        let temp: MultiArray;
-        if (M.dim[0] === 1) {
-            temp = MultiArray.transpose(M);
-        } else {
-            temp = M;
+    public static max(...args: any[]): MultiArray | ComplexDecimal {
+        if (args.length !== 1) {
+            throw new Error('max: second argument is ignored.');
         }
-        const result = new MultiArray([1, temp.dim[1]]);
-        result.array = [new Array(temp.dim[1])];
-        for (let j = 0; j < temp.dim[1]; j++) {
-            result.array[0][j] = temp.array[0][j];
-            for (let i = 1; i < temp.dim[0]; i++) {
-                result.array[0][j] = ComplexDecimal.max(result.array[0][j], temp.array[i][j]);
-            }
-        }
-        if (temp.dim[1] === 1) {
-            return result.array[0][0];
-        } else {
-            return result;
-        }
+        return MultiArray.minMax('gt', args[0]);
     }
 
     /**
@@ -1043,6 +1075,7 @@ export class MultiArray {
             }
             result.array[0][j] = ComplexDecimal.rdiv(result.array[0][j], new ComplexDecimal(temp.dim[0], 0));
         }
+        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
         if (temp.dim[1] === 1) {
             return result.array[0][0];
         } else {
@@ -1067,7 +1100,7 @@ export class MultiArray {
             }
             return temp;
         } else {
-            throw new Error(`trace: invalid dimensions`);
+            throw new Error(`trace: invalid dimensions.`);
         }
     }
 
@@ -1102,7 +1135,7 @@ export class MultiArray {
             }
             return det;
         } else {
-            throw new Error(`det: A must be a square matrix`);
+            throw new Error(`det: A must be a square matrix.`);
         }
     }
 
@@ -1214,9 +1247,10 @@ export class MultiArray {
             //matrix I should be the inverse:
             const result = new MultiArray(M.dim);
             result.array = I;
+            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else {
-            throw new Error(`inverse: A must be a square matrix`);
+            throw new Error(`inverse: A must be a square matrix.`);
         }
     }
 
@@ -1267,6 +1301,7 @@ export class MultiArray {
                 temp.array[i][j] = ComplexDecimal.mul(sign, MultiArray.det(minor));
             }
         }
+        temp.type = Math.max(...temp.array.map(row => ComplexDecimal.maxNumberType(...row)));
         return temp;
     }
 
@@ -1300,7 +1335,7 @@ export class MultiArray {
      * @returns
      */
     public static gauss(M: MultiArray, x: MultiArray): MultiArray | undefined {
-        if (M.dim[0] != M.dim[1]) throw new Error(`invalid dimensions in function gauss`);
+        if (M.dim[0] != M.dim[1]) throw new Error(`invalid dimensions in function gauss.`);
         const A: MultiArray = MultiArray.copy(M);
         let i: number, k: number, j: number;
         const DMin = Math.min(x.dim[0], x.dim[1]);
@@ -1353,7 +1388,7 @@ export class MultiArray {
                 A.array[k][n] = ComplexDecimal.sub(A.array[k][n], ComplexDecimal.mul(A.array[k][i], X.array[0][i]));
             }
         }
-
+        X.type = Math.max(...X.array.map(row => ComplexDecimal.maxNumberType(...row)));
         return X;
     }
 

@@ -692,13 +692,13 @@ stash_comment
 parse_error
         : INVALID
                 {
-                        EvaluatorPointer.exitStatus = 1; // Evaluator.response.LEX_ERROR; (Evaluator not defined)
-                        throw new Error("invalid syntax")
+                        EvaluatorPointer.exitStatus = EvaluatorPointer.response.LEX_ERROR;
+                        throw new SyntaxError('invalid syntax.')
                 }
         | error
                 {
-                        EvaluatorPointer.exitStatus = 2; // Evaluator.response.PARSER_ERROR;
-                        throw new Error("parse error")
+                        EvaluatorPointer.exitStatus = EvaluatorPointer.response.PARSER_ERROR;
+                        throw new SyntaxError('parse error.')
                 }
         ;
 
