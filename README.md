@@ -26,6 +26,7 @@ application can be found [here](https://github.com/sergiolindau/mathjslab-calcul
 - Is easily extensible.
 - Open source with fully documented code.
 - Test suites.
+- Improved [demo](https://mathjslab.netlify.app/) web application.
 
 ## Browser support
 
@@ -90,6 +91,14 @@ Some differences from the original MATLAB&reg;/Octave language are
 * Defining functions is done simply using:
 function_name(argument, argument, ...) = <expression>
 * Parsing is executed line-by-line.
+
+## References
+
+* [MATLAB&reg; Documentation](https://www.mathworks.com/help/matlab/index.html)
+* [GNU Octave manual](https://docs.octave.org/latest/)
+* [Octave Online](https://octave-online.net/)
+* [Wolfram MathWorld](https://mathworld.wolfram.com/)
+* [WolframAlpha](https://www.wolframalpha.com/)
 
 # License
 

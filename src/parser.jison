@@ -8,7 +8,7 @@
  * file.
  *
  * The parser access methods in Evaluator class using EvaluatorPointer global
- * variable (Window.EvaluatorPointer) defined in parser body.
+ * variable (global.EvaluatorPointer) defined in parser body.
  *
  * This code is build by Jison parser generator:
  * https://gerhobbelt.github.io/jison/

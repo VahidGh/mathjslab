@@ -36,7 +36,7 @@ export abstract class Tensor {
     };
 
     public static ewiseOp(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'pow' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
         left: any,
         right: any,
     ): any {
@@ -114,14 +114,14 @@ export abstract class Tensor {
     public static mldivide(left: any, right: any): any {}
 
     public static power(left: any, right: any): any {
-        return Tensor.ewiseOp('pow', left, right);
+        return Tensor.ewiseOp('power', left, right);
     }
 
     public static mpower(left: any, right: any): any {
         if ('re' in left && 're' in right) {
-            return ComplexDecimal.pow(left, right);
+            return ComplexDecimal.power(left, right);
         } else if ('array' in left && 're' in right) {
-            return MultiArray.pow(left, right);
+            return MultiArray.power(left, right);
         } else {
             throw new Error('invalid exponent in \'^\'.');
         }

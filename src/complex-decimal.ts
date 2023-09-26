@@ -121,7 +121,7 @@ export class ComplexDecimal {
     public static twoArgFunction: Record<string, Function> = {
         root: ComplexDecimal.root,
         hypot: ComplexDecimal.hypot,
-        pow: ComplexDecimal.pow,
+        power: ComplexDecimal.power,
         logb: ComplexDecimal.logb,
     };
 
@@ -411,30 +411,6 @@ export class ComplexDecimal {
         return left_prec.re.eq(right_prec.re) && left_prec.im.eq(right_prec.im) ? ComplexDecimal.false() : ComplexDecimal.true();
     }
 
-    public static cmpComplex(cmp: 'lt' | 'lte' | 'gt' | 'gte', left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        const left_abs = ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.abs(left).re);
-        const right_abs = ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.abs(right).re);
-        if (left_abs.eq(right_abs)) {
-            return ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.arg(left).re)[cmp](
-                ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.arg(right).re),
-            )
-                ? ComplexDecimal.true()
-                : ComplexDecimal.false();
-        } else {
-            return left_abs[cmp](right_abs) ? ComplexDecimal.true() : ComplexDecimal.false();
-        }
-    }
-
-    public static minMaxComplex(cmp: 'lt' | 'gt', left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        const left_abs = ComplexDecimal.abs(left).re;
-        const right_abs = ComplexDecimal.abs(right).re;
-        if (left_abs.eq(right_abs)) {
-            return ComplexDecimal.arg(left).re[cmp](ComplexDecimal.arg(right).re) ? left : right;
-        } else {
-            return left_abs[cmp](right_abs) ? left : right;
-        }
-    }
-
     /**
      * Comparison made in polar lexicographical ordering. It's ordered by
      * absolute value, or by polar angle in (-pi,pi] when absolute values are
@@ -463,10 +439,21 @@ export class ComplexDecimal {
         }
     }
 
+    /**
+     * Gets the highest number type.
+     * @param args ComplexDecimal values.
+     * @returns Highest number type.
+     */
     public static maxNumberType(...args: ComplexDecimal[]): number {
         return Math.max(...args.map(arg => arg.type));
     }
 
+    /**
+     * Gets the maximum or minimum of an array of ComplexDecimal using real comparison.
+     * @param cmp 'lt' for minimum or 'gt' for maximum.
+     * @param args ComplexDecimal values.
+     * @returns Minimum or maximum of ComplexDecimal values.
+     */
     public static minMaxArrayReal(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): ComplexDecimal {
         let result = args[0];
         for (let i = 1; i < args.length; i++) {
@@ -477,6 +464,15 @@ export class ComplexDecimal {
         return result;
     }
 
+    /**
+     * Gets the maximum or minimum of an array of ComplexDecimal using complex
+     * comparison. The arguments are in polar lexicographical ordering
+     * (ordered by absolute value, or by polar angle in (-pi,pi] when absolute
+     * values are equal).
+     * @param cmp 'lt' for minimum or 'gt' for maximum.
+     * @param args ComplexDecimal values.
+     * @returns Minimum or maximum of ComplexDecimal values.
+     */
     public static minMaxArrayComplex(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): ComplexDecimal {
         let result = args[0];
         for (let i = 1; i < args.length; i++) {
@@ -890,7 +886,7 @@ export class ComplexDecimal {
      * @param right Exponent.
      * @returns left^right
      */
-    public static pow(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+    public static power(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         if (left.im.eq(0) && right.im.eq(0) && left.re.gte(0)) {
             return new ComplexDecimal(Decimal.pow(left.re, right.re), new Decimal(0));
         } else {
@@ -912,7 +908,7 @@ export class ComplexDecimal {
      * @returns nth root of x.
      */
     public static root(x: ComplexDecimal, n: ComplexDecimal): ComplexDecimal {
-        return ComplexDecimal.pow(x, ComplexDecimal.inv(n));
+        return ComplexDecimal.power(x, ComplexDecimal.inv(n));
     }
 
     /**
@@ -1255,7 +1251,7 @@ export class ComplexDecimal {
             ComplexDecimal.onei(),
             ComplexDecimal.log(
                 ComplexDecimal.sub(
-                    ComplexDecimal.sqrt(ComplexDecimal.sub(ComplexDecimal.one(), ComplexDecimal.pow(z, ComplexDecimal.two()))),
+                    ComplexDecimal.sqrt(ComplexDecimal.sub(ComplexDecimal.one(), ComplexDecimal.power(z, ComplexDecimal.two()))),
                     ComplexDecimal.mul(ComplexDecimal.onei(), z),
                 ),
             ),
@@ -1425,7 +1421,7 @@ export class ComplexDecimal {
      */
     public static asinh(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.log(
-            ComplexDecimal.add(ComplexDecimal.sqrt(ComplexDecimal.add(ComplexDecimal.one(), ComplexDecimal.pow(z, ComplexDecimal.two()))), z),
+            ComplexDecimal.add(ComplexDecimal.sqrt(ComplexDecimal.add(ComplexDecimal.one(), ComplexDecimal.power(z, ComplexDecimal.two()))), z),
         );
     }
 
@@ -1436,7 +1432,7 @@ export class ComplexDecimal {
      */
     public static acosh(z: ComplexDecimal): ComplexDecimal {
         return ComplexDecimal.log(
-            ComplexDecimal.add(ComplexDecimal.sqrt(ComplexDecimal.add(ComplexDecimal.minusone(), ComplexDecimal.pow(z, ComplexDecimal.two()))), z),
+            ComplexDecimal.add(ComplexDecimal.sqrt(ComplexDecimal.add(ComplexDecimal.minusone(), ComplexDecimal.power(z, ComplexDecimal.two()))), z),
         );
     }
 
@@ -1522,7 +1518,7 @@ export class ComplexDecimal {
                 x = ComplexDecimal.add(x, ComplexDecimal.rdiv(new ComplexDecimal(p[i]), ComplexDecimal.add(z, new ComplexDecimal(i))));
             }
             return ComplexDecimal.mul(
-                ComplexDecimal.mul(ComplexDecimal.sqrt2pi(), ComplexDecimal.pow(t, ComplexDecimal.add(z, new ComplexDecimal(0.5)))),
+                ComplexDecimal.mul(ComplexDecimal.sqrt2pi(), ComplexDecimal.power(t, ComplexDecimal.add(z, new ComplexDecimal(0.5)))),
                 ComplexDecimal.mul(ComplexDecimal.exp(ComplexDecimal.neg(t)), x),
             );
         }

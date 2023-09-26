@@ -12,8 +12,8 @@ describe('ComplexDecimal', () => {
         // One-by-one degree
         for (let i = 0; i <= 2 * Math.PI; i += Math.PI / 180) {
             const value = ComplexDecimal.add(
-                ComplexDecimal.pow(ComplexDecimal.sin(new ComplexDecimal(i)), ComplexDecimal.newThis(2)),
-                ComplexDecimal.pow(ComplexDecimal.cos(new ComplexDecimal(i)), ComplexDecimal.newThis(2)),
+                ComplexDecimal.power(ComplexDecimal.sin(new ComplexDecimal(i)), ComplexDecimal.newThis(2)),
+                ComplexDecimal.power(ComplexDecimal.cos(new ComplexDecimal(i)), ComplexDecimal.newThis(2)),
             );
             result &&= value.re.toNumber() === 1 && value.im.toNumber() === 0; // converting to native number type to comparison.
             result &&= Boolean(ComplexDecimal.eq(value, ComplexDecimal.one()).re.toNumber()); // using ComplexDecimal.eq to comparison.
@@ -26,8 +26,8 @@ describe('ComplexDecimal', () => {
         let result: boolean = true;
         for (let i = 0; i <= 1e-300; i += 1e-302) {
             const value = ComplexDecimal.add(
-                ComplexDecimal.pow(ComplexDecimal.sin(new ComplexDecimal(i)), ComplexDecimal.newThis(2)),
-                ComplexDecimal.pow(ComplexDecimal.cos(new ComplexDecimal(i)), ComplexDecimal.newThis(2)),
+                ComplexDecimal.power(ComplexDecimal.sin(new ComplexDecimal(i)), ComplexDecimal.newThis(2)),
+                ComplexDecimal.power(ComplexDecimal.cos(new ComplexDecimal(i)), ComplexDecimal.newThis(2)),
             );
             result &&= value.re.toNumber() === 1 && value.im.toNumber() === 0; // converting to native number type to comparison.
             result &&= Boolean(ComplexDecimal.eq(value, ComplexDecimal.one()).re.toNumber()); // using ComplexDecimal.eq to comparison.
