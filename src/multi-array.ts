@@ -485,7 +485,7 @@ export class MultiArray {
      * @returns
      */
     public static scalarOpMultiArray(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'xor' | 'mod' | 'rem',
         left: ComplexDecimal,
         right: MultiArray,
     ): MultiArray {
@@ -508,7 +508,7 @@ export class MultiArray {
      * @returns
      */
     public static MultiArrayOpScalar(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'xor' | 'mod' | 'rem',
         left: MultiArray,
         right: ComplexDecimal,
     ): MultiArray {
@@ -549,7 +549,7 @@ export class MultiArray {
      * @returns
      */
     public static ewiseOp(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'xor' | 'mod' | 'rem',
         left: MultiArray,
         right: MultiArray,
     ): MultiArray {

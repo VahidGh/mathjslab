@@ -33,10 +33,19 @@ export abstract class Tensor {
         mtimes: Tensor.mtimes,
         and: Tensor.and,
         or: Tensor.or,
+        xor: Tensor.xor,
     };
 
+    public static copy(right: any): any {
+        if ('re' in right) {
+            return ComplexDecimal.copy(right);
+        } else if ('array' in right) {
+            return MultiArray.copy(right);
+        }
+    }
+
     public static ewiseOp(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'mod' | 'rem',
+        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'xor' | 'mod' | 'rem',
         left: any,
         right: any,
     ): any {
@@ -213,5 +222,9 @@ export abstract class Tensor {
 
     public static or(left: any, right: any): any {
         return Tensor.ewiseOp('or', left, right);
+    }
+
+    public static xor(left: any, right: any): any {
+        return Tensor.ewiseOp('xor', left, right);
     }
 }

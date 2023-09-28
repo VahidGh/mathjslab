@@ -94,6 +94,7 @@ function_name(argument, argument, ...) = <expression>
 
 ## References
 
+* [Decimal.js documentation](https://mikemcl.github.io/decimal.js/)
 * [MATLAB&reg; Documentation](https://www.mathworks.com/help/matlab/index.html)
 * [GNU Octave manual](https://docs.octave.org/latest/)
 * [Octave Online](https://octave-online.net/)

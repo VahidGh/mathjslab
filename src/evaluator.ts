@@ -168,9 +168,17 @@ export class Evaluator {
     };
 
     /**
-     * Debug flag.
+     * Debug flag, setter and getter.
      */
-    public debug: boolean = false;
+    private _debug: boolean = false;
+
+    public get debug(): boolean {
+        return this._debug;
+    }
+
+    public set debug(value: boolean) {
+        this._debug = value;
+    }
 
     /**
      * Native name table. It's inserted in nameTable when
@@ -216,6 +224,9 @@ export class Evaluator {
      */
     public localTable: { [k: string]: any } = {};
 
+    /**
+     * Command word list table.
+     */
     public commandWordListTable: TCommandWordListTable = {};
 
     /**
@@ -227,6 +238,42 @@ export class Evaluator {
      * Evaluator exit status.
      */
     public exitStatus: number = Evaluator.response.OK;
+
+    private incDecOp(pre: boolean, operation: 'plus' | 'minus'): ((tree: any) => any) {
+        if (pre) {
+            return (tree: any): any => {
+                if (tree.type === 'NAME') {
+                    if (this.nameTable[tree.id].expr) {
+                        this.nameTable[tree.id].expr = Tensor[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
+                        return this.nameTable[tree.id].expr;
+                    }
+                    else {
+                        throw new Error('in x++ or ++x, x must be defined first.')
+                    }
+                }
+                else {
+                    throw new SyntaxError(`invalid ${operation === 'plus' ? 'increment' : 'decrement'} variable.`);
+                }
+            }
+        }
+        else {
+            return (tree: any): any => {
+                if (tree.type === 'NAME') {
+                    if (this.nameTable[tree.id].expr) {
+                        const value = Tensor.copy(this.nameTable[tree.id].expr);
+                        this.nameTable[tree.id].expr = Tensor[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
+                        return value;
+                    }
+                    else {
+                        throw new Error('in x++ or ++x, x must be defined first.')
+                    }
+                }
+                else {
+                    throw new SyntaxError(`invalid ${operation === 'plus' ? 'increment' : 'decrement'} variable.`);
+                }
+            }
+        }
+    }
 
     /**
      * Operator table.
@@ -257,6 +304,10 @@ export class Evaluator {
         '!': Tensor.not,
         '&&': Tensor.mand,
         '||': Tensor.mor,
+        '++_': this.incDecOp(true, 'plus'),
+        '--_': this.incDecOp(true, 'minus'),
+        '_++': this.incDecOp(false, 'plus'),
+        '_--': this.incDecOp(false, 'minus'),
     };
 
     public get opList(): string[] {
@@ -296,17 +347,16 @@ export class Evaluator {
      */
     private constructor() {
         global.EvaluatorPointer = this;
+        this.exitStatus = Evaluator.response.OK;
         /* Set opTable aliases */
         this.opTable['.+'] = this.opTable['+'];
         this.opTable['.-'] = this.opTable['-'];
-        this.opTable['.÷'] = this.opTable['./'];
-        this.opTable['÷'] = this.opTable['/'];
         this.opTable['**'] = this.opTable['^'];
         this.opTable['.**'] = this.opTable['.^'];
         this.opTable['~='] = this.opTable['!='];
         this.opTable['~'] = this.opTable['!'];
         /* Load nativeNameTable and constantsTable in nameTable */
-        this.reloadNativeTable();
+        this.loadNativeTable();
         /* Define function operators */
         for (const func in Tensor.twoMoreOpFunction) {
             this.DefBinMoreOpFunction(func, Tensor.twoMoreOpFunction[func]);
@@ -387,7 +437,7 @@ export class Evaluator {
     /**
      * Reload native name table in name table.
      */
-    private reloadNativeTable(): void {
+    private loadNativeTable(): void {
         /* Insert nativeNameTable in nameTable */
         for (const name in this.nativeNameTable) {
             this.nameTable[name] = { args: [], expr: this.nativeNameTable[name] };
@@ -406,7 +456,8 @@ export class Evaluator {
     public Restart(): void {
         this.nameTable = {};
         this.localTable = {};
-        this.reloadNativeTable();
+        this.readonlyNameTable = [];
+        this.loadNativeTable();
     }
 
     /**
@@ -464,9 +515,9 @@ export class Evaluator {
      */
     public nodeRange(left: any, ...right: any): NodeRange {
         /* https://www.mathworks.com/help/matlab/ref/end.html */
-        if (right.length == 1) {
+        if (right.length === 1) {
             return { start: left, stop: right[0], stride: null };
-        } else if (right.length == 2) {
+        } else if (right.length === 2) {
             return { start: left, stop: right[1], stride: right[0] };
         } else {
             throw new Error('invalid range.');
@@ -490,8 +541,6 @@ export class Evaluator {
             case '*':
             case './':
             case '/':
-            case '.÷':
-            case '÷':
             case '.\\':
             case '\\':
             case '.^':
@@ -567,10 +616,6 @@ export class Evaluator {
         return lnode;
     }
 
-    public listToArray(lnode: any): any[] {
-        return lnode.list;
-    }
-
     /**
      * Create first row of a matrix MultiArray.
      * @param row
@@ -605,12 +650,12 @@ export class Evaluator {
      */
     public validateAssignment(tree: any): any {
         const invalidMessage = 'invalid left hand side of assignment';
-        if (tree.type == 'NAME') {
+        if (tree.type === 'NAME') {
             if (this.readonlyNameTable.includes(tree.id)) {
                 throw new Error(`${invalidMessage}: cannot assign to a read only value: ${tree.id}.`);
             }
             return tree;
-        } else if (tree.type == 'ARG' && tree.expr.type == 'NAME') {
+        } else if (tree.type === 'ARG' && tree.expr.type === 'NAME') {
             if (this.readonlyNameTable.includes(tree.expr.id)) {
                 throw new Error(`${invalidMessage}: cannot assign to a read only value: ${tree.expr.id}.`);
             }
@@ -645,7 +690,7 @@ export class Evaluator {
             mapper: false,
             ev: [],
             func: (...operand: any) => {
-                if (operand.length == 1) {
+                if (operand.length === 1) {
                     return func(operand[0]);
                 } else {
                     throw new Error(`Invalid call to ${name}.`);
@@ -664,7 +709,7 @@ export class Evaluator {
             mapper: false,
             ev: [],
             func: (left: any, ...right: any) => {
-                if (right.length == 1) {
+                if (right.length === 1) {
                     return func(left, right[0]);
                 } else {
                     throw new Error(`Invalid call to ${name}.`);
@@ -683,7 +728,7 @@ export class Evaluator {
             mapper: false,
             ev: [],
             func: (left: any, ...right: any) => {
-                if (right.length == 1) {
+                if (right.length === 1) {
                     return func(left, right[0]);
                 } else if (right.length > 1) {
                     let result = func(left, right[0]);
@@ -739,7 +784,7 @@ export class Evaluator {
                 /* Convert undefined name, defined in word-list command, to word-list command.
                  * (Null length word-list command) */
                 if (
-                    tree.list[i].type == 'NAME' &&
+                    tree.list[i].type === 'NAME' &&
                     !(local && this.localTable[fname] && this.localTable[fname][tree.list[i].id]) &&
                     !(tree.list[i].id in this.nameTable) &&
                     commandsTable.indexOf(tree.list[i].id) >= 0
@@ -776,8 +821,6 @@ export class Evaluator {
                 case '*':
                 case './':
                 case '/':
-                case '.÷':
-                case '÷':
                 case '.\\':
                 case '\\':
                 case '.^':
@@ -803,12 +846,13 @@ export class Evaluator {
                     return this.opTable[tree.type](this.Evaluator(tree.right, local, fname));
                 case '++_':
                 case '--_':
-                    return this.opTable[tree.type](this.Evaluator(tree.right, local, fname));
+                    return this.opTable[tree.type](tree.right);
                 case ".'":
                 case "'":
+                    return this.opTable[tree.type](this.Evaluator(tree.left, local, fname));
                 case '_++':
                 case '_--':
-                    return this.opTable[tree.type](this.Evaluator(tree.left, local, fname));
+                    return this.opTable[tree.type](tree.left);
                 case '=':
                 case '+=':
                 case '-=':
@@ -829,13 +873,13 @@ export class Evaluator {
                     let left;
                     let id;
                     let args;
-                    if (tree.left.type == 'NAME') {
+                    if (tree.left.type === 'NAME') {
                         left = tree.left;
                         id = tree.left.id;
                         aliasTreeName = this.aliasName(tree.left.id);
                         args = [];
                     } else {
-                        /* (tree.left.type=='ARG') && (tree.left.expr.type=='NAME') */
+                        /* (tree.left.type==='ARG') && (tree.left.expr.type==='NAME') */
                         left = tree.left.expr;
                         id = tree.left.expr.id;
                         aliasTreeName = this.aliasName(tree.left.expr.id);
@@ -844,7 +888,7 @@ export class Evaluator {
                     if (aliasTreeName in this.baseFunctionTable) {
                         throw new Error(`cannot assign to reserved name: ${aliasTreeName}.`);
                     } else {
-                        if (args.length == 0) {
+                        if (args.length === 0) {
                             /* Name definition */
                             const expr = op.length ? this.nodeOp(op, left, tree.right) : tree.right;
                             try {
@@ -863,7 +907,7 @@ export class Evaluator {
                                 /* Function definition. Test if args is a list of NAME */
                                 let pass = true;
                                 for (let i = 0; i < args.length; i++) {
-                                    pass = pass && args[i].type == 'NAME';
+                                    pass = pass && args[i].type === 'NAME';
                                     if (!pass) throw new Error('invalid arguments in function definition.');
                                 }
                                 this.nameTable[id] = { args: args, expr: tree.right };
@@ -878,16 +922,16 @@ export class Evaluator {
                         return this.localTable[fname][tree.id];
                     } else if (tree.id in this.nameTable) {
                         /* Defined in nameTable */
-                        if (this.nameTable[tree.id].args.length == 0) {
+                        if (this.nameTable[tree.id].args.length === 0) {
                             /* Defined as name */
                             return this.Evaluator(this.nameTable[tree.id].expr, false, fname);
                         } else {
                             /* Defined as function name */
-                            throw new Error('calling ' + tree.id + ' function without arguments list.');
+                            throw new SyntaxError(`calling ${tree.id} function without arguments list.`);
                         }
                     }
                 case 'ARG':
-                    if (tree.expr.type == 'NAME') {
+                    if (tree.expr.type === 'NAME') {
                         /* Matrix indexing or function call */
                         aliasTreeName = this.aliasName(tree.expr.id);
                         const argumentsList: any[] = [];
@@ -899,11 +943,11 @@ export class Evaluator {
                                     /* Evaluate arguments list */
                                     argumentsList[i] = this.Evaluator(tree.args[i], local, fname);
                                 }
-                                if (this.baseFunctionTable[aliasTreeName].mapper && argumentsList.length != 1) {
-                                    /* Error if mapper and #arguments!=1 (Invalid call) */
+                                if (this.baseFunctionTable[aliasTreeName].mapper && argumentsList.length !== 1) {
+                                    /* Error if mapper and #arguments!==1 (Invalid call) */
                                     throw new Error('Invalid call to ' + aliasTreeName + '.');
                                 }
-                                if (argumentsList.length == 1 && 'array' in argumentsList[0] && this.baseFunctionTable[aliasTreeName].mapper) {
+                                if (argumentsList.length === 1 && 'array' in argumentsList[0] && this.baseFunctionTable[aliasTreeName].mapper) {
                                     /* Test if is mapper */
                                     return this.mapTensor(argumentsList[0], this.baseFunctionTable[aliasTreeName].func);
                                 } else {
@@ -924,10 +968,10 @@ export class Evaluator {
                             return this.localTable[fname][tree.expr.id];
                         } else if (tree.expr.id in this.nameTable) {
                             /* Defined in nameTable */
-                            if (this.nameTable[tree.expr.id].args.length == 0) {
+                            if (this.nameTable[tree.expr.id].args.length === 0) {
                                 /* if is defined name */
                                 const temp = this.Evaluator(this.nameTable[tree.expr.id].expr, false, fname);
-                                if (tree.args.length == 0) {
+                                if (tree.args.length === 0) {
                                     /* Defined name */
                                     return temp;
                                 } else if (this.isTensor(temp)) {
@@ -942,7 +986,7 @@ export class Evaluator {
                                 }
                             } else {
                                 /* Else is defined function */
-                                if (this.nameTable[tree.expr.id].args.length != tree.args.length) {
+                                if (this.nameTable[tree.expr.id].args.length !== tree.args.length) {
                                     throw new Error(`invalid number of arguments in function ${tree.expr.id}.`);
                                 }
                                 /* Create localTable entry */
@@ -1044,8 +1088,6 @@ export class Evaluator {
                     case '*':
                     case './':
                     case '/':
-                    case '.÷':
-                    case '÷':
                     case '.\\':
                     case '\\':
                     case '.^':
@@ -1171,8 +1213,6 @@ export class Evaluator {
                     case '-':
                     case '.*':
                     case './':
-                    case '.÷':
-                    case '÷':
                     case '.\\':
                     case '\\':
                     case '.^':
@@ -1229,9 +1269,9 @@ export class Evaluator {
                     case '--_':
                         return '<mo>--</mo>' + this.unparserML(tree.right);
                     case '_++':
-                        return this.unparserML(tree.right) + '<mo>++</mo>';
+                        return this.unparserML(tree.left) + '<mo>++</mo>';
                     case '_--':
-                        return this.unparserML(tree.right) + '<mo>--</mo>';
+                        return this.unparserML(tree.left) + '<mo>--</mo>';
                     case ".'":
                         return '<msup><mrow>' + this.unparserML(tree.left) + '</mrow><mrow><mi>T</mi></mrow></msup>';
                     case "'":
@@ -1239,7 +1279,7 @@ export class Evaluator {
                     case 'NAME':
                         return '<mi>' + substGreek(tree.id) + '</mi>';
                     case 'ARG':
-                        if (tree.args.length == 0) {
+                        if (tree.args.length === 0) {
                             return this.unparserML(tree.expr) + '<mrow><mo>(</mo><mo>)</mo></mrow>';
                         } else {
                             arglist = '';
@@ -1247,7 +1287,7 @@ export class Evaluator {
                                 arglist += this.unparserML(tree.args[i]) + '<mo>,</mo>';
                             }
                             arglist = arglist.substring(0, arglist.length - 10);
-                            if (tree.expr.type == 'NAME') {
+                            if (tree.expr.type === 'NAME') {
                                 const aliasTreeName = this.aliasName(tree.expr.id);
                                 switch (aliasTreeName) {
                                     case 'abs':

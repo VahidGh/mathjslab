@@ -72,6 +72,7 @@ export class ComplexDecimal {
         sqrt: ComplexDecimal.sqrt,
         exp: ComplexDecimal.exp,
         log: ComplexDecimal.log,
+        log2: ComplexDecimal.log2,
         log10: ComplexDecimal.log10,
         deg2rad: ComplexDecimal.deg2rad,
         rad2deg: ComplexDecimal.rad2deg,
@@ -631,6 +632,23 @@ export class ComplexDecimal {
     }
 
     /**
+     * Logical XOR.
+     * @param left Value.
+     * @param right Value.
+     * @returns left XOR right.
+     */
+    public static xor(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+        const left_prec = ComplexDecimal.toMaxPrecision(left);
+        const right_prec = ComplexDecimal.toMaxPrecision(right);
+        return (
+            left_prec.re.eq(0) && left_prec.im.eq(0) && !(right_prec.re.eq(0) && right_prec.im.eq(0)) ||
+            !(left_prec.re.eq(0) && left_prec.im.eq(0)) && right_prec.re.eq(0) && right_prec.im.eq(0)
+        )
+            ? ComplexDecimal.true()
+            : ComplexDecimal.false();
+    }
+
+    /**
      * Logical NOT.
      * @param right Value.
      * @returns NOT right.
@@ -1104,6 +1122,15 @@ export class ComplexDecimal {
                 Decimal.div(Decimal.sub(Decimal.mul(arg_l, Decimal.ln(mod_b)), Decimal.mul(Decimal.ln(mod_l), arg_b)), denom),
             );
         }
+    }
+
+    /**
+     * Base 2 logarithm
+     * @param z Value
+     * @returns logarithm base 2 of z.
+     */
+    public static log2(z: ComplexDecimal): ComplexDecimal {
+        return ComplexDecimal.logb(new ComplexDecimal(2), z);
     }
 
     /**

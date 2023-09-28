@@ -386,9 +386,9 @@ oper_expr
         : primary_expr
                 {$$ = $1;}
         | oper_expr '++'
-                {$$ = EvaluatorPointer.nodeOp($2,'++_');}
+                {$$ = EvaluatorPointer.nodeOp('_++', $1);}
         | oper_expr '--'
-                {$$ = EvaluatorPointer.nodeOp($2,'--_');}
+                {$$ = EvaluatorPointer.nodeOp('_--', $1);}
         | oper_expr '(' ')'
                 {$$ = EvaluatorPointer.nodeArgExpr($1);}
         | oper_expr '(' arg_list ')'
