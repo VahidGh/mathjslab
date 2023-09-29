@@ -4,7 +4,12 @@
 
 This package emulates a parser and evaluator for a subset of
 [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/)
-language.
+language written completely in [Typescript](https://www.typescriptlang.org/).
+
+It uses the [Jison](https://gerhobbelt.github.io/jison/)
+[parser generator](https://en.wikipedia.org/wiki/Compiler-compiler) to create an
+[AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree)
+([Abstract Syntax Tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree)).
 
 It can run in browser environment and implements an arbitrary precision arithmetics using
 [decimal.js](https://www.npmjs.com/package/decimal.js) package. MathJSLab
@@ -95,11 +100,25 @@ function_name(argument, argument, ...) = <expression>
 ## References
 
 * [Decimal.js documentation](https://mikemcl.github.io/decimal.js/)
-* [MATLAB&reg; Documentation](https://www.mathworks.com/help/matlab/index.html)
-* [GNU Octave manual](https://docs.octave.org/latest/)
-* [Octave Online](https://octave-online.net/)
 * [Wolfram MathWorld](https://mathworld.wolfram.com/)
 * [WolframAlpha](https://www.wolframalpha.com/)
+* [MATLAB&reg; Documentation](https://www.mathworks.com/help/matlab/index.html)
+    * [Get Started with MATLAB&reg;](https://www.mathworks.com/help/matlab/getting-started-with-matlab.html)
+    * [Language Fundamentals](https://www.mathworks.com/help/matlab/language-fundamentals.html)
+* [GNU Octave manual](https://docs.octave.org/latest/)
+* [Octave Online](https://octave-online.net/)
+* [Octave scripts source](https://github.com/gnu-octave/octave/tree/default/scripts)
+* [GNU Octave at Wikipedia](https://en.wikipedia.org/wiki/GNU_Octave)
+* [Octave Forge - Extra packages for GNU Octave](https://octave.sourceforge.io/)
+    * [Octave Forge Function List](https://octave.sourceforge.io/list_functions.php)
+* [GNU Octave at Free Software Foundation](https://www.gnu.org/software/octave/)
+* [GNU Octave (version 6.4.0) Online Manual](https://octave.org/doc/v6.4.0/index.html)
+    * [18.2 Basic Matrix Functions](https://octave.org/doc/v6.4.0/Basic-Matrix-Functions.html)
+* [Octave lexer](https://github.com/gnu-octave/octave/blob/default/libinterp/parse-tree/lex.ll)
+* [Octave parser](https://github.com/gnu-octave/octave/blob/default/libinterp/parse-tree/oct-parse.yy)
+* [MATLAB&reg; parser by Tegala Sravani](https://github.com/TegalaSravani/MATLAB&reg;-PARSER)
+* [The Design and Implementation of a Parser and Scanner for the MATLAB&reg; Language in the MATCH Compiler](http://www.ece.northwestern.edu/cpdc/pjoisha/MAGICA/CPDC-TR-9909-017.pdf)
+* [MATLAB&reg; grammar from Grammar Zoo](https://slebok.github.io/zoo/markup/scientific/matlab/srour/extracted/index.html)
 
 # License
 
