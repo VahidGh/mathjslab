@@ -1,20 +1,25 @@
 # MathJSLab
 
-> An interpreter with language syntax like MATLAB&reg;/Octave written in TypeScript.
+> An interpreter with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
 
 This package emulates a parser and evaluator for a subset of
 [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/)
 language written completely in [Typescript](https://www.typescriptlang.org/).
 
-It uses the [Jison](https://gerhobbelt.github.io/jison/)
-[parser generator](https://en.wikipedia.org/wiki/Compiler-compiler) to create an
-[AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree)
-([Abstract Syntax Tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree)).
+It can run in browser environment and implements an arbitrary precision
+arithmetics using [decimal.js](https://www.npmjs.com/package/decimal.js)
+package.
 
-It can run in browser environment and implements an arbitrary precision arithmetics using
-[decimal.js](https://www.npmjs.com/package/decimal.js) package. MathJSLab
-has functions to generate [MathML](https://www.w3.org/Math/) code of
-expressions parsed too.
+It uses the [Jison](https://gerhobbelt.github.io/jison/)
+[parser generator](https://en.wikipedia.org/wiki/Compiler-compiler) to
+generate a [parser](https://en.wikipedia.org/wiki/Parsing) that create an
+[AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree)
+([Abstract Syntax Tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree)) of input.
+
+Other components besides the [parser](https://en.wikipedia.org/wiki/Parsing)
+are the evaluator and the [MathML](https://www.w3.org/Math/) unparser, which
+computes the inputs and generates mathematical representations of the inputs
+and results, respectively.
 
 This software is intended for educational purposes, to provide teachers and
 students with a computer aided calculation tool that is capable of running in

@@ -349,8 +349,6 @@ export class Evaluator {
         global.EvaluatorPointer = this;
         this.exitStatus = Evaluator.response.OK;
         /* Set opTable aliases */
-        this.opTable['.+'] = this.opTable['+'];
-        this.opTable['.-'] = this.opTable['-'];
         this.opTable['**'] = this.opTable['^'];
         this.opTable['.**'] = this.opTable['.^'];
         this.opTable['~='] = this.opTable['!='];
