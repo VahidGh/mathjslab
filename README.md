@@ -1,5 +1,7 @@
 # MathJSLab
 
+[![NPM version][npm-image]][npm-url]
+[![npm download][download-image]][download-url]
 [![DOI](https://zenodo.org/badge/606645564.svg)](https://zenodo.org/badge/latestdoi/606645564)
 [![MIT License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/sergiolindau/mathjslab/blob/master/LICENSE)
 
@@ -53,6 +55,8 @@ Install the `mathjslab` package:
 npm install mathjslab
 ```
 
+[![](https://badgen.net/bundlephobia/minzip/mathjslab)](https://bundlephobia.com/package/mathjslab)
+
 ## Usage
 
 The basic API is an instantiation of `Evaluator` with optional configuration.
@@ -88,6 +92,10 @@ You can use the latest version of this module directly from unpkg using:
 ## Contributing
 
 To contribute to this project see our [contributing guidelines](https://github.com/sergiolindau/mathjslab-calculator/blob/master/CONTRIBUTING.md).
+
+Join the community chat:
+
+[![Join the chat at https://gitter.im/sergiolindau/mathjslab](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sergiolindau/mathjslab?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Test and Build
 

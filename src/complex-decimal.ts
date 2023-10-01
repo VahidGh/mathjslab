@@ -604,7 +604,7 @@ export class ComplexDecimal {
     }
 
     /**
-     * Logical AND.
+     * Logical **AND**.
      * @param left Value.
      * @param right Value.
      * @returns left AND right.
@@ -618,7 +618,7 @@ export class ComplexDecimal {
     }
 
     /**
-     * Logical OR.
+     * Logical **OR**.
      * @param left Value.
      * @param right Value.
      * @returns left OR right.
@@ -632,7 +632,7 @@ export class ComplexDecimal {
     }
 
     /**
-     * Logical XOR.
+     * Logical **XOR**.
      * @param left Value.
      * @param right Value.
      * @returns left XOR right.
@@ -649,7 +649,7 @@ export class ComplexDecimal {
     }
 
     /**
-     * Logical NOT.
+     * Logical **NOT**.
      * @param right Value.
      * @returns NOT right.
      */
