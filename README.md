@@ -1,5 +1,8 @@
 # MathJSLab
 
+[![DOI](https://zenodo.org/badge/606645564.svg)](https://zenodo.org/badge/latestdoi/606645564)
+[![MIT License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/sergiolindau/mathjslab/blob/master/LICENSE)
+
 > An interpreter with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
 
 This package emulates a parser and evaluator for a subset of
@@ -76,6 +79,16 @@ let result = evaluator.Evaluate(tree);
 let mathml = evaluator.UnparseML(tree);
 ```
 
+You can use the latest version of this module directly from unpkg using:
+
+```html
+<script type="module" src="https://www.unpkg.com/mathjslab"></script>
+```
+
+## Contributing
+
+To contribute to this project see our [contributing guidelines](https://github.com/sergiolindau/mathjslab-calculator/blob/master/CONTRIBUTING.md).
+
 ## Test and Build
 
 Run the `mathjslab` tests:
@@ -125,7 +138,7 @@ function_name(argument, argument, ...) = <expression>
 * [The Design and Implementation of a Parser and Scanner for the MATLAB&reg; Language in the MATCH Compiler](http://www.ece.northwestern.edu/cpdc/pjoisha/MAGICA/CPDC-TR-9909-017.pdf)
 * [MATLAB&reg; grammar from Grammar Zoo](https://slebok.github.io/zoo/markup/scientific/matlab/srour/extracted/index.html)
 
-# License
+## License
 
 >MIT License
 >

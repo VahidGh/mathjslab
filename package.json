@@ -1,6 +1,6 @@
 {
   "name": "mathjslab",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "MathJSLab - An interpreter with language syntax like MATLAB/Octave",
   "main": "build/mathjslab.js",
   "types": "build/src/index.d.ts",
@@ -55,7 +55,7 @@
   "devDependencies": {
     "@types/debug": "^4.1.9",
     "@types/jest": "29.5.5",
-    "@types/node": "^20.7.2",
+    "@types/node": "^20.8.0",
     "@types/supertest": "^2.0.13",
     "@types/webpack": "^5.28.3",
     "@typescript-eslint/eslint-plugin": "^6.7.3",
