@@ -602,7 +602,7 @@ export class MultiArray {
                 matrix = left;
             } else {
                 throw new Error(
-                    `operator ${op}: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]}).`,
+                    `operator ${op}: non-conforming arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]}).`,
                 );
             }
             const result = new MultiArray([matrix.dim[0], row.dim[1]]);

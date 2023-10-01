@@ -1,7 +1,5 @@
 # MathJSLab
 
-[![NPM version][npm-image]][npm-url]
-[![npm download][download-image]][download-url]
 [![DOI](https://zenodo.org/badge/606645564.svg)](https://zenodo.org/badge/latestdoi/606645564)
 [![MIT License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/sergiolindau/mathjslab/blob/master/LICENSE)
 
