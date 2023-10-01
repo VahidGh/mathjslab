@@ -20,7 +20,7 @@ Always write a clear log message for your commits. One-line messages are fine fo
 
 Join the community chat:
 
-[![Join the chat at https://gitter.im/sergiolindau/mathjslab](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sergiolindau/mathjslab?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://matrix.to/#/#mathjslab:gitter.im](https://badges.gitter.im/Join%20Chat.svg)](https://matrix.to/#/#mathjslab:gitter.im?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Coding conventions
 
