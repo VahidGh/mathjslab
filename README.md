@@ -43,7 +43,8 @@ application can be found [here](https://github.com/sergiolindau/mathjslab-calcul
 
 ## Browser support
 
-MathJSLab works on any ES6 compatible JavaScript engine, including Node.js, Chrome, Firefox, Safari, and Edge.
+MathJSLab works on any ES6 compatible JavaScript engine, including Node.js,
+Chrome, Firefox, Safari, and Edge.
 
 ## Installation
 
@@ -83,17 +84,14 @@ let mathml = evaluator.UnparseML(tree);
 
 You can use the latest version of this module directly from unpkg using:
 
-```html
-<script type="module" src="https://www.unpkg.com/mathjslab"></script>
-```
-
 ## Contributing
 
-To contribute to this project see our [contributing guidelines](https://github.com/sergiolindau/mathjslab-calculator/blob/master/CONTRIBUTING.md).
+To contribute to this project see our
+[contributing guidelines](https://github.com/sergiolindau/mathjslab/blob/main/CONTRIBUTING.md).
 
 Join the community chat:
 
-[![Join the chat at https://gitter.im/sergiolindau/mathjslab](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sergiolindau/mathjslab?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://matrix.to/#/#mathjslab:gitter.im](https://badges.gitter.im/Join%20Chat.svg)](https://matrix.to/#/#mathjslab:gitter.im?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Test and Build
 
@@ -120,29 +118,6 @@ Some differences from the original MATLAB&reg;/Octave language are
 * Defining functions is done simply using:
 function_name(argument, argument, ...) = <expression>
 * Parsing is executed line-by-line.
-
-## References
-
-* [Decimal.js documentation](https://mikemcl.github.io/decimal.js/)
-* [Wolfram MathWorld](https://mathworld.wolfram.com/)
-* [WolframAlpha](https://www.wolframalpha.com/)
-* [MATLAB&reg; Documentation](https://www.mathworks.com/help/matlab/index.html)
-    * [Get Started with MATLAB&reg;](https://www.mathworks.com/help/matlab/getting-started-with-matlab.html)
-    * [Language Fundamentals](https://www.mathworks.com/help/matlab/language-fundamentals.html)
-* [GNU Octave manual](https://docs.octave.org/latest/)
-* [Octave Online](https://octave-online.net/)
-* [Octave scripts source](https://github.com/gnu-octave/octave/tree/default/scripts)
-* [GNU Octave at Wikipedia](https://en.wikipedia.org/wiki/GNU_Octave)
-* [Octave Forge - Extra packages for GNU Octave](https://octave.sourceforge.io/)
-    * [Octave Forge Function List](https://octave.sourceforge.io/list_functions.php)
-* [GNU Octave at Free Software Foundation](https://www.gnu.org/software/octave/)
-* [GNU Octave (version 6.4.0) Online Manual](https://octave.org/doc/v6.4.0/index.html)
-    * [18.2 Basic Matrix Functions](https://octave.org/doc/v6.4.0/Basic-Matrix-Functions.html)
-* [Octave lexer](https://github.com/gnu-octave/octave/blob/default/libinterp/parse-tree/lex.ll)
-* [Octave parser](https://github.com/gnu-octave/octave/blob/default/libinterp/parse-tree/oct-parse.yy)
-* [MATLAB&reg; parser by Tegala Sravani](https://github.com/TegalaSravani/MATLAB&reg;-PARSER)
-* [The Design and Implementation of a Parser and Scanner for the MATLAB&reg; Language in the MATCH Compiler](http://www.ece.northwestern.edu/cpdc/pjoisha/MAGICA/CPDC-TR-9909-017.pdf)
-* [MATLAB&reg; grammar from Grammar Zoo](https://slebok.github.io/zoo/markup/scientific/matlab/srour/extracted/index.html)
 
 ## License
 
