@@ -1,5 +1,5 @@
 /**
- * #### parser.jison ####
+ * === parser.jison ===
  *
  * MATLAB®/Octave like syntax parser
  *
@@ -20,12 +20,10 @@
 
 D       [0-9]
 D_      [0-9_]
-L       [_$a-zA-ZàáâäãÀÁÂÄÃèéêëÈÉÊËìíîïÌÍÎÏòóôöõÒÓÔÖÕùúûüÙÚÛÜçÇñÑýÝ]
-LD      ({L}|{D})
 S       [ \t]
 NL      ((\n)|(\r)|(\r\n))
 CCHAR   [#%]
-IDENT   ({L}({LD})*)
+IDENT   ([_a-zA-Z][_a-zA-Z0-9]*)
 FQIDENT ({IDENT}({S}*\.{S}*{IDENT})*)
 
 DECIMAL_DIGITS ({D}{D_}*)
@@ -86,22 +84,20 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 
 {STRING}        return "STRING";
 
-^{S}*"#{"{S}*$  {
+^{S}*\#\{{S}*$  {
         this.pushState(BLOCK_COMMENT_SRP_START);
 }
-^{S}*"#}"{S}*$  {
+^{S}*\#\}{S}*$  {
         this.popState();
 }
-^{S}*"%{"{S}*$  {
+^{S}*\%\{{S}*$  {
         this.pushState(BLOCK_COMMENT_PRC_START);
 }
-^{S}*"%}"{S}*$  {
+^{S}*\%\}{S}*$  {
         this.popState();
 }
 <BLOCK_COMMENT_SRP_START,BLOCK_COMMENT_PRC_START>({S}|{NL})+ /* skip comment */
 
-".+"                                            return ".+";
-".-"                                            return ".-";
 ".*"                                            return ".*";
 "./"                                            return "./";
 ".\\"                                           return ".\\";
@@ -124,8 +120,6 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 "*="                                            return "*=";
 "/="                                            return "/=";
 "\\="                                           return "\\=";
-".+="                                           return ".+=";
-".-="                                           return ".-=";
 ".*="                                           return ".*=";
 "./="                                           return "./=";
 ".\\="                                          return ".\\=";
@@ -142,14 +136,14 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 /lex
 
 /* operator associations and precedence */
-%right '=' '+=' '.+=' '-=' '.-=' '*=' '/=' '\\=' '^=' '.*=' './=' '.\\=' '.^=' '.**=' '|=' '&='
+%right '=' '+=' '-=' '*=' '/=' '\\=' '^=' '.*=' './=' '.\\=' '.^=' '.**=' '|=' '&='
 %left '||'
 %left '&&'
 %left '|'
 %left '&'
 %left '<' '<=' '==' '!=' '~=' '>=' '>'
 %left ':'
-%left '-' '+' '.-' '.+'
+%left '-' '+'
 %left '*' '/' '\\' '.*' './' '.\\'
 %right UNARY '~' '!'
 %left POW '^' '**' '.^' '.**' "'" ".'"
@@ -419,11 +413,7 @@ oper_expr
                 {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | oper_expr '+' oper_expr
                 {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
-        | oper_expr '.+' oper_expr
-                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | oper_expr '-' oper_expr
-                {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
-        | oper_expr '.-' oper_expr
                 {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}
         | oper_expr '*' oper_expr
                 {$$ = EvaluatorPointer.nodeOp($2,$1,$3);}

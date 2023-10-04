@@ -531,9 +531,7 @@ export class Evaluator {
      */
     public nodeOp(op: string, data1: any, data2: any): NodeOperation {
         switch (op) {
-            case '.+':
             case '+':
-            case '.-':
             case '-':
             case '.*':
             case '*':
@@ -811,9 +809,7 @@ export class Evaluator {
             );
         } else {
             switch (tree.type) {
-                case '.+':
                 case '+':
-                case '.-':
                 case '-':
                 case '.*':
                 case '*':
@@ -899,7 +895,7 @@ export class Evaluator {
                         } else {
                             if (this.nameTable[id] && this.isTensor(this.nameTable[id].expr)) {
                                 /* Matrix indexing refer */
-                                console.log('matrix indexing refer');
+                                console.log('matrix indexing refer at left hand side');
                                 return tree; /** */
                             } else {
                                 /* Function definition. Test if args is a list of NAME */
@@ -967,7 +963,7 @@ export class Evaluator {
                         } else if (tree.expr.id in this.nameTable) {
                             /* Defined in nameTable */
                             if (this.nameTable[tree.expr.id].args.length === 0) {
-                                /* if is defined name */
+                                /* If is a defined name */
                                 const temp = this.Evaluator(this.nameTable[tree.expr.id].expr, false, fname);
                                 if (tree.args.length === 0) {
                                     /* Defined name */
@@ -1078,9 +1074,7 @@ export class Evaluator {
                     case '!':
                     case '~':
                         return tree.type;
-                    case '.+':
                     case '+':
-                    case '.-':
                     case '-':
                     case '.*':
                     case '*':
@@ -1205,9 +1199,7 @@ export class Evaluator {
                     case '!':
                     case '~':
                         return '<mo>' + tree.type + '</mo>';
-                    case '.+':
                     case '+':
-                    case '.-':
                     case '-':
                     case '.*':
                     case './':

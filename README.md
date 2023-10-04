@@ -1,9 +1,13 @@
 # MathJSLab
 
+[![npm version](https://badge.fury.io/js/mathjslab.svg)](https://badge.fury.io/js/mathjslab)
 [![DOI](https://zenodo.org/badge/606645564.svg)](https://zenodo.org/badge/latestdoi/606645564)
 [![MIT License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/sergiolindau/mathjslab/blob/master/LICENSE)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/sergiolindau/mathjslab/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/sergiolindau/mathjslab/tree/main)
 
 > An interpreter with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
+
+**ISBN 978-65-00-82338-7**
 
 This package emulates a parser and evaluator for a subset of
 [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/)
@@ -81,8 +85,6 @@ let result = evaluator.Evaluate(tree);
 ```typescript
 let mathml = evaluator.UnparseML(tree);
 ```
-
-You can use the latest version of this module directly from unpkg using:
 
 ## Contributing
 
