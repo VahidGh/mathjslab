@@ -12,6 +12,10 @@
  *
  * This code is build by Jison parser generator:
  * https://gerhobbelt.github.io/jison/
+ *
+ * This parser was coded based on the GNU Octave lexical analyzer and parser:
+ * * https://github.com/gnu-octave/octave/blob/default/libinterp/parse-tree/lex.ll
+ * * https://github.com/gnu-octave/octave/blob/default/libinterp/parse-tree/oct-parse.yy
  */
 
 /* lexical scanner */
@@ -135,7 +139,10 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 
 /lex
 
-/* operator associations and precedence */
+/**
+ * operator associations and precedence
+ * https://www.mathworks.com/help/matlab/matlab_prog/operator-precedence.html
+ */
 %right '=' '+=' '-=' '*=' '/=' '\\=' '^=' '.*=' './=' '.\\=' '.^=' '.**=' '|=' '&='
 %left '||'
 %left '&&'
