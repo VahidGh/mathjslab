@@ -3,7 +3,6 @@
 [![npm version](https://badge.fury.io/js/mathjslab.svg)](https://badge.fury.io/js/mathjslab)
 [![DOI](https://zenodo.org/badge/606645564.svg)](https://zenodo.org/badge/latestdoi/606645564)
 [![MIT License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/sergiolindau/mathjslab/blob/master/LICENSE)
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/sergiolindau/mathjslab/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/sergiolindau/mathjslab/tree/main)
 
 > An interpreter with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
 
@@ -24,9 +23,8 @@ generate a [parser](https://en.wikipedia.org/wiki/Parsing) that create an
 ([Abstract Syntax Tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree)) of input.
 
 Other components besides the [parser](https://en.wikipedia.org/wiki/Parsing)
-are the evaluator and the [MathML](https://www.w3.org/Math/) unparser, which
-computes the inputs and generates mathematical representations of the inputs
-and results, respectively.
+are the evaluator, which computes the inputs, and the [MathML](https://www.w3.org/Math/)
+unparser, that generates mathematical representations of the inputs and results.
 
 This software is intended for educational purposes, to provide teachers and
 students with a computer aided calculation tool that is capable of running in
@@ -63,6 +61,13 @@ npm install mathjslab
 ## Usage
 
 The basic API is an instantiation of `Evaluator` with optional configuration.
+
+Import MathJSLab API:
+
+```typescript
+import { Evaluator, TEvaluatorConfig } from 'mathjslab';
+```
+
 Initialize evaluator with:
 
 ```typescript
@@ -84,6 +89,25 @@ let result = evaluator.Evaluate(tree);
 * MathML generation
 ```typescript
 let mathml = evaluator.UnparseML(tree);
+```
+
+## Using UNPKG CDN
+
+You can optimize your application, reducing the size of your bundle, loading
+MathJSLab via the [UNPKG](https://www.unpkg.com/) [CDN](https://en.wikipedia.org/wiki/Content_delivery_network).
+
+```html
+<head>
+    ...
+    <script defer type="module" src="https://www.unpkg.com/mathjslab"></script>
+    ...
+</head>
+```
+
+The module will be loaded with `mathjslab` name. You can initialize evaluator with:
+
+```typescript
+let evaluator = mathjslab.Evaluator.initialize(EvaluatorConfiguration);
 ```
 
 ## Contributing
@@ -125,7 +149,7 @@ function_name(argument, argument, ...) = <expression>
 
 >MIT License
 >
->Copyright &copy; 2016-2023 Sergio Lindau
+>Copyright &copy; 2016-2023 Sergio Lindau, ISBN 978-65-00-82338-7
 >
 >Permission is hereby granted, free of charge, to any person obtaining a copy
 >of this software and associated documentation files (the "Software"), to deal
