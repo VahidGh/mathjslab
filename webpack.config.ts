@@ -2,7 +2,7 @@ import path from 'path';
 import webpack from 'webpack';
 
 const config: webpack.Configuration = {
-    entry: './src/index.ts',
+    entry: './src/lib.ts',
     module: {
         rules: [
             {
@@ -26,7 +26,7 @@ const config: webpack.Configuration = {
         },
     },
     output: {
-        path: path.resolve(__dirname, 'build'),
+        path: path.resolve(__dirname, 'lib'),
         filename: 'mathjslab.js',
         library: 'mathjslab',
         libraryTarget: 'umd',

@@ -430,7 +430,7 @@ export class Evaluator {
      * @param name
      * @returns
      */
-    private aliasName: (name: string) => string = (name: string): string => name;
+    public aliasName: (name: string) => string = (name: string): string => name;
 
     /**
      * Reload native name table in name table.

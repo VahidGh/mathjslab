@@ -3,11 +3,11 @@ logs
 *.log
 npm-debug.log*
 
-# Generated parser
+# Generated parser by Jison
 src/parser.js
 
 # Build directory
-build
+lib
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json

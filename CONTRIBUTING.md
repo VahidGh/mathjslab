@@ -1,16 +1,33 @@
-# How to contribute
+# Contributing to MathJSLab
+
+The following is a set of guidelines for contributing to the MathJSLab
+package. These are mostly guidelines, not rules. Use your best judgment and
+feel free to propose changes to this document in a pull request.
 
 I'm really glad you're reading this, because we need volunteer developers to
 help this project come to fruition. At end of this file there is
 [references](#references) that were consulted to carry out this project.
 
-## Testing
+#### Table Of Contents
 
-The tests are run by jest. Add tests for the new code you create.
+* [Code of Conduct](#code-of-conduct)
+* [How to Contribute](#how-to-contribute)
+* [Community](#community)
+* [Code conventions](#code-conventions)
+* [References](#references)
 
-## Submitting changes
+# Code of Conduct
 
-Please send a [GitHub Pull Request to mathjslab](https://github.com/sergiolindau/mathjslab/pull/new/master)
+This project and everyone participating in it is governed by the
+[MathJSLab Code of Conduct](https://github.com/sergiolindau/mathjslab/blob/main/CODE_OF_CONDUCT.md).
+By participating, you are expected to uphold this code. Please report
+unacceptable behavior to [sergiolindau@gmail.com](mailto:sergiolindau@gmail.com).
+
+## How to Contribute
+
+Check for similar previous [issues](https://github.com/sergiolindau/mathjslab/issues) before send you own.
+
+Please send a [GitHub Pull Request to MathJSLab](https://github.com/sergiolindau/mathjslab/pull/new/main)
 with a clear list of what you've done (read more about
 [pull requests](http://help.github.com/pull-requests/)). Please follow our
 coding conventions (below) and make sure all of your commits are atomic (one
@@ -23,24 +40,44 @@ for small changes, but bigger changes should look like this:
     >
     > A paragraph describing what changed and its impact."
 
+The tests are run by jest. Add relevant tests for the new code created.
+
 ## Community
 
 Join the community chat:
 
 [![Join the chat at https://matrix.to/#/#mathjslab:gitter.im](https://badges.gitter.im/Join%20Chat.svg)](https://matrix.to/#/#mathjslab:gitter.im?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-## Coding conventions
+## Code conventions
 
-Start reading our code and you'll get the hang of it. We optimize for readability:
+All code is linted with [Prettier](https://prettier.io/).
+
+Start reading our code and you'll get the hang of it. In summary, we adopted:
 
 * We indent using four spaces for code files and two spaces for json files, set by EditorConfig.
 * We ALWAYS put spaces after list items and method parameters (`[1, 2, 3]`, not `[1,2,3]`), around operators (`x += 1`, not `x+=1`), and around hash arrows.
+* Prefer the object spread operator (`{...anotherObj}`) to `Object.assign()`.
+* Inline exports with expressions whenever possible:
+```typescript
+// Use this:
+export default class ClassName {
+
+}
+
+// Instead of:
+class ClassName {
+
+}
+export default ClassName
+```
 * This is an [open source software](https://en.wikipedia.org/wiki/Open-source_software). Consider the people who will read your code, and make it look nice for them.
 
 Thanks,
 Sergio Lindau
 
 ## References
+
+Here are some references consulted to carry out this project.
 
 * [Decimal.js documentation](https://mikemcl.github.io/decimal.js/)
 * [Wolfram MathWorld](https://mathworld.wolfram.com/)
@@ -52,6 +89,7 @@ Sergio Lindau
     * [MATLAB Operators and Special Characters](https://www.mathworks.com/help/matlab/matlab_prog/matlab-operators-and-special-characters.html)
     * [Operator Precedence](https://www.mathworks.com/help/matlab/matlab_prog/operator-precedence.html)
 * [GNU Octave Documentation](https://docs.octave.org/latest/)
+    * [Octave Function List](https://octave.sourceforge.io/octave/overview.html)
 * [Octave Online](https://octave-online.net/)
 * [Octave scripts source](https://github.com/gnu-octave/octave/tree/default/scripts)
 * [GNU Octave at Wikipedia](https://en.wikipedia.org/wiki/GNU_Octave)

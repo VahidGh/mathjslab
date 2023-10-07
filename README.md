@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/mathjslab.svg)](https://badge.fury.io/js/mathjslab)
 [![DOI](https://zenodo.org/badge/606645564.svg)](https://zenodo.org/badge/latestdoi/606645564)
-[![MIT License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/sergiolindau/mathjslab/blob/master/LICENSE)
+[![MIT License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/sergiolindau/mathjslab/blob/main/LICENSE)
 
 > An interpreter with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
 
@@ -31,8 +31,9 @@ students with a computer aided calculation tool that is capable of running in
 a browser environment. So it can be easily adapted to be used on different devices
 and environments.
 
-A functional [demo](https://mathjslab.netlify.app/) use of this package in a Web
-application can be found [here](https://github.com/sergiolindau/mathjslab-calculator).
+A functional [demo](https://mathjslab.netlify.app/) use of this package in a
+[Web application](https://en.wikipedia.org/wiki/Web_application) can be found
+[here](https://github.com/sergiolindau/mathjslab-calculator).
 
 ## Features
 
