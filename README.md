@@ -37,17 +37,22 @@ A functional [demo](https://mathjslab.netlify.app/) use of this package in a
 
 ## Features
 
-- Runs on any JavaScript engine.
+- Runs on any [JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/) engine.
 - Comes with a large set of built-in functions and constants.
 - Is easily extensible.
-- Open source with fully documented code.
+- [Open source](https://en.wikipedia.org/wiki/Open-source_software) with fully documented code.
 - Test suites.
-- Improved [demo](https://mathjslab.netlify.app/) web application.
+- Improved [demo](https://mathjslab.netlify.app/) [Web application](https://en.wikipedia.org/wiki/Web_application).
 
 ## Browser support
 
-MathJSLab works on any ES6 compatible JavaScript engine, including Node.js,
-Chrome, Firefox, Safari, and Edge.
+MathJSLab works on any [ES6](http://es6-features.org/) compatible
+[JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/)
+engine, including [Node.js](https://nodejs.org/),
+[Chrome](https://www.google.com/chrome/),
+[Firefox](https://www.mozilla.org/en-US/firefox/),
+[Safari](https://www.apple.com/safari/),
+and [Edge](https://www.microsoft.com/edge).
 
 ## Installation
 
@@ -145,6 +150,7 @@ Some differences from the original MATLAB&reg;/Octave language are
 * Defining functions is done simply using:
 function_name(argument, argument, ...) = <expression>
 * Parsing is executed line-by-line.
+* There are only one complex numeric type. Other implemented types is boolean and character string;
 
 ## License
 

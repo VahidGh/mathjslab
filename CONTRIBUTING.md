@@ -5,8 +5,7 @@ package. These are mostly guidelines, not rules. Use your best judgment and
 feel free to propose changes to this document in a pull request.
 
 I'm really glad you're reading this, because we need volunteer developers to
-help this project come to fruition. At end of this file there is
-[references](#references) that were consulted to carry out this project.
+help this project come to fruition.
 
 #### Table Of Contents
 
@@ -16,7 +15,7 @@ help this project come to fruition. At end of this file there is
 * [Code conventions](#code-conventions)
 * [References](#references)
 
-# Code of Conduct
+## Code of Conduct
 
 This project and everyone participating in it is governed by the
 [MathJSLab Code of Conduct](https://github.com/sergiolindau/mathjslab/blob/main/CODE_OF_CONDUCT.md).
@@ -25,7 +24,7 @@ unacceptable behavior to [sergiolindau@gmail.com](mailto:sergiolindau@gmail.com)
 
 ## How to Contribute
 
-Check for similar previous [issues](https://github.com/sergiolindau/mathjslab/issues) before send you own.
+Check for similar previous [issues](https://github.com/sergiolindau/mathjslab/issues) before send your own.
 
 Please send a [GitHub Pull Request to MathJSLab](https://github.com/sergiolindau/mathjslab/pull/new/main)
 with a clear list of what you've done (read more about
@@ -48,7 +47,7 @@ Join the community chat:
 
 [![Join the chat at https://matrix.to/#/#mathjslab:gitter.im](https://badges.gitter.im/Join%20Chat.svg)](https://matrix.to/#/#mathjslab:gitter.im?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-## Code conventions
+## Code Conventions
 
 All code is linted with [Prettier](https://prettier.io/).
 
@@ -79,9 +78,9 @@ Sergio Lindau
 
 Here are some references consulted to carry out this project.
 
-* [Decimal.js documentation](https://mikemcl.github.io/decimal.js/)
 * [Wolfram MathWorld](https://mathworld.wolfram.com/)
 * [WolframAlpha](https://www.wolframalpha.com/)
+* [Decimal.js Documentation](https://mikemcl.github.io/decimal.js/)
 * [MATLAB&reg; Documentation](https://www.mathworks.com/help/matlab/index.html)
     * [Get Started with MATLAB&reg;](https://www.mathworks.com/help/matlab/getting-started-with-matlab.html)
     * [Language Fundamentals](https://www.mathworks.com/help/matlab/language-fundamentals.html)
@@ -89,17 +88,16 @@ Here are some references consulted to carry out this project.
     * [MATLAB Operators and Special Characters](https://www.mathworks.com/help/matlab/matlab_prog/matlab-operators-and-special-characters.html)
     * [Operator Precedence](https://www.mathworks.com/help/matlab/matlab_prog/operator-precedence.html)
 * [GNU Octave Documentation](https://docs.octave.org/latest/)
-    * [Octave Function List](https://octave.sourceforge.io/octave/overview.html)
+    * [18.2 Basic Matrix Functions](https://octave.org/doc/latest/Basic-Matrix-Functions.html)
+* [Octave Forge - Search Function](https://octave.sourceforge.io/list_functions.php)
+* [Octave Forge - Function List](https://octave.sourceforge.io/octave/overview.html)
+* [Octave Forge - Extra packages for GNU Octave](https://octave.sourceforge.io/)
 * [Octave Online](https://octave-online.net/)
 * [Octave scripts source](https://github.com/gnu-octave/octave/tree/default/scripts)
-* [GNU Octave at Wikipedia](https://en.wikipedia.org/wiki/GNU_Octave)
-* [Octave Forge - Extra packages for GNU Octave](https://octave.sourceforge.io/)
-    * [Octave Forge Function List](https://octave.sourceforge.io/list_functions.php)
-* [GNU Octave at Free Software Foundation](https://www.gnu.org/software/octave/)
-* [GNU Octave (version 6.4.0) Online Manual](https://octave.org/doc/v6.4.0/index.html)
-    * [18.2 Basic Matrix Functions](https://octave.org/doc/v6.4.0/Basic-Matrix-Functions.html)
 * [Octave lexer](https://github.com/gnu-octave/octave/blob/default/libinterp/parse-tree/lex.ll)
 * [Octave parser](https://github.com/gnu-octave/octave/blob/default/libinterp/parse-tree/oct-parse.yy)
+* [GNU Octave at Wikipedia](https://en.wikipedia.org/wiki/GNU_Octave)
+* [GNU Octave at Free Software Foundation](https://www.gnu.org/software/octave/)
 * [MATLAB&reg; parser by Tegala Sravani](https://github.com/TegalaSravani/MATLAB&reg;-PARSER)
 * [The Design and Implementation of a Parser and Scanner for the MATLAB&reg; Language in the MATCH Compiler](http://www.ece.northwestern.edu/cpdc/pjoisha/MAGICA/CPDC-TR-9909-017.pdf)
 * [MATLAB&reg; grammar from Grammar Zoo](https://slebok.github.io/zoo/markup/scientific/matlab/srour/extracted/index.html)
