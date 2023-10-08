@@ -5,7 +5,7 @@ export class CharString {
         this.str = str;
     }
     get string(): string {
-        return this.str.substring(1,this.str.length-1)
+        return this.str.substring(1, this.str.length - 1);
     }
     static isThis(obj: any): boolean {
         return 'str' in obj;

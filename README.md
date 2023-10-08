@@ -46,7 +46,7 @@ A functional [demo](https://mathjslab.netlify.app/) use of this package in a
 
 ## Browser support
 
-MathJSLab works on any [ES6](http://es6-features.org/) compatible
+MathJSLab works on any [ES5](https://www.ecma-international.org/wp-content/uploads/ECMA-262_5th_edition_december_2009.pdf) compatible
 [JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/)
 engine, including [Node.js](https://nodejs.org/),
 [Chrome](https://www.google.com/chrome/),

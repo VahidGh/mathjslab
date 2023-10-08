@@ -239,7 +239,7 @@ export class MultiArray {
             }
         }
         result.dim = [result.array.length, result.array.length ? result.array[0].length : 0];
-        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -344,7 +344,7 @@ export class MultiArray {
         for (let i = 0; i < M.dim[0]; i++) {
             result.array[i] = M.array[i].map(f as any);
         }
-        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -356,7 +356,7 @@ export class MultiArray {
         }
         const result = new MultiArray([1, temp.length]);
         result.array = [temp];
-        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -403,7 +403,7 @@ export class MultiArray {
                         result.array[i][j] = temp.array[n % temp.dim[1]][Math.floor(n / temp.dim[1])];
                     }
                 }
-                result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+                result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
                 return result;
             } else {
                 const n = MultiArray.testIndex(argumentsList[0], temp.dim[0] * temp.dim[1], temp, id + '(' + argumentsList[0].re.toNumber() + ')');
@@ -442,7 +442,7 @@ export class MultiArray {
                     }
                 }
             }
-            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
             if (result.dim[0] == 1 && result.dim[1] == 1) {
                 return result.array[0][0];
             } else {
@@ -472,7 +472,7 @@ export class MultiArray {
                     }
                 }
             }
-            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
             return result;
         }
     }
@@ -496,7 +496,7 @@ export class MultiArray {
                 result.array[i][j] = ComplexDecimal[op](left, right.array[i][j]);
             }
         }
-        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -519,7 +519,7 @@ export class MultiArray {
                 result.array[i][j] = ComplexDecimal[op](left.array[i][j], right);
             }
         }
-        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -537,7 +537,7 @@ export class MultiArray {
                 result.array[i][j] = ComplexDecimal[op](right.array[i][j]);
             }
         }
-        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -562,7 +562,7 @@ export class MultiArray {
                     result.array[i][j] = ComplexDecimal[op](left.array[i][j], right.array[i][j]);
                 }
             }
-            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else if (left.dim[0] === right.dim[0]) {
             // left and right has same number of rows
@@ -587,7 +587,7 @@ export class MultiArray {
                     result.array[i][j] = ComplexDecimal[op](col.array[i][0], matrix.array[i][j]);
                 }
             }
-            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else if (left.dim[1] === right.dim[1]) {
             // left and right has same number of columns
@@ -612,7 +612,7 @@ export class MultiArray {
                     result.array[i][j] = ComplexDecimal[op](row.array[0][j], matrix.array[i][j]);
                 }
             }
-            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else if (left.dim[0] === 1 && right.dim[1] === 1) {
             // left has one row and right has one column
@@ -623,7 +623,7 @@ export class MultiArray {
                     result.array[i][j] = ComplexDecimal[op](left.array[0][j], right.array[i][0]);
                 }
             }
-            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else if (left.dim[1] === 1 && right.dim[0] === 1) {
             // left has one column and right has one row
@@ -634,10 +634,12 @@ export class MultiArray {
                     result.array[i][j] = ComplexDecimal[op](left.array[i][0], right.array[0][j]);
                 }
             }
-            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else {
-            throw new Error(`operator ${op}: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]}).`);
+            throw new Error(
+                `operator ${op}: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]}).`,
+            );
         }
     }
 
@@ -920,7 +922,7 @@ export class MultiArray {
                 result.array[i][j] = Object.assign({}, left.array[j][i]);
             }
         }
-        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -937,7 +939,7 @@ export class MultiArray {
                 result.array[i][j] = ComplexDecimal.conj(left.array[j][i]);
             }
         }
-        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return result;
     }
 
@@ -986,7 +988,7 @@ export class MultiArray {
                     temp.array[i + U.dim[0]][j] = Object.assign({}, D.array[i][j]);
                 }
             }
-            temp.type = Math.max(...temp.array.map(row => ComplexDecimal.maxNumberType(...row)));
+            temp.type = Math.max(...temp.array.map((row) => ComplexDecimal.maxNumberType(...row)));
             return temp;
         } else {
             throw new Error(`invalid dimensions in vertcat function.`);
@@ -1010,12 +1012,11 @@ export class MultiArray {
             result.array = [new Array(temp.dim[1])];
             if (temp.type === ComplexDecimal.numberClass.complex) {
                 for (let j = 0; j < temp.dim[1]; j++) {
-                    result.array[0][j] = ComplexDecimal.minMaxArrayComplex(cmp, ...temp.array.map(row => row[j]));
+                    result.array[0][j] = ComplexDecimal.minMaxArrayComplex(cmp, ...temp.array.map((row) => row[j]));
                 }
-            }
-            else {
+            } else {
                 for (let j = 0; j < temp.dim[1]; j++) {
-                    result.array[0][j] = ComplexDecimal.minMaxArrayReal(cmp, ...temp.array.map(row => row[j]));
+                    result.array[0][j] = ComplexDecimal.minMaxArrayReal(cmp, ...temp.array.map((row) => row[j]));
                 }
             }
             result.type = temp.type;
@@ -1024,8 +1025,7 @@ export class MultiArray {
             } else {
                 return result;
             }
-        }
-        else {
+        } else {
             return M;
         }
     }
@@ -1075,7 +1075,7 @@ export class MultiArray {
             }
             result.array[0][j] = ComplexDecimal.rdiv(result.array[0][j], new ComplexDecimal(temp.dim[0], 0));
         }
-        result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         if (temp.dim[1] === 1) {
             return result.array[0][0];
         } else {
@@ -1247,7 +1247,7 @@ export class MultiArray {
             //matrix I should be the inverse:
             const result = new MultiArray(M.dim);
             result.array = I;
-            result.type = Math.max(...result.array.map(row => ComplexDecimal.maxNumberType(...row)));
+            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
             return result;
         } else {
             throw new Error(`inverse: A must be a square matrix.`);
@@ -1301,7 +1301,7 @@ export class MultiArray {
                 temp.array[i][j] = ComplexDecimal.mul(sign, MultiArray.det(minor));
             }
         }
-        temp.type = Math.max(...temp.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        temp.type = Math.max(...temp.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return temp;
     }
 
@@ -1388,7 +1388,7 @@ export class MultiArray {
                 A.array[k][n] = ComplexDecimal.sub(A.array[k][n], ComplexDecimal.mul(A.array[k][i], X.array[0][i]));
             }
         }
-        X.type = Math.max(...X.array.map(row => ComplexDecimal.maxNumberType(...row)));
+        X.type = Math.max(...X.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return X;
     }
 

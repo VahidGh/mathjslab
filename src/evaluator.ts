@@ -71,7 +71,7 @@ interface PrimaryNode {
 /**
  * Reserved node.
  */
-interface NodeReserved extends PrimaryNode { }
+interface NodeReserved extends PrimaryNode {}
 
 /**
  * Name node.
@@ -201,7 +201,7 @@ export class Evaluator {
     /**
      * Name table.
      */
-    public nameTable: { [k: string]: { args: Array<any>, expr: any } } = {};
+    public nameTable: { [k: string]: { args: Array<any>; expr: any } } = {};
 
     public readonlyNameTable: string[] = [];
 
@@ -239,39 +239,34 @@ export class Evaluator {
      */
     public exitStatus: number = Evaluator.response.OK;
 
-    private incDecOp(pre: boolean, operation: 'plus' | 'minus'): ((tree: any) => any) {
+    private incDecOp(pre: boolean, operation: 'plus' | 'minus'): (tree: any) => any {
         if (pre) {
             return (tree: any): any => {
                 if (tree.type === 'NAME') {
                     if (this.nameTable[tree.id].expr) {
                         this.nameTable[tree.id].expr = Tensor[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
                         return this.nameTable[tree.id].expr;
+                    } else {
+                        throw new Error('in x++ or ++x, x must be defined first.');
                     }
-                    else {
-                        throw new Error('in x++ or ++x, x must be defined first.')
-                    }
-                }
-                else {
+                } else {
                     throw new SyntaxError(`invalid ${operation === 'plus' ? 'increment' : 'decrement'} variable.`);
                 }
-            }
-        }
-        else {
+            };
+        } else {
             return (tree: any): any => {
                 if (tree.type === 'NAME') {
                     if (this.nameTable[tree.id].expr) {
                         const value = Tensor.copy(this.nameTable[tree.id].expr);
                         this.nameTable[tree.id].expr = Tensor[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
                         return value;
+                    } else {
+                        throw new Error('in x++ or ++x, x must be defined first.');
                     }
-                    else {
-                        throw new Error('in x++ or ++x, x must be defined first.')
-                    }
-                }
-                else {
+                } else {
                     throw new SyntaxError(`invalid ${operation === 'plus' ? 'increment' : 'decrement'} variable.`);
                 }
-            }
+            };
         }
     }
 
@@ -656,8 +651,7 @@ export class Evaluator {
                 throw new Error(`${invalidMessage}: cannot assign to a read only value: ${tree.expr.id}.`);
             }
             return tree;
-        }
-        else {
+        } else {
             throw new Error(`${invalidMessage}.`);
         }
     }

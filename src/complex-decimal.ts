@@ -147,8 +147,7 @@ export class ComplexDecimal {
             if (!((value.re.eq(0) || value.re.eq(1)) && value.type === ComplexDecimal.numberClass.logical)) {
                 value.type = ComplexDecimal.numberClass.real;
             }
-        }
-        else {
+        } else {
             value.type = ComplexDecimal.numberClass.complex;
         }
     }
@@ -167,8 +166,7 @@ export class ComplexDecimal {
             if (!((this.re.eq(0) || this.re.eq(1)) && this.type === ComplexDecimal.numberClass.logical)) {
                 this.type = ComplexDecimal.numberClass.real;
             }
-        }
-        else {
+        } else {
             this.type = ComplexDecimal.numberClass.complex;
         }
     }
@@ -446,7 +444,7 @@ export class ComplexDecimal {
      * @returns Highest number type.
      */
     public static maxNumberType(...args: ComplexDecimal[]): number {
-        return Math.max(...args.map(arg => arg.type));
+        return Math.max(...args.map((arg) => arg.type));
     }
 
     /**
@@ -640,10 +638,8 @@ export class ComplexDecimal {
     public static xor(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return (
-            left_prec.re.eq(0) && left_prec.im.eq(0) && !(right_prec.re.eq(0) && right_prec.im.eq(0)) ||
-            !(left_prec.re.eq(0) && left_prec.im.eq(0)) && right_prec.re.eq(0) && right_prec.im.eq(0)
-        )
+        return (left_prec.re.eq(0) && left_prec.im.eq(0) && !(right_prec.re.eq(0) && right_prec.im.eq(0))) ||
+            (!(left_prec.re.eq(0) && left_prec.im.eq(0)) && right_prec.re.eq(0) && right_prec.im.eq(0))
             ? ComplexDecimal.true()
             : ComplexDecimal.false();
     }
