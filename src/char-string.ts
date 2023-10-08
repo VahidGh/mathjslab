@@ -1,7 +1,11 @@
 export class CharString {
+    readonly type = 3;
     str: string;
     constructor(str: string) {
         this.str = str;
+    }
+    get string(): string {
+        return this.str.substring(1,this.str.length-1)
     }
     static isThis(obj: any): boolean {
         return 'str' in obj;
