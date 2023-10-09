@@ -214,7 +214,7 @@ export class MultiArray {
             for (let j = 0; j < tree.array[i].length; j++) {
                 const temp = that.Evaluator(tree.array[i][j], false, fname);
                 if (MultiArray.isThis(temp)) {
-                    if (j == 0) {
+                    if (j === 0) {
                         h = temp.array.length;
                         result.array.splice(k, 1, temp.array[0]);
                         for (let n = 1; n < h; n++) {
@@ -372,84 +372,86 @@ export class MultiArray {
 
     public static oneRowToDim(M: ComplexDecimal[] | MultiArray): number[] {
         if (Array.isArray(M)) {
-            const result = [];
-            for (let i = 0; i < M.length; i++) {
-                result[i] = M[i].re.toNumber();
-            }
-            return result;
+            return M.map(data => data.re.toNumber());
         } else {
-            const result = [];
-            for (let i = 0; i < M.array[0].length; i++) {
-                result[i] = M.array[0][i].re.toNumber();
-            }
-            return result;
+            return M.array[0].map(data => data.re.toNumber());
         }
     }
 
-    public static subMatrix(temp: MultiArray, id: string, argumentsList: Array<any>): any {
-        if (argumentsList.length == 1) {
+    /**
+     * Get selected items from MultiArray by linear index or subscripts.
+     * @param M
+     * @param id
+     * @param argumentsList
+     * @returns
+     */
+    public static getItems(M: MultiArray, id: string, argumentsList: Array<ComplexDecimal | MultiArray>): MultiArray | ComplexDecimal {
+        let result: MultiArray;
+        if (argumentsList.length === 0) {
+            return M;
+        }
+        else if (argumentsList.length === 1) {
             // single value indexing
             if ('array' in argumentsList[0]) {
-                const result = new MultiArray(argumentsList[0].dim.slice(0, 2));
+                result = new MultiArray(argumentsList[0].dim.slice(0, 2));
                 for (let i = 0; i < argumentsList[0].dim[0]; i++) {
                     result.array[i] = new Array(argumentsList[0].dim[1]);
                     for (let j = 0; j < argumentsList[0].dim[1]; j++) {
                         const n = MultiArray.testIndex(
                             argumentsList[0].array[i][j],
-                            temp.dim[0] * temp.dim[1],
-                            temp,
-                            id + '(' + argumentsList[0].array[i][j].re.toNumber() + ')',
+                            M.dim[0] * M.dim[1],
+                            M,
+                            `${id}(${argumentsList[0].array[i][j].re.toNumber()})`
                         );
-                        result.array[i][j] = temp.array[n % temp.dim[1]][Math.floor(n / temp.dim[1])];
+                        result.array[i][j] = M.array[n % M.dim[0]][Math.trunc(n / M.dim[0])];
                     }
                 }
                 result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
-                return result;
             } else {
-                const n = MultiArray.testIndex(argumentsList[0], temp.dim[0] * temp.dim[1], temp, id + '(' + argumentsList[0].re.toNumber() + ')');
-                return temp.array[n % temp.dim[1]][Math.floor(n / temp.dim[1])];
-            }
-        } else if (argumentsList.length == 2) {
-            // double value indexing
-            argumentsList[0] = MultiArray.number2matrix1x1(argumentsList[0]);
-            argumentsList[1] = MultiArray.number2matrix1x1(argumentsList[1]);
-            const rows = argumentsList[0].dim[0] * argumentsList[0].dim[1];
-            const cols = argumentsList[1].dim[0] * argumentsList[1].dim[1];
-            const result = new MultiArray([rows, cols]);
-            let s = 0;
-            for (let j = 0; j < argumentsList[0].dim[1]; j++) {
-                for (let i = 0; i < argumentsList[0].dim[0]; i++) {
-                    const p = MultiArray.testIndex(
-                        argumentsList[0].array[i][j],
-                        temp.dim[0],
-                        temp,
-                        id + '(' + argumentsList[0].array[i][j].re.toNumber() + ',_)',
-                    );
-                    for (let n = 0; n < argumentsList[1].dim[1]; n++) {
-                        for (let m = 0; m < argumentsList[1].dim[0]; m++) {
-                            const q = MultiArray.testIndex(
-                                argumentsList[1].array[m][n],
-                                temp.dim[1],
-                                temp,
-                                id + '(_,' + argumentsList[1].array[m][n].re.toNumber() + ')',
-                            );
-                            if (!(s % cols)) {
-                                result.array[Math.floor(s / cols)] = new Array(cols);
-                            }
-                            result.array[Math.floor(s / cols)][s % cols] = temp.array[p][q];
-                            s++;
-                        }
-                    }
-                }
-            }
-            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
-            if (result.dim[0] == 1 && result.dim[1] == 1) {
-                return result.array[0][0];
-            } else {
-                return result;
+                /* Is a ComplexDecimal value */
+                const n = MultiArray.testIndex(argumentsList[0], M.dim[0] * M.dim[1], M, `${id}(${argumentsList[0].re.toNumber()})`);
+                return M.array[n % M.dim[0]][Math.floor(n / M.dim[0])];
             }
         } else {
-            throw new Error(`${id}(_,_,...): out of bounds (dimensions are ${temp.dim[0]}x${temp.dim[1]}).`);
+            // multiple value indexing
+            if (argumentsList.length > 2) {
+                throw new Error(`${id}(_,_,...): out of bounds (dimensions are ${M.dim[0]}x${M.dim[1]}).`);
+            }
+            const args: ComplexDecimal[][] = [];
+            for (let i=0; i<argumentsList.length; i++) {
+                if ('array' in argumentsList[i]) {
+                    args[i] = MultiArray.linearize(argumentsList[i] as MultiArray);
+                }
+                else {
+                    /* Is a ComplexDecimal value */
+                    args[i] = [argumentsList[i] as ComplexDecimal];
+                }
+            }
+            result = new MultiArray([args[0].length, args[1].length]);
+            for (let i = 0; i < args[0].length; i++) {
+                const p = MultiArray.testIndex(
+                    args[0][i],
+                    M.dim[0],
+                    M,
+                    `${id}(${args[0][i].re.toNumber()},_)`
+                );
+                result.array[i] = new Array(args[1].length);
+                for (let j = 0; j < args[1].length; j++) {
+                    const q = MultiArray.testIndex(
+                        args[1][j],
+                        M.dim[1],
+                        M,
+                        `${id}(${args[1][j].re.toNumber()},_)`
+                    );
+                    result.array[i][j] = M.array[p][q];
+                }
+            }
+        }
+        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
+        if (result.dim[0] === 1 && result.dim[1] === 1) {
+            return result.array[0][0];
+        } else {
+            return result;
         }
     }
 
@@ -478,7 +480,7 @@ export class MultiArray {
     }
 
     /**
-     * Operation scalar * matrix.
+     * Operation scalar _ matrix.
      * @param op
      * @param left
      * @param right
@@ -501,7 +503,7 @@ export class MultiArray {
     }
 
     /**
-     * Operation matrix * scalar.
+     * Operation matrix _ scalar.
      * @param op
      * @param left
      * @param right
@@ -592,7 +594,7 @@ export class MultiArray {
         } else if (left.dim[1] === right.dim[1]) {
             // left and right has same number of columns
             let row, matrix;
-            if (left.dim[0] == 1) {
+            if (left.dim[0] === 1) {
                 // left has one row
                 row = left;
                 matrix = right;
@@ -748,7 +750,7 @@ export class MultiArray {
      * @returns
      */
     public static ind2sub(DIMS: any, IND: any) {
-        if (arguments.length == 2) {
+        if (arguments.length === 2) {
             return new ComplexDecimal(1, 0);
         } else {
             throw new Error(`Invalid call to ind2sub.`);
@@ -763,7 +765,7 @@ export class MultiArray {
     public static zeros(...args: any): MultiArray | ComplexDecimal {
         if (!args.length) {
             return ComplexDecimal.zero();
-        } else if (args.length == 1) {
+        } else if (args.length === 1) {
             if ('re' in args[0]) {
                 return new MultiArray([args[0].re.toNumber(), args[0].re.toNumber()], ComplexDecimal.zero());
             } else {
@@ -782,7 +784,7 @@ export class MultiArray {
     public static ones(...args: any): MultiArray | ComplexDecimal {
         if (!args.length) {
             return ComplexDecimal.one();
-        } else if (args.length == 1) {
+        } else if (args.length === 1) {
             if ('re' in args[0]) {
                 return new MultiArray([args[0].re.toNumber(), args[0].re.toNumber()], ComplexDecimal.one());
             } else {
@@ -822,7 +824,7 @@ export class MultiArray {
         let result: MultiArray;
         if (!args.length) {
             return new ComplexDecimal(Math.random());
-        } else if (args.length == 1) {
+        } else if (args.length === 1) {
             if ('re' in args[0]) {
                 result = new MultiArray([args[0].re.toNumber(), args[0].re.toNumber()]);
             } else {
@@ -861,7 +863,7 @@ export class MultiArray {
         };
         if (!args.length) {
             return new ComplexDecimal(getRandom());
-        } else if (args.length == 1) {
+        } else if (args.length === 1) {
             if ('re' in args[0]) {
                 result = new MultiArray([args[0].re.toNumber(), args[0].re.toNumber()]);
             } else {
@@ -950,7 +952,7 @@ export class MultiArray {
      * @returns
      */
     public static horzcat(L: MultiArray, R: MultiArray): MultiArray {
-        if (L.dim[0] == R.dim[0]) {
+        if (L.dim[0] === R.dim[0]) {
             const temp = new MultiArray([L.dim[0], L.dim[1] + R.dim[1]]);
             for (let i = 0; i < L.dim[0]; i++) {
                 temp.array[i] = [];
@@ -974,7 +976,7 @@ export class MultiArray {
      * @returns
      */
     public static vertcat(U: MultiArray, D: MultiArray): MultiArray {
-        if (U.dim[1] == D.dim[1]) {
+        if (U.dim[1] === D.dim[1]) {
             const temp = new MultiArray([U.dim[0] + D.dim[0], U.dim[1]]);
             for (let i = 0; i < U.dim[0]; i++) {
                 temp.array[i] = [];
@@ -1093,7 +1095,7 @@ export class MultiArray {
      * @returns
      */
     public static trace(M: MultiArray): ComplexDecimal {
-        if (M.dim[0] == M.dim[1]) {
+        if (M.dim[0] === M.dim[1]) {
             let temp: ComplexDecimal = ComplexDecimal.zero();
             for (let i = 0; i < M.dim[0]; i++) {
                 temp = ComplexDecimal.add(temp, M.array[i][i]);
@@ -1110,10 +1112,10 @@ export class MultiArray {
      * @returns
      */
     public static det(M: MultiArray): ComplexDecimal {
-        if (M.dim[0] == M.dim[1]) {
+        if (M.dim[0] === M.dim[1]) {
             let det = ComplexDecimal.zero();
-            if (M.dim[0] == 1) det = M.array[0][0];
-            else if (M.dim[0] == 2)
+            if (M.dim[0] === 1) det = M.array[0][0];
+            else if (M.dim[0] === 2)
                 det = ComplexDecimal.sub(ComplexDecimal.mul(M.array[0][0], M.array[1][1]), ComplexDecimal.mul(M.array[0][1], M.array[1][0]));
             else {
                 det = ComplexDecimal.zero();
@@ -1122,7 +1124,7 @@ export class MultiArray {
                     for (let i = 1; i < M.dim[0]; i++) {
                         let j2 = 0;
                         for (let j = 0; j < M.dim[0]; j++) {
-                            if (j == j1) continue;
+                            if (j === j1) continue;
                             m.array[i - 1][j2] = M.array[i][j];
                             j2++;
                         }
@@ -1157,7 +1159,7 @@ export class MultiArray {
         // (c) Add 2 rows
 
         //if the matrix isn't square: exit (error)
-        if (M.dim[0] == M.dim[1]) {
+        if (M.dim[0] === M.dim[1]) {
             //create the identity matrix (I), and a copy (C) of the original
             let i = 0,
                 ii = 0,
@@ -1172,7 +1174,7 @@ export class MultiArray {
                 C[C.length] = [];
                 for (j = 0; j < dim; j += 1) {
                     //if we're on the diagonal, put a 1 (for identity)
-                    if (i == j) {
+                    if (i === j) {
                         I[i][j] = ComplexDecimal.one();
                     } else {
                         I[i][j] = ComplexDecimal.zero();
@@ -1225,7 +1227,7 @@ export class MultiArray {
                 // rows above and below this one
                 for (ii = 0; ii < dim; ii++) {
                     // Only apply to other rows (we want a 1 on the diagonal)
-                    if (ii == i) {
+                    if (ii === i) {
                         continue;
                     }
 
@@ -1293,7 +1295,7 @@ export class MultiArray {
             for (let j = 0; j < M.dim[1]; j++) {
                 const minor = MultiArray.minor(M, new ComplexDecimal(i + 1, 0), new ComplexDecimal(j + 1, 0));
                 let sign: ComplexDecimal;
-                if ((i + j) % 2 == 0) {
+                if ((i + j) % 2 === 0) {
                     sign = ComplexDecimal.one();
                 } else {
                     sign = ComplexDecimal.minusone();
@@ -1339,7 +1341,7 @@ export class MultiArray {
         const A: MultiArray = MultiArray.copy(M);
         let i: number, k: number, j: number;
         const DMin = Math.min(x.dim[0], x.dim[1]);
-        if (DMin == x.dim[1]) {
+        if (DMin === x.dim[1]) {
             x = MultiArray.transpose(x);
         }
 

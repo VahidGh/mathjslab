@@ -23,7 +23,16 @@ export type TBaseFunctionTableEntry = {
     ev: boolean[];
     func: Function;
 };
-export type TBaseFunctionTable = { [k: string]: TBaseFunctionTableEntry };
+export type TBaseFunctionTable = Record<string,TBaseFunctionTableEntry>;
+
+/**
+ * nameTable type.
+ */
+export type TNameTableEntry = {
+    args: Array<any>;
+    expr: any
+};
+export type TNameTable = Record<string,TNameTableEntry>;
 
 /**
  * commandWordListTable type.
@@ -32,7 +41,7 @@ export type TCommandWordListFunction = (...args: string[]) => void;
 export type TCommandWordListTableEntry = {
     func: TCommandWordListFunction;
 };
-export type TCommandWordListTable = { [k: string]: TCommandWordListTableEntry };
+export type TCommandWordListTable = Record<string,TCommandWordListTableEntry>;
 
 /**
  * TEvaluatorConfig type.
@@ -184,7 +193,7 @@ export class Evaluator {
      * Native name table. It's inserted in nameTable when
      * `Evaluator.initialize` executed.
      */
-    private readonly nativeNameTable: { [k: string]: any } = {
+    private readonly nativeNameTable: Record<string,ComplexDecimal> = {
         false: ComplexDecimal.false(),
         true: ComplexDecimal.true(),
         i: ComplexDecimal.onei(),
@@ -201,7 +210,7 @@ export class Evaluator {
     /**
      * Name table.
      */
-    public nameTable: { [k: string]: { args: Array<any>; expr: any } } = {};
+    public nameTable: TNameTable = {};
 
     public readonlyNameTable: string[] = [];
 
@@ -222,7 +231,7 @@ export class Evaluator {
     /**
      * Local table.
      */
-    public localTable: { [k: string]: any } = {};
+    public localTable: Record<string,any> = {};
 
     /**
      * Command word list table.
@@ -273,7 +282,7 @@ export class Evaluator {
     /**
      * Operator table.
      */
-    private readonly opTable: { [k: string]: Function } = {
+    private readonly opTable: Record<string,Function> = {
         '+': Tensor.plus,
         '-': Tensor.minus,
         '.*': Tensor.times,
@@ -329,7 +338,7 @@ export class Evaluator {
     public readonly unparseTensorML = MultiArray.unparseML;
     public readonly evaluateTensor = MultiArray.evaluate;
     public readonly mapTensor = MultiArray.map;
-    public readonly subTensor = MultiArray.subMatrix;
+    public readonly getItems = MultiArray.getItems;
     public readonly expandRange = MultiArray.expandRange;
     public readonly firstRow = MultiArray.firstRow;
     public readonly appendRow = MultiArray.appendRow;
@@ -428,7 +437,7 @@ export class Evaluator {
     public aliasName: (name: string) => string = (name: string): string => name;
 
     /**
-     * Reload native name table in name table.
+     * Load native name table in name table.
      */
     private loadNativeTable(): void {
         /* Insert nativeNameTable in nameTable */
@@ -766,7 +775,7 @@ export class Evaluator {
     public Evaluator(tree: any, local: boolean, fname: string): any {
         let aliasTreeName: string;
         if (this.debug) {
-            console.log('Evaluator(tree:' + JSON.stringify(tree, null, 2) + ',local:' + local + ',fname:' + fname + ')');
+            console.log(`Evaluator(\ntree:${JSON.stringify(tree, null, 2)},\nlocal:${local},\nfname:${fname})`);
         }
         if ('list' in tree) {
             const result = { list: new Array(tree.list.length) };
@@ -919,10 +928,10 @@ export class Evaluator {
                         }
                     }
                 case 'ARG':
+                    const argumentsList: any[] = [];
                     if (tree.expr.type === 'NAME') {
                         /* Matrix indexing or function call */
                         aliasTreeName = this.aliasName(tree.expr.id);
-                        const argumentsList: any[] = [];
                         if (aliasTreeName in this.baseFunctionTable) {
                             /* Is base function */
                             if (typeof this.baseFunctionTable[aliasTreeName]['mapper'] !== 'undefined') {
@@ -933,7 +942,7 @@ export class Evaluator {
                                 }
                                 if (this.baseFunctionTable[aliasTreeName].mapper && argumentsList.length !== 1) {
                                     /* Error if mapper and #arguments!==1 (Invalid call) */
-                                    throw new Error('Invalid call to ' + aliasTreeName + '.');
+                                    throw new Error(`Invalid call to ${aliasTreeName}.`);
                                 }
                                 if (argumentsList.length === 1 && 'array' in argumentsList[0] && this.baseFunctionTable[aliasTreeName].mapper) {
                                     /* Test if is mapper */
@@ -968,7 +977,7 @@ export class Evaluator {
                                         /* Evaluate index list */
                                         argumentsList[i] = this.Evaluator(tree.args[i], local, fname);
                                     }
-                                    return this.subTensor(temp, tree.expr.id, argumentsList);
+                                    return this.getItems(temp, tree.expr.id, argumentsList);
                                 } else {
                                     throw new Error('invalid matrix indexing or function arguments.');
                                 }
@@ -993,19 +1002,22 @@ export class Evaluator {
                                 return temp;
                             }
                         } else {
-                            throw new Error("'" + tree.id + "' undefined.");
+                            throw new Error(`'${tree.id}' undefined.`);
                         }
                     } else {
                         /* literal indexing, ex: [1,2;3,4](1,2) */
-                        console.log('literal indexing');
-                        return tree; /** */
+                        for (let i = 0; i < tree.args.length; i++) {
+                            /* Evaluate index list */
+                            argumentsList[i] = this.Evaluator(tree.args[i], local, fname);
+                        }
+                        return this.getItems(tree.expr, '', argumentsList);
                     }
                 case 'CmdWList':
                     this.commandWordListTable[tree.id].func(...tree.args.map((word: { str: string }) => word.str));
                     this.exitStatus = Evaluator.response.EXTERNAL;
                     return tree;
                 default:
-                    throw new Error("evaluating undefined type '" + tree.type + "'.");
+                    throw new Error(`evaluating undefined type '${tree.type}'.`);
             }
         }
     }
@@ -1336,7 +1348,7 @@ export class Evaluator {
                                         return '<mi>' + substGreek(tree.expr.id) + '</mi><mrow><mo>(</mo>' + arglist + '<mo>)</mo></mrow>';
                                 }
                             } else {
-                                return '<mi>' + this.unparserML(tree.expr) + '</mi><mrow><mo>(</mo>' + arglist + '<mo>)</mo></mrow>';
+                                return this.unparserML(tree.expr) + '<mrow><mo>(</mo>' + arglist + '<mo>)</mo></mrow>';
                             }
                         }
                     case 'CmdWList':
