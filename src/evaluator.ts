@@ -23,16 +23,16 @@ export type TBaseFunctionTableEntry = {
     ev: boolean[];
     func: Function;
 };
-export type TBaseFunctionTable = Record<string,TBaseFunctionTableEntry>;
+export type TBaseFunctionTable = Record<string, TBaseFunctionTableEntry>;
 
 /**
  * nameTable type.
  */
 export type TNameTableEntry = {
     args: Array<any>;
-    expr: any
+    expr: any;
 };
-export type TNameTable = Record<string,TNameTableEntry>;
+export type TNameTable = Record<string, TNameTableEntry>;
 
 /**
  * commandWordListTable type.
@@ -41,7 +41,7 @@ export type TCommandWordListFunction = (...args: string[]) => void;
 export type TCommandWordListTableEntry = {
     func: TCommandWordListFunction;
 };
-export type TCommandWordListTable = Record<string,TCommandWordListTableEntry>;
+export type TCommandWordListTable = Record<string, TCommandWordListTableEntry>;
 
 /**
  * TEvaluatorConfig type.
@@ -193,7 +193,7 @@ export class Evaluator {
      * Native name table. It's inserted in nameTable when
      * `Evaluator.initialize` executed.
      */
-    private readonly nativeNameTable: Record<string,ComplexDecimal> = {
+    private readonly nativeNameTable: Record<string, ComplexDecimal> = {
         false: ComplexDecimal.false(),
         true: ComplexDecimal.true(),
         i: ComplexDecimal.onei(),
@@ -231,7 +231,7 @@ export class Evaluator {
     /**
      * Local table.
      */
-    public localTable: Record<string,any> = {};
+    public localTable: Record<string, any> = {};
 
     /**
      * Command word list table.
@@ -282,7 +282,7 @@ export class Evaluator {
     /**
      * Operator table.
      */
-    private readonly opTable: Record<string,Function> = {
+    private readonly opTable: Record<string, Function> = {
         '+': Tensor.plus,
         '-': Tensor.minus,
         '.*': Tensor.times,
@@ -460,6 +460,23 @@ export class Evaluator {
         this.localTable = {};
         this.readonlyNameTable = [];
         this.loadNativeTable();
+    }
+
+    /**
+     * Clear variables. If names is 0 lenght restart evaluator.
+     * @param names
+     */
+    public Clear(...names: string[]): void {
+        if (names.length === 0) {
+            this.Restart();
+        } else {
+            names.forEach((name) => {
+                if (!this.readonlyNameTable.includes(name)) {
+                    delete this.nameTable[name];
+                    delete this.baseFunctionTable[name];
+                }
+            });
+        }
     }
 
     /**
@@ -649,20 +666,36 @@ export class Evaluator {
      * @returns
      */
     public validateAssignment(tree: any): any {
-        const invalidMessage = 'invalid left hand side of assignment';
+        const invalidMessageBase = 'invalid left hand side of assignment';
+        const invalidMessage = `${invalidMessageBase}: cannot assign to a read only value:`;
+        let result: any;
         if (tree.type === 'NAME') {
             if (this.readonlyNameTable.includes(tree.id)) {
-                throw new Error(`${invalidMessage}: cannot assign to a read only value: ${tree.id}.`);
+                throw new Error(`${invalidMessage} ${tree.id}.`);
             }
-            return tree;
+            result = {
+                left: tree,
+                id: tree.id,
+                aliasTreeName: this.aliasName(tree.id),
+                args: [],
+            };
         } else if (tree.type === 'ARG' && tree.expr.type === 'NAME') {
             if (this.readonlyNameTable.includes(tree.expr.id)) {
-                throw new Error(`${invalidMessage}: cannot assign to a read only value: ${tree.expr.id}.`);
+                throw new Error(`${invalidMessage} ${tree.expr.id}.`);
             }
-            return tree;
+            result = {
+                left: tree.expr,
+                id: tree.expr.id,
+                aliasTreeName: this.aliasName(tree.expr.id),
+                args: tree.args,
+            };
         } else {
-            throw new Error(`${invalidMessage}.`);
+            throw new Error(`${invalidMessageBase}.`);
         }
+        if (result.aliasTreeName in this.baseFunctionTable) {
+            throw new Error(`${invalidMessage} ${result.aliasTreeName}.`);
+        }
+        return result;
     }
 
     /**
@@ -773,7 +806,6 @@ export class Evaluator {
      * @returns
      */
     public Evaluator(tree: any, local: boolean, fname: string): any {
-        let aliasTreeName: string;
         if (this.debug) {
             console.log(`Evaluator(\ntree:${JSON.stringify(tree, null, 2)},\nlocal:${local},\nfname:${fname})`);
         }
@@ -865,51 +897,52 @@ export class Evaluator {
                 case '.**=':
                 case '&=':
                 case '|=':
-                    this.validateAssignment(tree.left);
+                    let { left, id, aliasTreeName, args } = this.validateAssignment(tree.left);
                     const op: string = tree.type.substring(0, tree.type.length - 1);
-                    let left;
-                    let id;
-                    let args;
-                    if (tree.left.type === 'NAME') {
-                        left = tree.left;
-                        id = tree.left.id;
-                        aliasTreeName = this.aliasName(tree.left.id);
-                        args = [];
+                    if (args.length === 0) {
+                        /* Name definition */
+                        const expr = op.length ? this.nodeOp(op, left, tree.right) : tree.right;
+                        try {
+                            this.nameTable[id] = { args: [], expr: this.Evaluator(expr, false, fname) };
+                            return this.nodeOp('=', left, this.nameTable[id].expr);
+                        } catch (e) {
+                            this.nameTable[id] = { args: [], expr: expr };
+                            throw e;
+                        }
                     } else {
-                        /* (tree.left.type==='ARG') && (tree.left.expr.type==='NAME') */
-                        left = tree.left.expr;
-                        id = tree.left.expr.id;
-                        aliasTreeName = this.aliasName(tree.left.expr.id);
-                        args = tree.left.args;
-                    }
-                    if (aliasTreeName in this.baseFunctionTable) {
-                        throw new Error(`cannot assign to reserved name: ${aliasTreeName}.`);
-                    } else {
-                        if (args.length === 0) {
-                            /* Name definition */
-                            const expr = op.length ? this.nodeOp(op, left, tree.right) : tree.right;
-                            try {
-                                this.nameTable[id] = { args: [], expr: this.Evaluator(expr, false, fname) };
-                                return this.nodeOp('=', left, this.nameTable[id].expr);
-                            } catch (e) {
-                                this.nameTable[id] = { args: [], expr: expr };
-                                throw e;
+                        if (op) {
+                            if (this.nameTable[id]) {
+                            } else {
+                                throw new Error(`in computed assignment ${id}(index) OP= X, ${id} must be defined first.`);
                             }
                         } else {
-                            if (this.nameTable[id] && this.isTensor(this.nameTable[id].expr)) {
-                                /* Matrix indexing refer */
-                                console.log('matrix indexing refer at left hand side');
-                                return tree; /** */
-                            } else {
-                                /* Function definition. Test if args is a list of NAME */
-                                let pass = true;
-                                for (let i = 0; i < args.length; i++) {
-                                    pass = pass && args[i].type === 'NAME';
-                                    if (!pass) throw new Error('invalid arguments in function definition.');
+                            /* Test function definition. Is a function definition if args is a list of undefined NAME */
+                            let isFunction: boolean = true;
+                            for (let i = 0; i < args.length; i++) {
+                                isFunction &&= args[i].type === 'NAME';
+                                if (isFunction) {
+                                    isFunction &&= typeof this.nameTable[args[i].id] === 'undefined';
                                 }
-                                this.nameTable[id] = { args: args, expr: tree.right };
-                                return tree;
+                                if (!isFunction) {
+                                    break;
+                                }
                             }
+                            if (isFunction) {
+                                this.nameTable[id] = { args: args, expr: tree.right };
+                            } else {
+                                console.log('Matrix indexing refer at left hand side');
+                                console.log('left:', left);
+                                console.log('id:', id);
+                                console.log('aliasTreeName:', aliasTreeName);
+                                console.log('args:', args);
+                                if (this.nameTable[id]) {
+                                    console.log('this.nameTable[id] defined');
+                                    console.log(this.nameTable[id]);
+                                } else {
+                                    console.log('this.nameTable[id] undefined');
+                                }
+                            }
+                            return tree;
                         }
                     }
                     break;
@@ -929,6 +962,9 @@ export class Evaluator {
                     }
                 case 'ARG':
                     const argumentsList: any[] = [];
+                    if (typeof tree.expr === 'undefined') {
+                        throw new Error(`'${tree.id}' undefined.`);
+                    }
                     if (tree.expr.type === 'NAME') {
                         /* Matrix indexing or function call */
                         aliasTreeName = this.aliasName(tree.expr.id);
@@ -1002,7 +1038,7 @@ export class Evaluator {
                                 return temp;
                             }
                         } else {
-                            throw new Error(`'${tree.id}' undefined.`);
+                            throw new Error(`'${tree.expr.id}' undefined.`);
                         }
                     } else {
                         /* literal indexing, ex: [1,2;3,4](1,2) */
@@ -1010,7 +1046,7 @@ export class Evaluator {
                             /* Evaluate index list */
                             argumentsList[i] = this.Evaluator(tree.args[i], local, fname);
                         }
-                        return this.getItems(tree.expr, '', argumentsList);
+                        return this.getItems(tree.expr, this.Unparse(tree.expr), argumentsList);
                     }
                 case 'CmdWList':
                     this.commandWordListTable[tree.id].func(...tree.args.map((word: { str: string }) => word.str));

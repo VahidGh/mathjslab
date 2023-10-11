@@ -372,36 +372,49 @@ export class MultiArray {
 
     public static oneRowToDim(M: ComplexDecimal[] | MultiArray): number[] {
         if (Array.isArray(M)) {
-            return M.map(data => data.re.toNumber());
+            return M.map((data) => data.re.toNumber());
         } else {
-            return M.array[0].map(data => data.re.toNumber());
+            return M.array[0].map((data) => data.re.toNumber());
         }
+    }
+
+    public static setItems(
+        M: MultiArray,
+        id: string,
+        indexList: Array<ComplexDecimal | MultiArray>,
+        value: MultiArray | ComplexDecimal,
+    ): MultiArray | ComplexDecimal {
+        let result: MultiArray;
+        result = new MultiArray([1, 1]);
+        if (indexList.length === 0) {
+            return M;
+        }
+        return result;
     }
 
     /**
      * Get selected items from MultiArray by linear index or subscripts.
      * @param M
      * @param id
-     * @param argumentsList
+     * @param indexList
      * @returns
      */
-    public static getItems(M: MultiArray, id: string, argumentsList: Array<ComplexDecimal | MultiArray>): MultiArray | ComplexDecimal {
+    public static getItems(M: MultiArray, id: string, indexList: Array<ComplexDecimal | MultiArray>): MultiArray | ComplexDecimal {
         let result: MultiArray;
-        if (argumentsList.length === 0) {
+        if (indexList.length === 0) {
             return M;
-        }
-        else if (argumentsList.length === 1) {
+        } else if (indexList.length === 1) {
             // single value indexing
-            if ('array' in argumentsList[0]) {
-                result = new MultiArray(argumentsList[0].dim.slice(0, 2));
-                for (let i = 0; i < argumentsList[0].dim[0]; i++) {
-                    result.array[i] = new Array(argumentsList[0].dim[1]);
-                    for (let j = 0; j < argumentsList[0].dim[1]; j++) {
+            if ('array' in indexList[0]) {
+                result = new MultiArray(indexList[0].dim.slice(0, 2));
+                for (let i = 0; i < indexList[0].dim[0]; i++) {
+                    result.array[i] = new Array(indexList[0].dim[1]);
+                    for (let j = 0; j < indexList[0].dim[1]; j++) {
                         const n = MultiArray.testIndex(
-                            argumentsList[0].array[i][j],
+                            indexList[0].array[i][j],
                             M.dim[0] * M.dim[1],
                             M,
-                            `${id}(${argumentsList[0].array[i][j].re.toNumber()})`
+                            `${id}(${indexList[0].array[i][j].re.toNumber()})`,
                         );
                         result.array[i][j] = M.array[n % M.dim[0]][Math.trunc(n / M.dim[0])];
                     }
@@ -409,40 +422,29 @@ export class MultiArray {
                 result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
             } else {
                 /* Is a ComplexDecimal value */
-                const n = MultiArray.testIndex(argumentsList[0], M.dim[0] * M.dim[1], M, `${id}(${argumentsList[0].re.toNumber()})`);
+                const n = MultiArray.testIndex(indexList[0], M.dim[0] * M.dim[1], M, `${id}(${indexList[0].re.toNumber()})`);
                 return M.array[n % M.dim[0]][Math.floor(n / M.dim[0])];
             }
         } else {
             // multiple value indexing
-            if (argumentsList.length > 2) {
+            if (indexList.length > 2) {
                 throw new Error(`${id}(_,_,...): out of bounds (dimensions are ${M.dim[0]}x${M.dim[1]}).`);
             }
             const args: ComplexDecimal[][] = [];
-            for (let i=0; i<argumentsList.length; i++) {
-                if ('array' in argumentsList[i]) {
-                    args[i] = MultiArray.linearize(argumentsList[i] as MultiArray);
-                }
-                else {
+            for (let i = 0; i < indexList.length; i++) {
+                if ('array' in indexList[i]) {
+                    args[i] = MultiArray.linearize(indexList[i] as MultiArray);
+                } else {
                     /* Is a ComplexDecimal value */
-                    args[i] = [argumentsList[i] as ComplexDecimal];
+                    args[i] = [indexList[i] as ComplexDecimal];
                 }
             }
             result = new MultiArray([args[0].length, args[1].length]);
             for (let i = 0; i < args[0].length; i++) {
-                const p = MultiArray.testIndex(
-                    args[0][i],
-                    M.dim[0],
-                    M,
-                    `${id}(${args[0][i].re.toNumber()},_)`
-                );
+                const p = MultiArray.testIndex(args[0][i], M.dim[0], M, `${id}(${args[0][i].re.toNumber()},_)`);
                 result.array[i] = new Array(args[1].length);
                 for (let j = 0; j < args[1].length; j++) {
-                    const q = MultiArray.testIndex(
-                        args[1][j],
-                        M.dim[1],
-                        M,
-                        `${id}(${args[1][j].re.toNumber()},_)`
-                    );
+                    const q = MultiArray.testIndex(args[1][j], M.dim[1], M, `${id}(${args[1][j].re.toNumber()},_)`);
                     result.array[i][j] = M.array[p][q];
                 }
             }
