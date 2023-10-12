@@ -80,7 +80,7 @@ Initialize evaluator with:
 let evaluator = Evaluator.initialize(EvaluatorConfiguration);
 ```
 
-Examples:
+### Examples:
 
 * Parsing
 ```typescript

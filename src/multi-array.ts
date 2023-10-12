@@ -37,7 +37,9 @@ export class MultiArray {
         min: MultiArray.min,
         max: MultiArray.max,
         mean: MultiArray.mean,
+        sum: MultiArray.sum,
         sumsq: MultiArray.sumsq,
+        prod: MultiArray.prod,
         trace: MultiArray.trace,
         det: MultiArray.det,
         inv: MultiArray.inv,
@@ -368,6 +370,15 @@ export class MultiArray {
             throw new Error(`${input}: out of bound ${bound} (dimensions are ${matrix.dim[0]}x${matrix.dim[1]}).`);
         }
         return result;
+    }
+
+    public static firstNonSingleDimmension(M: MultiArray): number {
+        for (let i = 0; i < M.dim.length; i++) {
+            if (M.dim[i] !== 1) {
+                return i;
+            }
+        }
+        return M.dim.length - 1;
     }
 
     public static oneRowToDim(M: ComplexDecimal[] | MultiArray): number[] {
@@ -1063,32 +1074,115 @@ export class MultiArray {
      * @param M
      * @returns
      */
-    public static mean(M: MultiArray): MultiArray | ComplexDecimal {
-        let temp: MultiArray;
-        if (M.dim[0] === 1) {
-            temp = MultiArray.transpose(M);
-        } else {
-            temp = M;
-        }
-        const result = new MultiArray([1, temp.dim[1]]);
-        result.array = [new Array(temp.dim[1])];
-        for (let j = 0; j < temp.dim[1]; j++) {
-            result.array[0][j] = temp.array[0][j];
-            for (let i = 1; i < temp.dim[0]; i++) {
-                result.array[0][j] = ComplexDecimal.add(result.array[0][j], temp.array[i][j]);
+    public static mean(M: MultiArray | ComplexDecimal): MultiArray | ComplexDecimal {
+        if ('array' in M) {
+            let temp: MultiArray;
+            if (M.dim[0] === 1) {
+                temp = MultiArray.transpose(M);
+            } else {
+                temp = M;
             }
-            result.array[0][j] = ComplexDecimal.rdiv(result.array[0][j], new ComplexDecimal(temp.dim[0], 0));
+            const result = new MultiArray([1, temp.dim[1]]);
+            result.array = [new Array(temp.dim[1])];
+            for (let j = 0; j < temp.dim[1]; j++) {
+                result.array[0][j] = temp.array[0][j];
+                for (let i = 1; i < temp.dim[0]; i++) {
+                    result.array[0][j] = ComplexDecimal.add(result.array[0][j], temp.array[i][j]);
+                }
+                result.array[0][j] = ComplexDecimal.rdiv(result.array[0][j], new ComplexDecimal(temp.dim[0], 0));
+            }
+            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
+            if (temp.dim[1] === 1) {
+                return result.array[0][0];
+            } else {
+                return result;
+            }
+        } else {
+            return M;
         }
-        result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
-        if (temp.dim[1] === 1) {
+    }
+
+    /**
+     * Calculate sum or product of elements along dimension DIM.
+     * @param op 'add' for sum or 'mul' for product
+     * @param mapper function to apply in each element
+     * @param M Matrix
+     * @param DIM Dimension
+     * @returns One dimensional matrix with sum or product of elements along dimension DIM.
+     */
+    private static sumprod(
+        op: 'add' | 'mul',
+        mapper: ((value: ComplexDecimal) => ComplexDecimal) | null,
+        M: MultiArray,
+        DIM?: ComplexDecimal,
+    ): MultiArray | ComplexDecimal {
+        if (!mapper) {
+            mapper = (value) => value;
+        }
+        let dim: number;
+        if (DIM) {
+            dim = MultiArray.testIndex(DIM, M.dim.length, M, 'sum');
+        } else {
+            dim = MultiArray.firstNonSingleDimmension(M);
+        }
+        let result: MultiArray;
+        if (dim === 0) {
+            result = new MultiArray([1, M.dim[1]]);
+            result.array[0] = new Array(M.dim[1]);
+            for (let i = 0; i < M.dim[1]; i++) {
+                result.array[0][i] = M.array
+                    .map((line) => line[i])
+                    .reduce(
+                        (accumulator: ComplexDecimal, current: ComplexDecimal): ComplexDecimal => ComplexDecimal[op](accumulator, mapper!(current)),
+                        op === 'mul' ? ComplexDecimal.one() : ComplexDecimal.zero(),
+                    );
+            }
+        } else {
+            result = new MultiArray([M.dim[0], 1]);
+            for (let i = 0; i < M.dim[0]; i++) {
+                result.array[i] = [
+                    M.array[i].reduce(
+                        (accumulator: ComplexDecimal, current: ComplexDecimal): ComplexDecimal => ComplexDecimal[op](accumulator, mapper!(current)),
+                        op === 'mul' ? ComplexDecimal.one() : ComplexDecimal.zero(),
+                    ),
+                ];
+            }
+        }
+        if (result.dim[0] === 1 && result.dim[1] === 1) {
             return result.array[0][0];
         } else {
             return result;
         }
     }
 
-    public static sumsq(M: MultiArray, DIM: ComplexDecimal): MultiArray | ComplexDecimal {
-        return ComplexDecimal.one();
+    /**
+     * Calculate sum of elements along dimension DIM.
+     * @param M Matrix
+     * @param DIM Dimension
+     * @returns One dimensional matrix with sum of elements along dimension DIM.
+     */
+    public static sum(M: MultiArray, DIM?: ComplexDecimal): MultiArray | ComplexDecimal {
+        return MultiArray.sumprod('add', null, M, DIM);
+    }
+
+    /**
+     * Calculate sum of squares of elements along dimension DIM.
+     * @param M Matrix
+     * @param DIM Dimension
+     * @returns One dimensional matrix with sum of squares of elements along dimension DIM.
+     */
+    public static sumsq(M: MultiArray, DIM?: ComplexDecimal): MultiArray | ComplexDecimal {
+        return MultiArray.sumprod('add', (value) => ComplexDecimal.mul(value, ComplexDecimal.conj(value)), M, DIM);
+    }
+
+    /**
+     * Calculate product of elements along dimension DIM.
+     * @param M Matrix
+     * @param DIM Dimension
+     * @returns One dimensional matrix with product of elements along dimension DIM.
+     */
+    public static prod(M: MultiArray, DIM?: ComplexDecimal): MultiArray | ComplexDecimal {
+        return MultiArray.sumprod('mul', null, M, DIM);
     }
 
     /**

@@ -454,13 +454,10 @@ export class ComplexDecimal {
      * @returns Minimum or maximum of ComplexDecimal values.
      */
     public static minMaxArrayReal(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): ComplexDecimal {
-        let result = args[0];
-        for (let i = 1; i < args.length; i++) {
-            if (args[i].re[cmp](result.re)) {
-                result = args[i];
-            }
-        }
-        return result;
+        return args.reduce(
+            (previous: ComplexDecimal, current: ComplexDecimal): ComplexDecimal => (previous.re[cmp](current.re) ? previous : current),
+            args[0],
+        );
     }
 
     /**
@@ -473,22 +470,15 @@ export class ComplexDecimal {
      * @returns Minimum or maximum of ComplexDecimal values.
      */
     public static minMaxArrayComplex(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): ComplexDecimal {
-        let result = args[0];
-        for (let i = 1; i < args.length; i++) {
-            const result_abs = ComplexDecimal.abs(result).re;
-            const arg_abs = ComplexDecimal.abs(args[i]).re;
-            if (result_abs.eq(arg_abs)) {
-                result = ComplexDecimal.arg(result).re[cmp](ComplexDecimal.arg(args[i]).re) ? result : args[i];
-                if (ComplexDecimal.arg(args[i]).re[cmp](ComplexDecimal.arg(result).re)) {
-                    result = args[i];
-                }
+        return args.reduce((previous: ComplexDecimal, current: ComplexDecimal): ComplexDecimal => {
+            const previous_abs = ComplexDecimal.abs(previous).re;
+            const current_abs = ComplexDecimal.abs(current).re;
+            if (previous_abs.eq(current_abs)) {
+                return ComplexDecimal.arg(previous).re[cmp](ComplexDecimal.arg(current).re) ? previous : current;
             } else {
-                if (arg_abs[cmp](result_abs)) {
-                    result = args[i];
-                }
+                return previous_abs[cmp](current_abs) ? previous : current;
             }
-        }
-        return result;
+        }, args[0]);
     }
 
     /**

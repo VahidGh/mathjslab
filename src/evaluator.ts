@@ -22,6 +22,7 @@ export type TBaseFunctionTableEntry = {
     mapper?: boolean;
     ev: boolean[];
     func: Function;
+    unparserML?: (tree: any) => string;
 };
 export type TBaseFunctionTable = Record<string, TBaseFunctionTableEntry>;
 
@@ -346,6 +347,20 @@ export class Evaluator {
 
     public readonly linearize = MultiArray.linearize;
 
+    private readonly unparseMLFunctions: Record<string, (tree: any) => string> = {
+        abs: (tree: any) => '<mrow><mo>|</mo>' + this.unparserML(tree.args[0]) + '<mo>|</mo></mrow>',
+        conj: (tree: any) => '<mover><mrow>' + this.unparserML(tree.args[0]) + '</mrow><mo>&OverBar;</mo></mover>',
+        sqrt: (tree: any) => '<msqrt><mrow>' + this.unparserML(tree.args[0]) + '</mrow></msqrt>',
+        root: (tree: any) => '<mroot><mrow>' + this.unparserML(tree.args[0]) + '</mrow><mrow>' + this.unparserML(tree.args[1]) + '</mrow></mroot>',
+        exp: (tree: any) => '<msup><mi>e</mi><mrow>' + this.unparserML(tree.args[0]) + '</mrow></msup>',
+        logb: (tree: any) =>
+            '<msub><mi>log</mi><mrow>' + this.unparserML(tree.args[0]) + '</mrow></msub><mrow>' + this.unparserML(tree.args[1]) + '</mrow>',
+        log2: (tree: any) => '<msub><mi>log</mi><mrow>' + '<mn>2</mn>' + '</mrow></msub><mrow>' + this.unparserML(tree.args[0]) + '</mrow>',
+        log10: (tree: any) => '<msub><mi>log</mi><mrow>' + '<mn>10</mn>' + '</mrow></msub><mrow>' + this.unparserML(tree.args[0]) + '</mrow>',
+        gamma: (tree: any) => '<mi>&Gamma;</mi><mrow><mo>(</mo>' + this.unparserML(tree.args[0]) + '<mo>)</mo></mrow>',
+        factorial: (tree: any) => '<mrow><mo>(</mo>' + this.unparserML(tree.args[0]) + '<mo>)</mo></mrow><mo>!</mo>',
+    };
+
     /**
      * Evaluator object constructor
      */
@@ -382,6 +397,9 @@ export class Evaluator {
         }
         for (const func in MultiArray.linearizedFunctions) {
             this.DefLinearizedFunction(func, MultiArray.linearizedFunctions[func].func, MultiArray.linearizedFunctions[func].lin);
+        }
+        for (const func in this.unparseMLFunctions) {
+            this.baseFunctionTable[func].unparserML = this.unparseMLFunctions[func];
         }
     }
 
@@ -905,9 +923,9 @@ export class Evaluator {
                         try {
                             this.nameTable[id] = { args: [], expr: this.Evaluator(expr, false, fname) };
                             return this.nodeOp('=', left, this.nameTable[id].expr);
-                        } catch (e) {
+                        } catch (error) {
                             this.nameTable[id] = { args: [], expr: expr };
-                            throw e;
+                            throw error;
                         }
                     } else {
                         if (op) {
@@ -1203,7 +1221,7 @@ export class Evaluator {
      * @param tree Expression tree.
      * @returns String of expression tree unparsed as MathML language.
      */
-    private unparserML(tree: any): string {
+    public unparserML(tree: any): string {
         try {
             if (tree === undefined) {
                 return '';
@@ -1321,67 +1339,10 @@ export class Evaluator {
                             arglist = arglist.substring(0, arglist.length - 10);
                             if (tree.expr.type === 'NAME') {
                                 const aliasTreeName = this.aliasName(tree.expr.id);
-                                switch (aliasTreeName) {
-                                    case 'abs':
-                                        return '<mrow><mo>|</mo>' + this.unparserML(tree.args[0]) + '<mo>|</mo></mrow>';
-                                    case 'conj':
-                                        return '<mover><mrow>' + this.unparserML(tree.args[0]) + '</mrow><mo>&OverBar;</mo></mover>';
-                                    case 'sqrt':
-                                        return '<msqrt><mrow>' + this.unparserML(tree.args[0]) + '</mrow></msqrt>';
-                                    case 'root':
-                                        return (
-                                            '<mroot><mrow>' +
-                                            this.unparserML(tree.args[0]) +
-                                            '</mrow><mrow>' +
-                                            this.unparserML(tree.args[1]) +
-                                            '</mrow></mroot>'
-                                        );
-                                    case 'exp':
-                                        return '<msup><mi>e</mi><mrow>' + this.unparserML(tree.args[0]) + '</mrow></msup>';
-                                    case 'log':
-                                        return (
-                                            '<msub><mi>log</mi><mrow>' +
-                                            this.unparserML(tree.args[0]) +
-                                            '</mrow></msub><mrow>' +
-                                            this.unparserML(tree.args[1]) +
-                                            '</mrow>'
-                                        );
-                                    case 'sum':
-                                        return (
-                                            '<mrow><munderover><mo>&#x2211;</mo><mrow>' +
-                                            this.unparserML(tree.args[0]) +
-                                            '<mo>=</mo>' +
-                                            this.unparserML(tree.args[1]) +
-                                            '</mrow>' +
-                                            this.unparserML(tree.args[2]) +
-                                            '</munderover></mrow>' +
-                                            this.unparserML(tree.args[3])
-                                        );
-                                    case 'prod':
-                                        return (
-                                            '<mrow><munderover><mo>&#x220F;</mo><mrow>' +
-                                            this.unparserML(tree.args[0]) +
-                                            '<mo>=</mo>' +
-                                            this.unparserML(tree.args[1]) +
-                                            '</mrow>' +
-                                            this.unparserML(tree.args[2]) +
-                                            '</munderover></mrow>' +
-                                            this.unparserML(tree.args[3])
-                                        );
-                                    case 'gamma':
-                                        return '<mi>&Gamma;</mi><mrow><mo>(</mo>' + arglist + '<mo>)</mo></mrow>';
-                                    case 'factorial':
-                                        return '<mrow><mo>(</mo>' + this.unparserML(tree.args[0]) + '<mo>)</mo></mrow><mo>!</mo>';
-                                    case 'binomial':
-                                        return (
-                                            '<mrow><mo>(</mo><mtable><mtr><mtd>' +
-                                            this.unparserML(tree.args[0]) +
-                                            '</mtd></mtr><mtr><mtd>' +
-                                            this.unparserML(tree.args[1]) +
-                                            '</mtd></mtr></mtable><mo>)</mo></mrow>'
-                                        );
-                                    default:
-                                        return '<mi>' + substGreek(tree.expr.id) + '</mi><mrow><mo>(</mo>' + arglist + '<mo>)</mo></mrow>';
+                                if (aliasTreeName in this.baseFunctionTable && this.baseFunctionTable[aliasTreeName].unparserML) {
+                                    return this.baseFunctionTable[aliasTreeName].unparserML!(tree);
+                                } else {
+                                    return '<mi>' + substGreek(tree.expr.id) + '</mi><mrow><mo>(</mo>' + arglist + '<mo>)</mo></mrow>';
                                 }
                             } else {
                                 return this.unparserML(tree.expr) + '<mrow><mo>(</mo>' + arglist + '<mo>)</mo></mrow>';
