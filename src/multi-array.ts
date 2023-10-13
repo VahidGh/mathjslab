@@ -4,6 +4,15 @@ export type Evaluator = any;
 
 declare let EvaluatorPointer: Evaluator;
 
+/**
+ * nameTable type (same in evaluator) to be used in MultiArray.setItems
+ */
+export type TNameTableEntry = {
+    args: Array<any>;
+    expr: any;
+};
+export type TNameTable = Record<string, TNameTableEntry>;
+
 export type ArrayElement = MultiArray | ComplexDecimal | any;
 
 export type dimRange = {
@@ -205,13 +214,13 @@ export class MultiArray {
      * @param fname Function name (context).
      * @returns MultiArray object evaluated.
      */
-    public static evaluate(tree: MultiArray, that: Evaluator, fname: string): MultiArray {
+    public static evaluate(tree: MultiArray, that: Evaluator, local: boolean = false, fname: string = ''): MultiArray {
         const result = new MultiArray();
         for (let i = 0, k = 0; i < tree.array.length; i++, k++) {
             result.array.push([]);
             let h = 1;
             for (let j = 0; j < tree.array[i].length; j++) {
-                const temp = that.Evaluator(tree.array[i][j], false, fname);
+                const temp = that.Evaluator(tree.array[i][j], local, fname);
                 if (MultiArray.isThis(temp)) {
                     if (j === 0) {
                         h = temp.array.length;
@@ -434,7 +443,14 @@ export class MultiArray {
         }
     }
 
-    public static setItems(nameTable: any, id: string, args: any, right: MultiArray): void {
+    /**
+     * Set selected items from MultiArray by linear index or subscripts.
+     * @param nameTable
+     * @param id
+     * @param args
+     * @param right
+     */
+    public static setItems(nameTable: TNameTable, id: string, args: any[], right: MultiArray): void {
         const linright = this.linearize(right);
         args = args.map((arg: any) => arg.map((value: any) => MultiArray.testIndex(value, id)));
         // console.log('args:');
@@ -451,7 +467,7 @@ export class MultiArray {
         }
         // console.log('dim:', dim);
         if (typeof nameTable[id] === 'undefined') {
-            console.log('undefined name');
+            // console.log('undefined name');
             nameTable[id] = {
                 args: [],
                 expr: MultiArray.zeros(dim.map((value: number) => new ComplexDecimal(value + 1))),
@@ -463,7 +479,7 @@ export class MultiArray {
                     nameTable[id].expr,
                     dim.map((value: number) => value + 1),
                 );
-                console.log(`expanded(${dim}):`, nameTable[id].expr);
+                // console.log(`expanded(${dim}):`, nameTable[id].expr);
             } else {
                 throw new Error(`${id} is a function.`);
             }
@@ -483,7 +499,7 @@ export class MultiArray {
             // console.log('subscript:', argsDim);
             for (let j = 0, n = 0; j < argsDim[1]; j++) {
                 for (let i = 0; i < argsDim[0]; i++, n++) {
-                    console.log(`(${n})(${i},${j})>>${args[0][i]}x${args[1][j]}`);
+                    // console.log(`(${n})(${i},${j})>>${args[0][i]}x${args[1][j]}`);
                     nameTable[id].expr.array[args[0][i]][args[1][j]] = linright[n];
                 }
             }

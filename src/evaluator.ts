@@ -684,7 +684,7 @@ export class Evaluator {
      * @param tree
      * @returns
      */
-    public validateAssignment(tree: any): any {
+    public validateAssignment(tree: any): { left: any; id: string; args: any[] } {
         const invalidMessageBase = 'invalid left hand side of assignment';
         const invalidMessage = `${invalidMessageBase}: cannot assign to a read only value:`;
         let result: any;
@@ -695,7 +695,6 @@ export class Evaluator {
             result = {
                 left: tree,
                 id: tree.id,
-                aliasTreeName: this.aliasName(tree.id),
                 args: [],
             };
         } else if (tree.type === 'ARG' && tree.expr.type === 'NAME') {
@@ -705,7 +704,6 @@ export class Evaluator {
             result = {
                 left: tree.expr,
                 id: tree.expr.id,
-                aliasTreeName: this.aliasName(tree.expr.id),
                 args: tree.args,
             };
         } else {
@@ -824,7 +822,7 @@ export class Evaluator {
      * @param fname
      * @returns
      */
-    public Evaluator(tree: any, local: boolean, fname: string): any {
+    public Evaluator(tree: any, local: boolean = false, fname: string = ''): any {
         if (this.debug) {
             console.log(`Evaluator(\ntree:${JSON.stringify(tree, null, 2)},\nlocal:${local},\nfname:${fname})`);
         }
@@ -853,7 +851,7 @@ export class Evaluator {
             return tree;
         } else if (this.isTensor(tree)) {
             /* MATRIX */
-            return this.evaluateTensor(tree, this, fname);
+            return this.evaluateTensor(tree, this, local, fname);
         } else if (this.isRange(tree)) {
             /* RANGE */
             return this.expandRange(
@@ -916,37 +914,37 @@ export class Evaluator {
                 case '.**=':
                 case '&=':
                 case '|=':
-                    let { left, id, aliasTreeName, args } = this.validateAssignment(tree.left);
+                    const { left, id, args } = this.validateAssignment(tree.left);
                     const op: string = tree.type.substring(0, tree.type.length - 1);
                     if (args.length === 0) {
-                        /* Name definition */
+                        /* Name definition. */
                         const expr = op.length ? this.nodeOp(op, left, tree.right) : tree.right;
                         try {
-                            this.nameTable[id] = { args: [], expr: this.Evaluator(expr, false, fname) };
+                            this.nameTable[id] = { args: [], expr: this.Evaluator(expr) };
                             return this.nodeOp('=', left, this.nameTable[id].expr);
                         } catch (error) {
                             this.nameTable[id] = { args: [], expr: expr };
                             throw error;
                         }
                     } else {
+                        /* Function definition or indexed matrix reference. */
                         if (op) {
                             if (this.nameTable[id]) {
-                                /* Matrix indexing refer at left hand side with operator */
-                                const right = this.toTensor(
-                                    this.Evaluator(
-                                        this.nodeOp(op, this.getItems(this.nameTable[id].expr, id, args), this.toTensor(this.Evaluator(tree.right, false, fname))),
-                                        false,
-                                        fname,
+                                /* Indexed matrix reference on left hand side with operator. */
+                                this.setItems(
+                                    this.nameTable,
+                                    id,
+                                    args.map((arg: any) => this.linearize(this.Evaluator(arg))),
+                                    this.toTensor(
+                                        this.Evaluator(this.nodeOp(op, this.getItems(this.nameTable[id].expr, id, args), this.toTensor(this.Evaluator(tree.right))), false, fname),
                                     ),
                                 );
-                                args = args.map((arg: any) => this.linearize(this.Evaluator(arg, false, fname)));
-                                this.setItems(this.nameTable, id, args, right);
                                 return this.nodeOp('=', this.nodeName(id), this.nameTable[id].expr);
                             } else {
                                 throw new Error(`in computed assignment ${id}(index) OP= X, ${id} must be defined first.`);
                             }
                         } else {
-                            /* Test if is a function definition (test if args is a list of undefined NAME) */
+                            /* Test if is a function definition (test if args is a list of undefined NAME). */
                             let isFunction: boolean = true;
                             for (let i = 0; i < args.length; i++) {
                                 isFunction &&= args[i].type === 'NAME';
@@ -961,87 +959,93 @@ export class Evaluator {
                                 this.nameTable[id] = { args: args, expr: tree.right };
                                 return tree;
                             } else {
-                                /* Matrix indexing refer at left hand side */
-                                const right = this.toTensor(this.Evaluator(tree.right, false, fname));
-                                args = args.map((arg: any) => this.linearize(this.Evaluator(arg, false, fname)));
-                                this.setItems(this.nameTable, id, args, right);
+                                /* Indexed matrix reference on left hand side. */
+                                this.setItems(
+                                    this.nameTable,
+                                    id,
+                                    args.map((arg: any) => this.linearize(this.Evaluator(arg))),
+                                    this.toTensor(this.Evaluator(tree.right)),
+                                );
                                 return this.nodeOp('=', this.nodeName(id), this.nameTable[id].expr);
                             }
                         }
                     }
                 case 'NAME':
                     if (local && this.localTable[fname] && this.localTable[fname][tree.id]) {
-                        /* Defined in localTable */
+                        /* Defined in localTable. */
                         return this.localTable[fname][tree.id];
                     } else if (tree.id in this.nameTable) {
-                        /* Defined in nameTable */
+                        /* Defined in nameTable. */
                         if (this.nameTable[tree.id].args.length === 0) {
-                            /* Defined as name */
-                            return this.Evaluator(this.nameTable[tree.id].expr, false, fname);
+                            /* Defined as name. */
+                            return this.Evaluator(this.nameTable[tree.id].expr);
                         } else {
-                            /* Defined as function name */
-                            throw new SyntaxError(`calling ${tree.id} function without arguments list.`);
+                            /* Defined as function name. */
+                            throw new Error(`calling ${tree.id} function without arguments list.`);
                         }
                     }
                 case 'ARG':
-                    let argumentsList: any[] = [];
                     if (typeof tree.expr === 'undefined') {
                         throw new Error(`'${tree.id}' undefined.`);
                     }
                     if (tree.expr.type === 'NAME') {
-                        /* Matrix indexing or function call */
-                        aliasTreeName = this.aliasName(tree.expr.id);
+                        /* Indexed matrix reference or function call. */
+                        const aliasTreeName = this.aliasName(tree.expr.id);
                         if (aliasTreeName in this.baseFunctionTable) {
-                            /* Is base function */
+                            /* Is base function. */
                             if (typeof this.baseFunctionTable[aliasTreeName]['mapper'] !== 'undefined') {
-                                /* arguments evaluated */
-                                argumentsList = tree.args.map((arg: any) => this.Evaluator(arg, local, fname));
+                                /* Arguments evaluated. */
+                                const argumentsList = tree.args.map((arg: any) => this.Evaluator(arg, local, fname));
                                 if (this.baseFunctionTable[aliasTreeName].mapper && argumentsList.length !== 1) {
-                                    /* Error if mapper and #arguments!==1 (Invalid call) */
+                                    /* Error if mapper and #arguments!==1 (Invalid call). */
                                     throw new Error(`Invalid call to ${aliasTreeName}.`);
                                 }
                                 if (argumentsList.length === 1 && 'array' in argumentsList[0] && this.baseFunctionTable[aliasTreeName].mapper) {
-                                    /* Test if is mapper */
+                                    /* Test if is mapper. */
                                     return this.mapTensor(argumentsList[0], this.baseFunctionTable[aliasTreeName].func);
                                 } else {
                                     return this.baseFunctionTable[aliasTreeName].func(...argumentsList);
                                 }
                             } else {
-                                /* arguments selectively evaluated */
-                                argumentsList = tree.args.map((arg: any, i: number) => (this.baseFunctionTable[aliasTreeName].ev[i] ? this.Evaluator(arg, local, fname) : arg));
-                                return this.baseFunctionTable[aliasTreeName].func(...argumentsList);
+                                /* Arguments selectively evaluated. */
+                                return this.baseFunctionTable[aliasTreeName].func(
+                                    ...tree.args.map((arg: any, i: number) => (this.baseFunctionTable[aliasTreeName].ev[i] ? this.Evaluator(arg, local, fname) : arg)),
+                                );
                             }
                         } else if (local && this.localTable[fname] && this.localTable[fname][tree.expr.id]) {
-                            /* Defined in localTable **** */
+                            /* Defined in localTable. **** */
                             return this.localTable[fname][tree.expr.id];
                         } else if (tree.expr.id in this.nameTable) {
-                            /* Defined in nameTable */
+                            /* Defined in nameTable. */
                             if (this.nameTable[tree.expr.id].args.length === 0) {
-                                /* If is a defined name */
-                                const temp = this.Evaluator(this.nameTable[tree.expr.id].expr, false, fname);
+                                /* If is a defined name. */
+                                const temp = this.Evaluator(this.nameTable[tree.expr.id].expr);
                                 if (tree.args.length === 0) {
-                                    /* Defined name */
+                                    /* Defined name. */
                                     return temp;
                                 } else if (this.isTensor(temp)) {
-                                    /* Defined matrix indexing */
-                                    argumentsList = tree.args.map((arg: any) => this.Evaluator(arg, local, fname));
-                                    return this.getItems(temp, tree.expr.id, argumentsList);
+                                    /* Defined indexed matrix reference. */
+                                    return this.getItems(
+                                        temp,
+                                        tree.expr.id,
+                                        tree.args.map((arg: any) => this.Evaluator(arg, local, fname)),
+                                    );
                                 } else {
                                     throw new Error('invalid matrix indexing or function arguments.');
                                 }
                             } else {
-                                /* Else is defined function */
+                                /* Else is defined function. */
                                 if (this.nameTable[tree.expr.id].args.length !== tree.args.length) {
                                     throw new Error(`invalid number of arguments in function ${tree.expr.id}.`);
                                 }
-                                /* Create localTable entry */
+                                /* Create localTable entry. */
                                 this.localTable[tree.expr.id] = {};
                                 for (let i = 0; i < tree.args.length; i++) {
-                                    /* Evaluate defined function arguments list */
+                                    /* Evaluate defined function arguments list. */
                                     this.localTable[tree.expr.id][this.nameTable[tree.expr.id].args[i].id] = this.Evaluator(tree.args[i], true, fname);
                                 }
                                 const temp = this.Evaluator(this.nameTable[tree.expr.id].expr, true, tree.expr.id);
-                                /* Delete localTable entry */
+                                /* Delete localTable entry. */
                                 delete this.localTable[tree.expr.id];
                                 return temp;
                             }
@@ -1049,9 +1053,12 @@ export class Evaluator {
                             throw new Error(`'${tree.expr.id}' undefined.`);
                         }
                     } else {
-                        /* literal indexing, ex: [1,2;3,4](1,2) */
-                        argumentsList = tree.args.map((arg: any) => this.Evaluator(arg, local, fname));
-                        return this.getItems(tree.expr, this.Unparse(tree.expr), argumentsList);
+                        /* literal indexing, ex: [1,2;3,4](1,2). */
+                        return this.getItems(
+                            tree.expr,
+                            this.Unparse(tree.expr),
+                            tree.args.map((arg: any) => this.Evaluator(arg, local, fname)),
+                        );
                     }
                 case 'CmdWList':
                     this.commandWordListTable[tree.id].func(...tree.args.map((word: { str: string }) => word.str));
@@ -1071,7 +1078,7 @@ export class Evaluator {
     public Evaluate(tree: any): any {
         try {
             this.exitStatus = Evaluator.response.OK;
-            return this.Evaluator(tree, false, '');
+            return this.Evaluator(tree);
         } catch (e) {
             this.exitStatus = Evaluator.response.EVAL_ERROR;
             throw e;
