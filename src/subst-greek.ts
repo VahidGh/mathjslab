@@ -86,15 +86,9 @@ export function substGreek(id: string): string {
         id = id.replace(regex, greekAlias[i][1]);
     }
     for (let i = 0; i < greekLetters.length; i++) {
-        regex = new RegExp(
-            '([^a-zA-Z0-9])([' + greekLetters[i][0] + greekLetters[i][0].toUpperCase() + ']' + greekLetters[i].substring(1) + ')(?![a-zA-Z0-9;])',
-            'g',
-        );
+        regex = new RegExp('([^a-zA-Z0-9])([' + greekLetters[i][0] + greekLetters[i][0].toUpperCase() + ']' + greekLetters[i].substring(1) + ')(?![a-zA-Z0-9;])', 'g');
         id = id.replace(regex, '$1&$2;');
-        regex = new RegExp(
-            '^([' + greekLetters[i][0] + greekLetters[i][0].toUpperCase() + ']' + greekLetters[i].substring(1) + ')(?![a-zA-Z0-9;])',
-            'g',
-        );
+        regex = new RegExp('^([' + greekLetters[i][0] + greekLetters[i][0].toUpperCase() + ']' + greekLetters[i].substring(1) + ')(?![a-zA-Z0-9;])', 'g');
         id = id.replace(regex, '&$1;');
     }
     return id;

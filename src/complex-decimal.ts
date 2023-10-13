@@ -322,10 +322,7 @@ export class ComplexDecimal {
             } else if (!value_prec.re.eq(0)) {
                 return ComplexDecimal.unparseDecimalML(value_prec.re);
             } else if (!value_prec.im.eq(0)) {
-                return (
-                    (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalML(value_prec.im) : '<mo>-</mo>') : '') +
-                    '<mi>i</mi>'
-                );
+                return (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalML(value_prec.im) : '<mo>-</mo>') : '') + '<mi>i</mi>';
             } else {
                 return '<mn>0</mn>';
             }
@@ -428,9 +425,7 @@ export class ComplexDecimal {
         const left_abs = ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.abs(left).re);
         const right_abs = ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.abs(right).re);
         if (left_abs.eq(right_abs)) {
-            return ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.arg(left).re)[cmp](
-                ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.arg(right).re),
-            )
+            return ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.arg(left).re)[cmp](ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.arg(right).re))
                 ? ComplexDecimal.true()
                 : ComplexDecimal.false();
         } else {
@@ -454,10 +449,7 @@ export class ComplexDecimal {
      * @returns Minimum or maximum of ComplexDecimal values.
      */
     public static minMaxArrayReal(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): ComplexDecimal {
-        return args.reduce(
-            (previous: ComplexDecimal, current: ComplexDecimal): ComplexDecimal => (previous.re[cmp](current.re) ? previous : current),
-            args[0],
-        );
+        return args.reduce((previous: ComplexDecimal, current: ComplexDecimal): ComplexDecimal => (previous.re[cmp](current.re) ? previous : current), args[0]);
     }
 
     /**
@@ -600,9 +592,7 @@ export class ComplexDecimal {
     public static and(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return (left_prec.re.eq(0) && left_prec.im.eq(0)) || (right_prec.re.eq(0) && right_prec.im.eq(0))
-            ? ComplexDecimal.false()
-            : ComplexDecimal.true();
+        return (left_prec.re.eq(0) && left_prec.im.eq(0)) || (right_prec.re.eq(0) && right_prec.im.eq(0)) ? ComplexDecimal.false() : ComplexDecimal.true();
     }
 
     /**
@@ -614,9 +604,7 @@ export class ComplexDecimal {
     public static or(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return left_prec.re.eq(0) && left_prec.im.eq(0) && right_prec.re.eq(0) && right_prec.im.eq(0)
-            ? ComplexDecimal.false()
-            : ComplexDecimal.true();
+        return left_prec.re.eq(0) && left_prec.im.eq(0) && right_prec.re.eq(0) && right_prec.im.eq(0) ? ComplexDecimal.false() : ComplexDecimal.true();
     }
 
     /**
@@ -921,9 +909,7 @@ export class ComplexDecimal {
      * @returns Absolute value of z
      */
     public static abs(z: ComplexDecimal): ComplexDecimal {
-        return z.im.eq(0)
-            ? new ComplexDecimal(Decimal.abs(z.re))
-            : new ComplexDecimal(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im))));
+        return z.im.eq(0) ? new ComplexDecimal(Decimal.abs(z.re)) : new ComplexDecimal(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im))));
     }
 
     /**
@@ -1060,10 +1046,7 @@ export class ComplexDecimal {
     public static sqrt(z: ComplexDecimal): ComplexDecimal {
         const mod_z = Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im)));
         const arg_z = Decimal.atan2(z.im.eq(0) ? 0 : z.im, z.re);
-        return new ComplexDecimal(
-            Decimal.mul(Decimal.sqrt(mod_z), Decimal.cos(Decimal.div(arg_z, 2))),
-            Decimal.mul(Decimal.sqrt(mod_z), Decimal.sin(Decimal.div(arg_z, 2))),
-        );
+        return new ComplexDecimal(Decimal.mul(Decimal.sqrt(mod_z), Decimal.cos(Decimal.div(arg_z, 2))), Decimal.mul(Decimal.sqrt(mod_z), Decimal.sin(Decimal.div(arg_z, 2))));
     }
 
     /**
@@ -1082,10 +1065,7 @@ export class ComplexDecimal {
      * @returns Natural logarithm of z.
      */
     public static log(z: ComplexDecimal): ComplexDecimal {
-        return new ComplexDecimal(
-            Decimal.ln(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im)))),
-            Decimal.atan2(z.im.eq(0) ? 0 : z.im, z.re),
-        );
+        return new ComplexDecimal(Decimal.ln(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im)))), Decimal.atan2(z.im.eq(0) ? 0 : z.im, z.re));
     }
 
     /**
@@ -1433,9 +1413,7 @@ export class ComplexDecimal {
      * @returns Inverse hyperbolic sine of z.
      */
     public static asinh(z: ComplexDecimal): ComplexDecimal {
-        return ComplexDecimal.log(
-            ComplexDecimal.add(ComplexDecimal.sqrt(ComplexDecimal.add(ComplexDecimal.one(), ComplexDecimal.power(z, ComplexDecimal.two()))), z),
-        );
+        return ComplexDecimal.log(ComplexDecimal.add(ComplexDecimal.sqrt(ComplexDecimal.add(ComplexDecimal.one(), ComplexDecimal.power(z, ComplexDecimal.two()))), z));
     }
 
     /**
@@ -1444,9 +1422,7 @@ export class ComplexDecimal {
      * @returns Inverse hyperbolic cosine of z.
      */
     public static acosh(z: ComplexDecimal): ComplexDecimal {
-        return ComplexDecimal.log(
-            ComplexDecimal.add(ComplexDecimal.sqrt(ComplexDecimal.add(ComplexDecimal.minusone(), ComplexDecimal.power(z, ComplexDecimal.two()))), z),
-        );
+        return ComplexDecimal.log(ComplexDecimal.add(ComplexDecimal.sqrt(ComplexDecimal.add(ComplexDecimal.minusone(), ComplexDecimal.power(z, ComplexDecimal.two()))), z));
     }
 
     /**
@@ -1518,10 +1494,7 @@ export class ComplexDecimal {
         if (z.re.lt(0.5)) {
             return ComplexDecimal.rdiv(
                 ComplexDecimal.pi(),
-                ComplexDecimal.mul(
-                    ComplexDecimal.sin(ComplexDecimal.mul(ComplexDecimal.pi(), z)),
-                    ComplexDecimal.gamma(ComplexDecimal.sub(ComplexDecimal.one(), z)),
-                ),
+                ComplexDecimal.mul(ComplexDecimal.sin(ComplexDecimal.mul(ComplexDecimal.pi(), z)), ComplexDecimal.gamma(ComplexDecimal.sub(ComplexDecimal.one(), z))),
             );
         } else {
             z = ComplexDecimal.sub(z, ComplexDecimal.one());

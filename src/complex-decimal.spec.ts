@@ -45,9 +45,7 @@ describe('ComplexDecimal', () => {
     it('abs(sin(n*pi+pi/2)) == 1 for integer n >= 0', () => {
         let result: boolean = true;
         for (let n = 0; n < 1000; n++) {
-            const value = ComplexDecimal.abs(
-                ComplexDecimal.sin(ComplexDecimal.add(ComplexDecimal.mul(new ComplexDecimal(n), ComplexDecimal.pi()), ComplexDecimal.pidiv2())),
-            );
+            const value = ComplexDecimal.abs(ComplexDecimal.sin(ComplexDecimal.add(ComplexDecimal.mul(new ComplexDecimal(n), ComplexDecimal.pi()), ComplexDecimal.pidiv2())));
             result &&= Boolean(ComplexDecimal.eq(value, ComplexDecimal.one()).re.toNumber()); // using ComplexDecimal.eq to comparison.
         }
         expect(result).toBe(true);
