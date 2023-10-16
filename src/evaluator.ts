@@ -531,7 +531,7 @@ export class Evaluator {
     public nodeName(nodeid: string): NodeName {
         return {
             type: 'NAME',
-            id: nodeid.replace(/(\r\n|[\n\r])|[\ ]/gm, '')
+            id: nodeid.replace(/(\r\n|[\n\r])|[\ ]/gm, ''),
         };
     }
 
@@ -545,7 +545,7 @@ export class Evaluator {
         return {
             type: 'CmdWList',
             id: nodename.id,
-            args: nodelist ? (nodelist.list as any) : []
+            args: nodelist ? (nodelist.list as any) : [],
         };
     }
 
@@ -559,7 +559,7 @@ export class Evaluator {
         return {
             type: 'ARG',
             expr: nodeexpr,
-            args: nodelist ? nodelist.list : []
+            args: nodelist ? nodelist.list : [],
         };
     }
 
@@ -576,14 +576,14 @@ export class Evaluator {
                 type: 'RANGE',
                 start: args[0],
                 stop: args[1],
-                stride: null
+                stride: null,
             };
         } else if (args.length === 3) {
             return {
                 type: 'RANGE',
                 start: args[0],
                 stop: args[2],
-                stride: args[1]
+                stride: args[1],
             };
         } else {
             throw new SyntaxError('invalid range.');
@@ -665,12 +665,12 @@ export class Evaluator {
         if (node) {
             return {
                 type: 'LIST',
-                list: [node]
+                list: [node],
             };
         } else {
             return {
                 type: 'LIST',
-                list: []
+                list: [],
             };
         }
     }
@@ -717,7 +717,7 @@ export class Evaluator {
         return {
             type: 'RETLIST',
             selector,
-        }
+        };
     }
 
     /**
@@ -732,25 +732,27 @@ export class Evaluator {
             if (this.readonlyNameTable.includes(tree.id)) {
                 throw new Error(`${invalidMessage} ${tree.id}.`);
             }
-            return [{
-                left: tree,
-                id: tree.id,
-                args: [],
-            }];
+            return [
+                {
+                    left: tree,
+                    id: tree.id,
+                    args: [],
+                },
+            ];
         } else if (tree.type === 'ARG' && tree.expr.type === 'NAME') {
             if (this.readonlyNameTable.includes(tree.expr.id)) {
                 throw new Error(`${invalidMessage} ${tree.expr.id}.`);
             }
-            return [{
-                left: tree.expr,
-                id: tree.expr.id,
-                args: tree.args,
-            }];
-        }
-        else if (shallow && this.isTensor(tree) && tree.dim[0] === 1) {
+            return [
+                {
+                    left: tree.expr,
+                    id: tree.expr.id,
+                    args: tree.args,
+                },
+            ];
+        } else if (shallow && this.isTensor(tree) && tree.dim[0] === 1) {
             return tree.array[0].map((left: any) => this.validateAssignment(left, false)[0]);
-        }
-        else {
+        } else {
             throw new Error(`${invalidMessageBase}.`);
         }
     }
@@ -930,7 +932,7 @@ export class Evaluator {
                     const assignment = this.validateAssignment(tree.left);
                     const op: string = tree.type.substring(0, tree.type.length - 1);
                     if (assignment.length > 1 && op.length > 0) {
-                        throw new Error('computed multiple assignment not allowed.')
+                        throw new Error('computed multiple assignment not allowed.');
                     }
                     const { left, id, args } = assignment[0];
                     if (args.length === 0) {
@@ -1004,7 +1006,7 @@ export class Evaluator {
                 case 'LIST':
                     const result = {
                         type: 'LIST',
-                        list: new Array(tree.list.length)
+                        list: new Array(tree.list.length),
                     };
                     for (let i = 0; i < tree.list.length; i++) {
                         /* Convert undefined name, defined in word-list command, to word-list command.
@@ -1107,7 +1109,7 @@ export class Evaluator {
                         );
                     }
                 case 'RETLIST':
-                    return this.Evaluator(tree.selector(1,1), local, fname);
+                    return this.Evaluator(tree.selector(1, 1), local, fname);
                 case 'CmdWList':
                     this.commandWordListTable[tree.id].func(...tree.args.map((word: { str: string }) => word.str));
                     this.exitStatus = Evaluator.response.EXTERNAL;
