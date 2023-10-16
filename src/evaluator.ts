@@ -58,25 +58,16 @@ export type TEvaluatorConfig = {
  */
 
 /**
- * Expression node.
- */
-export type NodeExpr = NodeName | NodeArgExpr | NodeOperation | NodeList;
-
-/**
- * Range node.
- */
-interface NodeRange {
-    start: NodeExpr | null;
-    stop: NodeExpr | null;
-    stride: NodeExpr | null;
-}
-
-/**
  * Common primary node.
  */
 interface PrimaryNode {
     type: string | number;
 }
+
+/**
+ * Expression node.
+ */
+export type NodeExpr = NodeName | NodeArgExpr | NodeOperation | NodeList | NodeRange | NodeReturnList;
 
 /**
  * Reserved node.
@@ -107,6 +98,16 @@ export interface NodeArgExpr extends PrimaryNode {
     type: 'ARG';
     expr: NodeExpr;
     args: Array<NodeExpr>;
+}
+
+/**
+ * Range node.
+ */
+interface NodeRange extends PrimaryNode {
+    type: 'RANGE';
+    start: NodeExpr | null;
+    stop: NodeExpr | null;
+    stride: NodeExpr | null;
 }
 
 /**
@@ -144,8 +145,19 @@ interface BinaryOperation extends PrimaryNode {
 /**
  * List node
  */
-export interface NodeList {
+export interface NodeList extends PrimaryNode {
+    type: 'LIST';
     list: Array<NodeExpr>;
+}
+
+export type ReturnSelector = (length: number, index: number) => any;
+
+/**
+ * Return list node
+ */
+export interface NodeReturnList extends PrimaryNode {
+    type: 'RETLIST';
+    selector: ReturnSelector;
 }
 
 /**
@@ -315,10 +327,6 @@ export class Evaluator {
         '_--': this.incDecOp(false, 'minus'),
     };
 
-    public get opList(): string[] {
-        return Object.keys(this.opTable);
-    }
-
     /**
      * Parser AST (Abstract Syntax Tree) constructor methods.
      */
@@ -334,7 +342,6 @@ export class Evaluator {
     public readonly unparseNumber = ComplexDecimal.unparse;
     public readonly unparseNumberML = ComplexDecimal.unparseML;
     public readonly isTensor = MultiArray.isThis;
-    public readonly isRange = MultiArray.isRange;
     public readonly unparseTensor = MultiArray.unparse;
     public readonly unparseTensorML = MultiArray.unparseML;
     public readonly evaluateTensor = MultiArray.evaluate;
@@ -522,7 +529,10 @@ export class Evaluator {
      * @returns
      */
     public nodeName(nodeid: string): NodeName {
-        return { type: 'NAME', id: nodeid.replace(/(\r\n|[\n\r])|[\ ]/gm, '') };
+        return {
+            type: 'NAME',
+            id: nodeid.replace(/(\r\n|[\n\r])|[\ ]/gm, '')
+        };
     }
 
     /**
@@ -532,7 +542,11 @@ export class Evaluator {
      * @returns
      */
     public nodeCmdWList(nodename: NodeName, nodelist: NodeList): NodeCmdWList {
-        return { type: 'CmdWList', id: nodename.id, args: nodelist ? (nodelist.list as any) : [] };
+        return {
+            type: 'CmdWList',
+            id: nodename.id,
+            args: nodelist ? (nodelist.list as any) : []
+        };
     }
 
     /**
@@ -542,7 +556,11 @@ export class Evaluator {
      * @returns
      */
     public nodeArgExpr(nodeexpr: any, nodelist?: any): NodeArgExpr {
-        return { type: 'ARG', expr: nodeexpr, args: nodelist ? nodelist.list : [] };
+        return {
+            type: 'ARG',
+            expr: nodeexpr,
+            args: nodelist ? nodelist.list : []
+        };
     }
 
     /**
@@ -551,14 +569,24 @@ export class Evaluator {
      * @param right
      * @returns
      */
-    public nodeRange(left: any, ...right: any): NodeRange {
+    public nodeRange(...args: any): NodeRange {
         /* https://www.mathworks.com/help/matlab/ref/end.html */
-        if (right.length === 1) {
-            return { start: left, stop: right[0], stride: null };
-        } else if (right.length === 2) {
-            return { start: left, stop: right[1], stride: right[0] };
+        if (args.length === 2) {
+            return {
+                type: 'RANGE',
+                start: args[0],
+                stop: args[1],
+                stride: null
+            };
+        } else if (args.length === 3) {
+            return {
+                type: 'RANGE',
+                start: args[0],
+                stop: args[2],
+                stride: args[1]
+            };
         } else {
-            throw new Error('invalid range.');
+            throw new SyntaxError('invalid range.');
         }
     }
 
@@ -635,9 +663,15 @@ export class Evaluator {
      */
     public nodeListFirst(node?: any): NodeList {
         if (node) {
-            return { list: [node] };
+            return {
+                type: 'LIST',
+                list: [node]
+            };
         } else {
-            return { list: [] };
+            return {
+                type: 'LIST',
+                list: []
+            };
         }
     }
 
@@ -679,40 +713,46 @@ export class Evaluator {
         }
     }
 
+    public nodeReturnList(selector: ReturnSelector): NodeReturnList {
+        return {
+            type: 'RETLIST',
+            selector,
+        }
+    }
+
     /**
      * Validate left hand side of assignment node.
      * @param tree
      * @returns
      */
-    public validateAssignment(tree: any): { left: any; id: string; args: any[] } {
+    public validateAssignment(tree: any, shallow: boolean = true): { left: any; id: string; args: any[] }[] {
         const invalidMessageBase = 'invalid left hand side of assignment';
         const invalidMessage = `${invalidMessageBase}: cannot assign to a read only value:`;
-        let result: any;
         if (tree.type === 'NAME') {
             if (this.readonlyNameTable.includes(tree.id)) {
                 throw new Error(`${invalidMessage} ${tree.id}.`);
             }
-            result = {
+            return [{
                 left: tree,
                 id: tree.id,
                 args: [],
-            };
+            }];
         } else if (tree.type === 'ARG' && tree.expr.type === 'NAME') {
             if (this.readonlyNameTable.includes(tree.expr.id)) {
                 throw new Error(`${invalidMessage} ${tree.expr.id}.`);
             }
-            result = {
+            return [{
                 left: tree.expr,
                 id: tree.expr.id,
                 args: tree.args,
-            };
-        } else {
+            }];
+        }
+        else if (shallow && this.isTensor(tree) && tree.dim[0] === 1) {
+            return tree.array[0].map((left: any) => this.validateAssignment(left, false)[0]);
+        }
+        else {
             throw new Error(`${invalidMessageBase}.`);
         }
-        if (result.aliasTreeName in this.baseFunctionTable) {
-            throw new Error(`${invalidMessage} ${result.aliasTreeName}.`);
-        }
-        return result;
     }
 
     /**
@@ -823,42 +863,15 @@ export class Evaluator {
      * @returns
      */
     public Evaluator(tree: any, local: boolean = false, fname: string = ''): any {
-        if (this.debug) {
-            console.log(`Evaluator(\ntree:${JSON.stringify(tree, null, 2)},\nlocal:${local},\nfname:${fname})`);
+        if (this._debug) {
+            console.log(`Evaluator(\ntree:${JSON.stringify(tree, null, 2)},\nlocal:${local},\nfname:${fname});`);
         }
-        if ('list' in tree) {
-            const result = { list: new Array(tree.list.length) };
-            for (let i = 0; i < tree.list.length; i++) {
-                /* Convert undefined name, defined in word-list command, to word-list command.
-                 * (Null length word-list command) */
-                if (
-                    tree.list[i].type === 'NAME' &&
-                    !(local && this.localTable[fname] && this.localTable[fname][tree.list[i].id]) &&
-                    !(tree.list[i].id in this.nameTable) &&
-                    commandsTable.indexOf(tree.list[i].id) >= 0
-                ) {
-                    tree.list[i].type = 'CmdWList';
-                    tree.list[i]['args'] = [];
-                }
-                result.list[i] = this.Evaluator(tree.list[i], local, fname);
-                if (typeof result.list[i].type === 'number') {
-                    this.nameTable['ans'] = { args: [], expr: result.list[i] };
-                }
-            }
-            return result;
-        } else if (this.isNumber(tree) || this.isString(tree)) {
+        if (this.isNumber(tree) || this.isString(tree)) {
             /* NUMBER or STRING */
             return tree;
         } else if (this.isTensor(tree)) {
             /* MATRIX */
             return this.evaluateTensor(tree, this, local, fname);
-        } else if (this.isRange(tree)) {
-            /* RANGE */
-            return this.expandRange(
-                this.Evaluator(tree.start, local, fname),
-                this.Evaluator(tree.stop, local, fname),
-                tree.stride ? this.Evaluator(tree.stride, local, fname) : null,
-            );
         } else {
             switch (tree.type) {
                 case '+':
@@ -914,8 +927,12 @@ export class Evaluator {
                 case '.**=':
                 case '&=':
                 case '|=':
-                    const { left, id, args } = this.validateAssignment(tree.left);
+                    const assignment = this.validateAssignment(tree.left);
                     const op: string = tree.type.substring(0, tree.type.length - 1);
+                    if (assignment.length > 1 && op.length > 0) {
+                        throw new Error('computed multiple assignment not allowed.')
+                    }
+                    const { left, id, args } = assignment[0];
                     if (args.length === 0) {
                         /* Name definition. */
                         const expr = op.length ? this.nodeOp(op, left, tree.right) : tree.right;
@@ -984,6 +1001,35 @@ export class Evaluator {
                             throw new Error(`calling ${tree.id} function without arguments list.`);
                         }
                     }
+                case 'LIST':
+                    const result = {
+                        type: 'LIST',
+                        list: new Array(tree.list.length)
+                    };
+                    for (let i = 0; i < tree.list.length; i++) {
+                        /* Convert undefined name, defined in word-list command, to word-list command.
+                         * (Null length word-list command) */
+                        if (
+                            tree.list[i].type === 'NAME' &&
+                            !(local && this.localTable[fname] && this.localTable[fname][tree.list[i].id]) &&
+                            !(tree.list[i].id in this.nameTable) &&
+                            commandsTable.indexOf(tree.list[i].id) >= 0
+                        ) {
+                            tree.list[i].type = 'CmdWList';
+                            tree.list[i]['args'] = [];
+                        }
+                        result.list[i] = this.Evaluator(tree.list[i], local, fname);
+                        if (typeof result.list[i].type === 'number') {
+                            this.nameTable['ans'] = { args: [], expr: result.list[i] };
+                        }
+                    }
+                    return result;
+                case 'RANGE':
+                    return this.expandRange(
+                        this.Evaluator(tree.start, local, fname),
+                        this.Evaluator(tree.stop, local, fname),
+                        tree.stride ? this.Evaluator(tree.stride, local, fname) : null,
+                    );
                 case 'ARG':
                     if (typeof tree.expr === 'undefined') {
                         throw new Error(`'${tree.id}' undefined.`);
@@ -1060,6 +1106,8 @@ export class Evaluator {
                             tree.args.map((arg: any) => this.Evaluator(arg, local, fname)),
                         );
                     }
+                case 'RETLIST':
+                    return this.Evaluator(tree.selector(1,1), local, fname);
                 case 'CmdWList':
                     this.commandWordListTable[tree.id].func(...tree.args.map((word: { str: string }) => word.str));
                     this.exitStatus = Evaluator.response.EXTERNAL;
@@ -1093,15 +1141,9 @@ export class Evaluator {
     public Unparse(tree: any): string {
         try {
             if (tree === undefined) {
-                return '';
+                return '<UNDEFINED>';
             }
-            if ('list' in tree) {
-                let list = '';
-                for (let i = 0; i < tree.list.length; i++) {
-                    list += this.Unparse(tree.list[i]) + '\n';
-                }
-                return list;
-            } else if (this.isNumber(tree)) {
+            if (this.isNumber(tree)) {
                 /* NUMBER */
                 return this.unparseNumber(tree);
             } else if (this.isString(tree)) {
@@ -1110,19 +1152,7 @@ export class Evaluator {
             } else if (this.isTensor(tree)) {
                 /* MATRIX */
                 return this.unparseTensor(tree, this);
-            } else if (this.isRange(tree)) {
-                /* RANGE */
-                if (tree.start && tree.stop) {
-                    if (tree.stride) {
-                        return this.Unparse(tree.start) + ':' + this.Unparse(tree.stride) + ':' + this.Unparse(tree.stop);
-                    } else {
-                        return this.Unparse(tree.start) + ':' + this.Unparse(tree.stop);
-                    }
-                } else {
-                    return ':';
-                }
             } else {
-                let arglist: string;
                 switch (tree.type) {
                     case ':':
                     case '!':
@@ -1189,18 +1219,22 @@ export class Evaluator {
                         return this.Unparse(tree.left) + '--';
                     case 'NAME':
                         return tree.id;
+                    case 'LIST':
+                        return tree.list.map((value: any) => this.Unparse(value)).join('\n') + '\n';
+                    case 'RANGE':
+                        if (tree.start && tree.stop) {
+                            if (tree.stride) {
+                                return this.Unparse(tree.start) + ':' + this.Unparse(tree.stride) + ':' + this.Unparse(tree.stop);
+                            } else {
+                                return this.Unparse(tree.start) + ':' + this.Unparse(tree.stop);
+                            }
+                        } else {
+                            return ':';
+                        }
                     case 'ARG':
-                        arglist = '';
-                        for (let i = 0; i < tree.args.length; i++) {
-                            arglist += this.Unparse(tree.args[i]) + ',';
-                        }
-                        return this.Unparse(tree.expr) + '(' + arglist.substring(0, arglist.length - 1) + ')';
+                        return this.Unparse(tree.expr) + '(' + tree.args.map((value: any) => this.Unparse(value)).join(',') + ')';
                     case 'CmdWList':
-                        arglist = '';
-                        for (let i = 0; i < tree.args.length; i++) {
-                            arglist += this.Unparse(tree.args[i]) + ' ';
-                        }
-                        return tree.id + arglist.substring(0, arglist.length - 1);
+                        return tree.id + ' ' + tree.args.map((arg: any) => this.Unparse(arg)).join(' ');
                     default:
                         return '<INVALID>';
                 }
@@ -1218,15 +1252,9 @@ export class Evaluator {
     public unparserML(tree: any): string {
         try {
             if (tree === undefined) {
-                return '';
+                return '<mi>undefined</mi>';
             }
-            if ('list' in tree) {
-                let list = '<mtable>';
-                for (let i = 0; i < tree.list.length; i++) {
-                    list += '<mtr><mtd>' + this.unparserML(tree.list[i]) + '</mtd></mtr>';
-                }
-                return list + '</mtable>';
-            } else if (this.isNumber(tree)) {
+            if (this.isNumber(tree)) {
                 /* NUMBER */
                 return this.unparseNumberML(tree);
             } else if (this.isString(tree)) {
@@ -1235,19 +1263,7 @@ export class Evaluator {
             } else if (this.isTensor(tree)) {
                 /* MATRIX */
                 return this.unparseTensorML(tree, this);
-            } else if (this.isRange(tree)) {
-                /* RANGE */
-                if (tree.start && tree.stop) {
-                    if (tree.stride) {
-                        return this.unparserML(tree.start) + '<mo>:</mo>' + this.unparserML(tree.stride) + '<mo>:</mo>' + this.unparserML(tree.stop);
-                    } else {
-                        return this.unparserML(tree.start) + '<mo>:</mo>' + this.unparserML(tree.stop);
-                    }
-                } else {
-                    return '<mo>:</mo>';
-                }
             } else {
-                let arglist: string;
                 switch (tree.type) {
                     case ':':
                     case '!':
@@ -1322,15 +1338,23 @@ export class Evaluator {
                         return '<msup><mrow>' + this.unparserML(tree.left) + '</mrow><mrow><mi>H</mi></mrow></msup>';
                     case 'NAME':
                         return '<mi>' + substGreek(tree.id) + '</mi>';
+                    case 'LIST':
+                        return `<mtable>${tree.list.map((value: any) => `<mtr><mtd>${this.unparserML(value)}</mtd></mtr>`).join('')}</mtable>`;
+                    case 'RANGE':
+                        if (tree.start && tree.stop) {
+                            if (tree.stride) {
+                                return this.unparserML(tree.start) + '<mo>:</mo>' + this.unparserML(tree.stride) + '<mo>:</mo>' + this.unparserML(tree.stop);
+                            } else {
+                                return this.unparserML(tree.start) + '<mo>:</mo>' + this.unparserML(tree.stop);
+                            }
+                        } else {
+                            return '<mo>:</mo>';
+                        }
                     case 'ARG':
                         if (tree.args.length === 0) {
                             return this.unparserML(tree.expr) + '<mrow><mo>(</mo><mo>)</mo></mrow>';
                         } else {
-                            arglist = '';
-                            for (let i = 0; i < tree.args.length; i++) {
-                                arglist += this.unparserML(tree.args[i]) + '<mo>,</mo>';
-                            }
-                            arglist = arglist.substring(0, arglist.length - 10);
+                            const arglist = tree.args.map((arg: any) => this.unparserML(arg)).join('<mo>,</mo>');
                             if (tree.expr.type === 'NAME') {
                                 const aliasTreeName = this.aliasName(tree.expr.id);
                                 if (aliasTreeName in this.baseFunctionTable && this.baseFunctionTable[aliasTreeName].unparserML) {
@@ -1343,17 +1367,13 @@ export class Evaluator {
                             }
                         }
                     case 'CmdWList':
-                        arglist = ' ';
-                        for (let i = 0; i < tree.args.length; i++) {
-                            arglist += this.Unparse(tree.args[i]) + ' ';
-                        }
-                        return '<mtext>' + tree.id + ' ' + arglist.substring(0, arglist.length - 1) + '</mtext>';
+                        return '<mtext>' + tree.id + ' ' + tree.args.map((arg: any) => this.unparserML(arg)).join(' ') + '</mtext>';
                     default:
                         return '<mi>invalid</mi>';
                 }
             }
         } catch (e) {
-            if (this.debug) {
+            if (this._debug) {
                 throw e;
             } else {
                 return '<mi>error</mi>';
