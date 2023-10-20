@@ -171,7 +171,7 @@ declare global {
 }
 
 /**
- * Evaluator object
+ * Evaluator object.
  * It is implemented as a class but cannot be instantiated more than one time
  * simultaneously. Instance is given by `Evaluator.initialize` static method.
  */
@@ -403,9 +403,10 @@ export class Evaluator {
         for (const func in MultiArray.functions) {
             this.defFunction(func, MultiArray.functions[func]);
         }
-        for (const func in MultiArray.linearizedFunctions) {
-            this.DefLinearizedFunction(func, MultiArray.linearizedFunctions[func].func, MultiArray.linearizedFunctions[func].lin);
+        for (const func in Tensor.linearizedFunctions) {
+            this.DefLinearizedFunction(func, Tensor.linearizedFunctions[func].func, Tensor.linearizedFunctions[func].lin);
         }
+        /* Configure unparserML */
         for (const func in this.unparseMLFunctions) {
             this.baseFunctionTable[func].unparserML = this.unparseMLFunctions[func];
         }

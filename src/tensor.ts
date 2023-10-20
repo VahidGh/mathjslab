@@ -1,6 +1,12 @@
 import { ComplexDecimal } from './complex-decimal';
 import { MultiArray } from './multi-array';
 
+/**
+ * External reference for Evaluator.
+ */
+export type Evaluator = any;
+declare let EvaluatorPointer: Evaluator;
+
 export abstract class Tensor {
     public static unaryOpFunction: { [name: string]: Function } = {
         uplus: Tensor.uplus,
@@ -35,6 +41,23 @@ export abstract class Tensor {
         or: Tensor.or,
         xor: Tensor.xor,
     };
+
+    public static functions: { [name: string]: Function } = {
+        sub2ind: Tensor.sub2ind,
+        ind2sub: Tensor.ind2sub,
+    };
+
+    /**
+     * Linearized functions
+     */
+    public static linearizedFunctions: { [name: string]: { func: Function; lin: boolean[] } } = {
+        size: {
+            func: Tensor.size,
+            lin: [false, true],
+        },
+    };
+
+    public readonly linearize = MultiArray.linearize;
 
     public static copy(right: any): any {
         if ('re' in right) {
@@ -226,5 +249,123 @@ export abstract class Tensor {
 
     public static xor(left: any, right: any): any {
         return Tensor.ewiseOp('xor', left, right);
+    }
+
+    /**
+     * Convert subscripts to linear indices.
+     * @param DIMS
+     * @param S
+     * @returns
+     */
+    public static sub2ind(DIMS: any, ...S: any) {
+        if (arguments.length > 1) {
+            const n = DIMS;
+            return new ComplexDecimal(1, 0);
+        } else {
+            throw new Error(`Invalid call to sub2ind.`);
+        }
+    }
+
+    /**
+     * Convert linear indices to subscripts.
+     * @param DIMS
+     * @param IND
+     * @returns
+     */
+    public static ind2sub(DIMS: any, IND: any): any {
+        if (arguments.length === 2) {
+            return EvaluatorPointer.nodeReturnList((length: number, index: number): any => {
+                const dims = DIMS;
+                const ind = IND;
+                if (length === 1) {
+                    return ind;
+                } else {
+                    return ind;
+                }
+            });
+        } else {
+            throw new Error(`Invalid call to ind2sub.`);
+        }
+    }
+
+    /**
+     * Array size.
+     * @param M Matrix
+     * @param DIM
+     * @returns
+     */
+    public static size(M: MultiArray, ...DIM: ComplexDecimal[] | ComplexDecimal[][]): MultiArray | ComplexDecimal {
+        const testDimension = (dimension: ComplexDecimal): number => {
+            const dim = dimension.re.toNumber();
+            if (dim < 1 || !dimension.re.trunc().eq(dimension.re)) {
+                throw new Error(`size: requested dimension DIM (= ${Math.trunc(dimension.re.toNumber())}) out of range. DIM must be a positive integer.`);
+            }
+            return dim;
+        };
+        if (DIM.length === 0) {
+            if ('re' in M) {
+                const result = new MultiArray([1, 2]);
+                result.array = [[ComplexDecimal.one(), ComplexDecimal.one()]];
+                result.type = ComplexDecimal.numberClass.real;
+                return result;
+            } else {
+                const result = new MultiArray([1, 2]);
+                result.array = [[new ComplexDecimal(M.dim[0]), new ComplexDecimal(M.dim[1])]];
+                result.type = ComplexDecimal.numberClass.real;
+                return result;
+            }
+        } else {
+            if (DIM.length === 1) {
+                if ('re' in M) {
+                    return ComplexDecimal.one();
+                } else {
+                    if ('re' in DIM[0]) {
+                        const dim = testDimension(DIM[0]);
+                        if (dim > M.dim.length) {
+                            return ComplexDecimal.one();
+                        } else {
+                            return new ComplexDecimal(M.dim[dim - 1]);
+                        }
+                    } else {
+                        const result = new MultiArray([1, DIM[0].length]);
+                        result.array = [[]];
+                        DIM[0].forEach((dimension) => {
+                            const dim = testDimension(dimension);
+                            if (dim > M.dim.length) {
+                                result.array[0].push(ComplexDecimal.one());
+                            } else {
+                                result.array[0].push(new ComplexDecimal(M.dim[dim - 1]));
+                            }
+                        });
+                        result.type = ComplexDecimal.numberClass.real;
+                        return result;
+                    }
+                }
+            } else {
+                if ('re' in M) {
+                    const result = new MultiArray([1, DIM.length]);
+                    result.array = [[]];
+                    (DIM as ComplexDecimal[]).forEach((dimension) => {
+                        testDimension(dimension);
+                        result.array[0].push(ComplexDecimal.one());
+                    });
+                    result.type = ComplexDecimal.numberClass.real;
+                    return result;
+                } else {
+                    const result = new MultiArray([1, DIM.length]);
+                    result.array = [[]];
+                    DIM.forEach((dimension) => {
+                        const dim = testDimension(dimension as ComplexDecimal);
+                        if (dim > M.dim.length) {
+                            result.array[0].push(ComplexDecimal.one());
+                        } else {
+                            result.array[0].push(new ComplexDecimal(M.dim[dim - 1]));
+                        }
+                    });
+                    result.type = ComplexDecimal.numberClass.real;
+                    return result;
+                }
+            }
+        }
     }
 }
