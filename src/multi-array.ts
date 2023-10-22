@@ -54,6 +54,18 @@ export class MultiArray {
         plu: MultiArray.plu,
         qr: MultiArray.qr,
         gauss: MultiArray.gauss,
+        sub2ind: MultiArray.sub2ind,
+        ind2sub: MultiArray.ind2sub,
+    };
+
+    /**
+     * Linearized functions
+     */
+    public static linearizedFunctions: { [name: string]: { func: Function; lin: boolean[] } } = {
+        size: {
+            func: MultiArray.size,
+            lin: [false, true],
+        },
     };
 
     /**
@@ -221,7 +233,7 @@ export class MultiArray {
     public static linearize(M: MultiArray | ComplexDecimal): ComplexDecimal[] {
         if ('array' in M) {
             const result: ComplexDecimal[] = [];
-            for (let j = 0, n = 0; j < M.dim[1]; j++) {
+            for (let j = 0; j < M.dim[1]; j++) {
                 result.push(...M.array.map((row) => row[j]));
             }
             return result;
@@ -253,7 +265,7 @@ export class MultiArray {
      * @param value
      * @returns
      */
-    public static number2matrix1x1(value: ComplexDecimal | MultiArray): MultiArray {
+    public static numberToMatrix(value: ComplexDecimal | MultiArray): MultiArray {
         if ('array' in value) {
             return value;
         } else {
@@ -261,6 +273,14 @@ export class MultiArray {
             result.array[0] = [value];
             result.type = value.type;
             return result;
+        }
+    }
+
+    public static matrixToNumber(value: ComplexDecimal | MultiArray): MultiArray | ComplexDecimal {
+        if ('array' in value && value.dim[0] === 1 && value.dim[1] === 1) {
+            return value.array[0][0];
+        } else {
+            return value;
         }
     }
 
@@ -430,18 +450,18 @@ export class MultiArray {
 
     /**
      * Set selected items from MultiArray by linear index or subscripts.
-     * @param nameTable
-     * @param id
-     * @param args
-     * @param right
+     * @param nameTable Name Table
+     * @param id Identifier
+     * @param args linear indices or subscripts
+     * @param right Value to assign.
      */
     public static setItems(nameTable: TNameTable, id: string, args: any[], right: MultiArray): void {
         const linright = this.linearize(right);
         args = args.map((arg: any) => arg.map((value: any) => MultiArray.testIndex(value, id)));
         const argsMax = args.map((arg: number[]) => Math.max(...arg));
         const argsLength = args.map((arg: number[]) => arg.length);
-        let isDefinedId = typeof nameTable[id] !== 'undefined';
-        let isNotFunction = isDefinedId && nameTable[id].args.length === 0;
+        const isDefinedId = typeof nameTable[id] !== 'undefined';
+        const isNotFunction = isDefinedId && nameTable[id].args.length === 0;
         const isMultiArray = isNotFunction && 'array' in nameTable[id].expr;
         const isLinearIndex = args.length < 2;
         if (isMultiArray) {
@@ -452,10 +472,7 @@ export class MultiArray {
             }
         } else {
             if (isNotFunction) {
-                nameTable[id].expr = MultiArray.number2matrix1x1(nameTable[id].expr);
-            } else {
-                isDefinedId = false;
-                isNotFunction = false;
+                nameTable[id].expr = MultiArray.numberToMatrix(nameTable[id].expr);
             }
         }
         // console.log('args:');
@@ -467,12 +484,22 @@ export class MultiArray {
         // console.log('argsLength:', argsLength);
         let argsDim;
         if (isLinearIndex) {
-            const index = argsMax[0];
-            argsMax[0] = index % nameTable[id].expr.dim[0];
-            argsMax[1] = Math.trunc(index / nameTable[id].expr.dim[0]);
-            argsDim = argsMax.map((value) => value + 1);
-            if (argsDim[1] > nameTable[id].expr.dim[1]) {
-                throw new Error('Invalid resizing operation or ambiguous assignment to an out-of-bounds array element.');
+            if (isDefinedId) {
+                if (isNotFunction) {
+                    const index = argsMax[0];
+                    argsMax[0] = index % nameTable[id].expr.dim[0];
+                    argsMax[1] = Math.trunc(index / nameTable[id].expr.dim[0]);
+                    argsDim = argsMax.map((value) => value + 1);
+                    if (argsDim[1] > nameTable[id].expr.dim[1]) {
+                        throw new Error('Invalid resizing operation or ambiguous assignment to an out-of-bounds array element.');
+                    }
+                } else {
+                    throw new Error(`in indexed assignment ${id}(index) = X, ${id} cannot be a function.`);
+                }
+            } else {
+                argsMax[1] = argsMax[0];
+                argsMax[0] = 0;
+                argsDim = argsMax.map((value) => value + 1);
             }
         } else {
             argsDim = argsLength.slice();
@@ -490,7 +517,7 @@ export class MultiArray {
                 );
                 // console.log(`expanded(${argsMax}):`, nameTable[id].expr);
             } else {
-                throw new Error(`${id} is a function.`);
+                throw new Error(`in indexed assignment ${id}(index) = X, ${id} cannot be a function.`);
             }
         } else {
             // console.log('undefined name');
@@ -524,11 +551,11 @@ export class MultiArray {
     }
 
     /**
-     * Get selected items from MultiArray by linear index or subscripts.
-     * @param M
-     * @param id
+     * Get selected items from MultiArray by linear indices or subscripts.
+     * @param M Matrix
+     * @param id Identifier
      * @param indexList
-     * @returns
+     * @returns MultiArray of selected items
      */
     public static getItems(M: MultiArray, id: string, indexList: (ComplexDecimal | MultiArray)[]): MultiArray | ComplexDecimal {
         let result: MultiArray;
@@ -576,11 +603,13 @@ export class MultiArray {
             }
         }
         result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
-        if (result.dim[0] === 1 && result.dim[1] === 1) {
+        return MultiArray.matrixToNumber(result);
+        /*if (result.dim[0] === 1 && result.dim[1] === 1) {
             return result.array[0][0];
         } else {
             return result;
         }
+        /*  */
     }
 
     /**
@@ -1633,5 +1662,144 @@ export class MultiArray {
             }
         }
         return EvaluatorPointer.nodeOp('*', Q, R);
+    }
+
+    /**
+     * Convert subscripts to linear indices.
+     * @param DIMS
+     * @param S
+     * @returns
+     */
+    public static sub2ind(DIMS: any, ...S: any) {
+        if (arguments.length > 1) {
+            const n = DIMS;
+            return new ComplexDecimal(1, 0);
+        } else {
+            throw new Error(`Invalid call to sub2ind.`);
+        }
+    }
+
+    /**
+     * Convert linear indices to subscripts.
+     * @param DIMS
+     * @param IND
+     * @returns
+     */
+    public static ind2sub(DIMS: any, IND: any): any {
+        if (arguments.length === 2) {
+            return EvaluatorPointer.nodeReturnList((length: number, index: number): any => {
+                if (length === 1) {
+                    return IND;
+                } else {
+                    const dims = 're' in DIMS ? MultiArray.numberToMatrix(DIMS) : DIMS;
+                    const ind = 're' in IND ? MultiArray.numberToMatrix(IND) : IND;
+                    if (dims.type > 1 || ind.type > 1) {
+                        throw new Error(`ind2sub: invalid index: subscripts must be either positive integers or logicals`);
+                    }
+                    let result;
+                    switch (index) {
+                        case 0:
+                            result = MultiArray.map(ind, (value: ComplexDecimal) =>
+                                ComplexDecimal.add(ComplexDecimal.mod(ComplexDecimal.sub(value, ComplexDecimal.one()), dims.array[0][0]), ComplexDecimal.one()),
+                            );
+                            break;
+                        case 1:
+                            result = MultiArray.map(ind, (value: ComplexDecimal) =>
+                                ComplexDecimal.fix(
+                                    ComplexDecimal.add(ComplexDecimal.rdiv(ComplexDecimal.sub(value, ComplexDecimal.one()), dims.array[0][0]), ComplexDecimal.one()),
+                                ),
+                            );
+                            break;
+                        default:
+                            result = MultiArray.ones(ind.dim.map((value: number) => new ComplexDecimal(value)));
+                            break;
+                    }
+                    return MultiArray.matrixToNumber(result);
+                }
+            });
+        } else {
+            throw new Error(`Invalid call to ind2sub.`);
+        }
+    }
+
+    /**
+     * Array size.
+     * @param M Matrix
+     * @param DIM
+     * @returns
+     */
+    public static size(M: MultiArray, ...DIM: ComplexDecimal[] | ComplexDecimal[][]): MultiArray | ComplexDecimal {
+        const testDimension = (dimension: ComplexDecimal): number => {
+            const dim = dimension.re.toNumber();
+            if (dim < 1 || !dimension.re.trunc().eq(dimension.re)) {
+                throw new Error(`size: requested dimension DIM (= ${Math.trunc(dimension.re.toNumber())}) out of range. DIM must be a positive integer.`);
+            }
+            return dim;
+        };
+        if (DIM.length === 0) {
+            if ('re' in M) {
+                const result = new MultiArray([1, 2]);
+                result.array = [[ComplexDecimal.one(), ComplexDecimal.one()]];
+                result.type = ComplexDecimal.numberClass.real;
+                return result;
+            } else {
+                const result = new MultiArray([1, 2]);
+                result.array = [[new ComplexDecimal(M.dim[0]), new ComplexDecimal(M.dim[1])]];
+                result.type = ComplexDecimal.numberClass.real;
+                return result;
+            }
+        } else {
+            if (DIM.length === 1) {
+                if ('re' in M) {
+                    return ComplexDecimal.one();
+                } else {
+                    if ('re' in DIM[0]) {
+                        const dim = testDimension(DIM[0]);
+                        if (dim > M.dim.length) {
+                            return ComplexDecimal.one();
+                        } else {
+                            return new ComplexDecimal(M.dim[dim - 1]);
+                        }
+                    } else {
+                        const result = new MultiArray([1, DIM[0].length]);
+                        result.array = [[]];
+                        DIM[0].forEach((dimension) => {
+                            const dim = testDimension(dimension);
+                            if (dim > M.dim.length) {
+                                result.array[0].push(ComplexDecimal.one());
+                            } else {
+                                result.array[0].push(new ComplexDecimal(M.dim[dim - 1]));
+                            }
+                        });
+                        result.type = ComplexDecimal.numberClass.real;
+                        return result;
+                    }
+                }
+            } else {
+                if ('re' in M) {
+                    const result = new MultiArray([1, DIM.length]);
+                    result.array = [[]];
+                    (DIM as ComplexDecimal[]).forEach((dimension) => {
+                        testDimension(dimension);
+                        result.array[0].push(ComplexDecimal.one());
+                    });
+                    result.type = ComplexDecimal.numberClass.real;
+                    return result;
+                } else {
+                    const result = new MultiArray([1, DIM.length]);
+                    result.array = [[]];
+                    DIM.forEach((dimension) => {
+                        const dim = testDimension(dimension as ComplexDecimal);
+                        if (dim > M.dim.length) {
+                            result.array[0].push(ComplexDecimal.one());
+                        } else {
+                            result.array[0].push(new ComplexDecimal(M.dim[dim - 1]));
+                        }
+                    });
+                    result.type = ComplexDecimal.numberClass.real;
+                    return result;
+                }
+            }
+        }
     }
 }
