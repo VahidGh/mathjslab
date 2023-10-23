@@ -7,6 +7,9 @@ feel free to propose changes to this document in a pull request.
 I'm really glad you're reading this, because we need volunteer developers to
 help this project come to fruition.
 
+All notable changes to this project will be documented in
+[CHANGES.md](https://github.com/sergiolindau/mathjslab/blob/main/CHANGES.md) file.
+
 #### Table Of Contents
 
 * [Code of Conduct](#code-of-conduct)
@@ -39,7 +42,7 @@ for small changes, but bigger changes should look like this:
     >
     > A paragraph describing what changed and its impact."
 
-The tests are run by jest. Add relevant tests for the new code created.
+The tests are run by [jest](https://jestjs.io/). Add relevant tests for the new code created.
 
 ## Community
 
@@ -71,6 +74,32 @@ export default ClassName
 ```
 * This is an [open source software](https://en.wikipedia.org/wiki/Open-source_software). Consider the people who will read your code, and make it look nice for them.
 
+## Work fronts
+
+The MathJSLab project started almost a decade ago, but it is still in its infancy. There are several work fronts, some already open, others yet to begin, none yet completed.
+
+Some are listed below:
+
+* Only 2-dimensional arrays (matrix) is supported. Extend to multidimensional
+arrays.
+* Only one single ComplexDecimal type based in Decimal.js is implemented.
+Extend to support ComplexDecimal type based on common javascript number type.
+It is necessary for faster and more efficient computing.
+* Parser is designed to scan a line. Need to code a parser that scan multiple
+lines calling Evaluator when need.
+The real need is a parser that supports both modes: single-line and
+multi-line.
+* More extensive tests need to be written, especially to test the parser and
+evaluator.
+* Search for other compiler-compiler tools besides
+[Jison](https://gerhobbelt.github.io/jison/), for use in the project.
+[Jison](https://gerhobbelt.github.io/jison/) has many limitations and the
+generated parser is not suitable for compiling together with
+[ES6](https://262.ecma-international.org/6.0/) modules written in
+[Typescript](https://www.typescriptlang.org/).
+
+You are welcome to contribute to this project. I will be very grateful if you participate in some way.
+
 Thanks,
 Sergio Lindau
 
@@ -87,6 +116,7 @@ Here are some references consulted to carry out this project.
     * [Compatible Array Sizes for Basic Operations](https://www.mathworks.com/help/matlab/matlab_prog/compatible-array-sizes-for-basic-operations.html)
     * [MATLAB Operators and Special Characters](https://www.mathworks.com/help/matlab/matlab_prog/matlab-operators-and-special-characters.html)
     * [Operator Precedence](https://www.mathworks.com/help/matlab/matlab_prog/operator-precedence.html)
+    * [Matrix Indexing in MATLAB&reg;](https://www.mathworks.com/company/newsletters/articles/matrix-indexing-in-matlab.html)
 * [GNU Octave Documentation](https://docs.octave.org/latest/)
     * [18.2 Basic Matrix Functions](https://octave.org/doc/latest/Basic-Matrix-Functions.html)
 * [Octave Forge - Search Function](https://octave.sourceforge.io/list_functions.php)
