@@ -1,9 +1,9 @@
 /**
- * Parse identifier replacing greek names by HTML entities
+ * Parse identifier replacing greek names and others symbols by HTML entities
  * @param id String containing greek names
  * @returns String with greek names replaced by HTML entities
  */
-export function substGreek(id: string): string {
+export function substSymbol(id: string): string {
     const greekLetters: Array<string> = [
         'alpha',
         'beta',

@@ -4,7 +4,7 @@
 
 import Parser from './parser.js';
 import { constantsTable } from './constants-table';
-import { substGreek } from './subst-greek';
+import { substSymbol } from './subst-symbol';
 import { CharString } from './char-string';
 import { ComplexDecimal } from './complex-decimal';
 import { MultiArray } from './multi-array';
@@ -62,6 +62,8 @@ export type TEvaluatorConfig = {
  */
 interface PrimaryNode {
     type: string | number;
+    parent?: any;
+    index?: number;
 }
 
 /**
@@ -355,6 +357,8 @@ export class Evaluator {
 
     public readonly linearize = MultiArray.linearize;
     public readonly toTensor = MultiArray.numberToMatrix;
+    public readonly linearLength = MultiArray.linearLength;
+    public readonly getDimension = MultiArray.getDimension;
 
     private readonly unparseMLFunctions: Record<string, (tree: any) => string> = {
         abs: (tree: any) => '<mrow><mo>|</mo>' + this.unparserML(tree.args[0]) + '<mo>|</mo></mrow>',
@@ -664,10 +668,12 @@ export class Evaluator {
      */
     public nodeListFirst(node?: any): NodeList {
         if (node) {
-            return {
+            const result = {
                 type: 'LIST',
                 list: [node],
             };
+            node.parent = result;
+            return result as NodeList;
         } else {
             return {
                 type: 'LIST',
@@ -682,7 +688,8 @@ export class Evaluator {
      * @param node
      * @returns
      */
-    public nodeList(lnode: any, node: any): NodeList {
+    public nodeList(lnode: NodeList, node: any): NodeList {
+        node.parent = lnode;
         lnode.list.push(node);
         return lnode;
     }
@@ -692,7 +699,7 @@ export class Evaluator {
      * @param row
      * @returns
      */
-    public nodeFirstRow(row: any): MultiArray {
+    public nodeFirstRow(row: NodeList): MultiArray {
         if (row) {
             return this.firstRow(row.list);
         } else {
@@ -706,7 +713,7 @@ export class Evaluator {
      * @param row
      * @returns
      */
-    public nodeAppendRow(matrix: any, row: any): MultiArray {
+    public nodeAppendRow(matrix: MultiArray, row: NodeList): MultiArray {
         if (row) {
             return this.appendRow(matrix, row.list);
         } else {
@@ -723,7 +730,9 @@ export class Evaluator {
 
     public reduceIfReturnList(value: any): any {
         if (value.type === 'RETLIST') {
-            return value.selector(1, 0);
+            const result = value.selector(1, 0);
+            result.parent = value.parent;
+            return result;
         } else {
             return value;
         }
@@ -874,13 +883,15 @@ export class Evaluator {
      */
     public Evaluator(tree: any, local: boolean = false, fname: string = ''): any {
         if (this._debug) {
-            console.log(`Evaluator(\ntree:${JSON.stringify(tree, null, 2)},\nlocal:${local},\nfname:${fname});`);
+            console.log(`Evaluator(\ntree:${JSON.stringify(tree, (key: string, value: any) => (key !== 'parent' ? value : true), 2)},\nlocal:${local},\nfname:${fname});`);
         }
         if (this.isNumber(tree) || this.isString(tree)) {
             /* NUMBER or STRING */
+            // if (tree.parent === undefined) console.log('(literal) parent undefined');
             return tree;
         } else if (this.isTensor(tree)) {
             /* MATRIX */
+            // if (tree.parent === undefined) console.log('(tensor) parent undefined');
             return this.evaluateTensor(tree, this, local, fname);
         } else {
             switch (tree.type) {
@@ -907,23 +918,30 @@ export class Evaluator {
                 case '|':
                 case '&&':
                 case '||':
+                    tree.left.parent = tree;
+                    tree.right.parent = tree;
                     return this.opTable[tree.type](
                         this.reduceIfReturnList(this.Evaluator(tree.left, local, fname)),
                         this.reduceIfReturnList(this.Evaluator(tree.right, local, fname)),
                     );
                 case '()':
+                    tree.right.parent = tree;
                     return this.reduceIfReturnList(this.Evaluator(tree.right, local, fname));
                 case '+_':
                 case '-_':
+                    tree.right.parent = tree;
                     return this.opTable[tree.type](this.reduceIfReturnList(this.Evaluator(tree.right, local, fname)));
                 case '++_':
                 case '--_':
+                    tree.right.parent = tree;
                     return this.opTable[tree.type](tree.right);
                 case ".'":
                 case "'":
+                    tree.left.parent = tree;
                     return this.opTable[tree.type](this.Evaluator(tree.left, local, fname));
                 case '_++':
                 case '_--':
+                    tree.left.parent = tree;
                     return this.opTable[tree.type](tree.left);
                 case '=':
                 case '+=':
@@ -940,6 +958,8 @@ export class Evaluator {
                 case '.**=':
                 case '&=':
                 case '|=':
+                    tree.left.parent = tree;
+                    tree.right.parent = tree;
                     const assignment = this.validateAssignment(tree.left);
                     const op: string = tree.type.substring(0, tree.type.length - 1);
                     if (assignment.length > 1) {
@@ -1049,11 +1069,13 @@ export class Evaluator {
                 case 'NAME':
                     if (local && this.localTable[fname] && this.localTable[fname][tree.id]) {
                         /* Defined in localTable. */
+                        this.localTable[fname][tree.id].parent = tree;
                         return this.localTable[fname][tree.id];
                     } else if (tree.id in this.nameTable) {
                         /* Defined in nameTable. */
                         if (this.nameTable[tree.id].args.length === 0) {
                             /* Defined as name. */
+                            this.nameTable[tree.id].expr.parent = tree;
                             return this.reduceIfReturnList(this.Evaluator(this.nameTable[tree.id].expr));
                         } else {
                             /* Defined as function name. */
@@ -1066,6 +1088,7 @@ export class Evaluator {
                     const result = {
                         type: 'LIST',
                         list: new Array(tree.list.length),
+                        parent: tree,
                     };
                     for (let i = 0; i < tree.list.length; i++) {
                         /* Convert undefined name, defined in word-list command, to word-list command.
@@ -1079,6 +1102,8 @@ export class Evaluator {
                             tree.list[i].type = 'CmdWList';
                             tree.list[i]['args'] = [];
                         }
+                        tree.list[i].parent = tree;
+                        tree.list[i].index = i;
                         result.list[i] = this.reduceIfReturnList(this.Evaluator(tree.list[i], local, fname));
                         if (typeof result.list[i].type === 'number') {
                             this.nameTable['ans'] = { args: [], expr: result.list[i] };
@@ -1086,15 +1111,36 @@ export class Evaluator {
                     }
                     return result;
                 case 'RANGE':
+                    tree.start.parent = tree;
+                    tree.stop.parent = tree;
+                    if (tree.stride) {
+                        tree.stride.parent = tree;
+                    }
                     return this.expandRange(
                         this.reduceIfReturnList(this.Evaluator(tree.start, local, fname)),
                         this.reduceIfReturnList(this.Evaluator(tree.stop, local, fname)),
                         tree.stride ? this.reduceIfReturnList(this.Evaluator(tree.stride, local, fname)) : null,
                     );
+                case 'ENDRANGE': {
+                    const parent = tree.parent.parent;
+                    if (
+                        parent.type === 'ARG' &&
+                        parent.expr.id in this.nameTable &&
+                        this.nameTable[parent.expr.id].args.length === 0 &&
+                        this.isTensor(this.nameTable[parent.expr.id].expr)
+                    ) {
+                        return parent.args.length === 1
+                            ? this.newNumber(this.linearLength(this.nameTable[parent.expr.id].expr))
+                            : this.newNumber(this.getDimension(this.nameTable[parent.expr.id].expr, tree.parent.index));
+                    } else {
+                        throw new SyntaxError('end of range undefined.');
+                    }
+                }
                 case 'ARG':
                     if (typeof tree.expr === 'undefined') {
                         throw new EvalError(`'${tree.id}' undefined.`);
                     }
+                    tree.expr.parent = tree;
                     if (tree.expr.type === 'NAME') {
                         /* Indexed matrix reference or function call. */
                         const aliasTreeName = this.aliasName(tree.expr.id);
@@ -1102,7 +1148,11 @@ export class Evaluator {
                             /* Is base function. */
                             if (typeof this.baseFunctionTable[aliasTreeName]['mapper'] !== 'undefined') {
                                 /* Arguments evaluated. */
-                                const argumentsList = tree.args.map((arg: any) => this.reduceIfReturnList(this.Evaluator(arg, local, fname)));
+                                const argumentsList = tree.args.map((arg: any, i: number) => {
+                                    arg.parent = tree;
+                                    arg.index = i;
+                                    return this.reduceIfReturnList(this.Evaluator(arg, local, fname));
+                                });
                                 if (this.baseFunctionTable[aliasTreeName].mapper && argumentsList.length !== 1) {
                                     /* Error if mapper and #arguments!==1 (Invalid call). */
                                     throw new EvalError(`Invalid call to ${aliasTreeName}.`);
@@ -1116,9 +1166,11 @@ export class Evaluator {
                             } else {
                                 /* Arguments selectively evaluated. */
                                 return this.baseFunctionTable[aliasTreeName].func(
-                                    ...tree.args.map((arg: any, i: number) =>
-                                        this.baseFunctionTable[aliasTreeName].ev[i] ? this.reduceIfReturnList(this.Evaluator(arg, local, fname)) : arg,
-                                    ),
+                                    ...tree.args.map((arg: any, i: number) => {
+                                        arg.parent = tree;
+                                        arg.index = i;
+                                        return this.baseFunctionTable[aliasTreeName].ev[i] ? this.reduceIfReturnList(this.Evaluator(arg, local, fname)) : arg;
+                                    }),
                                 );
                             }
                         } else if (local && this.localTable[fname] && this.localTable[fname][tree.expr.id]) {
@@ -1128,17 +1180,24 @@ export class Evaluator {
                             /* Defined in nameTable. */
                             if (this.nameTable[tree.expr.id].args.length === 0) {
                                 /* If is a defined name. */
+                                this.nameTable[tree.expr.id].expr.parent = tree;
                                 const temp = this.reduceIfReturnList(this.Evaluator(this.nameTable[tree.expr.id].expr));
                                 if (tree.args.length === 0) {
                                     /* Defined name. */
                                     return temp;
                                 } else if (this.isTensor(temp)) {
                                     /* Defined indexed matrix reference. */
-                                    return this.getItems(
+                                    const result = this.getItems(
                                         temp,
                                         tree.expr.id,
-                                        tree.args.map((arg: any) => this.reduceIfReturnList(this.Evaluator(arg, local, fname))),
+                                        tree.args.map((arg: any, i: number) => {
+                                            arg.parent = tree;
+                                            arg.index = i;
+                                            return this.reduceIfReturnList(this.Evaluator(arg, local, fname));
+                                        }),
                                     );
+                                    result.parent = tree;
+                                    return result;
                                 } else {
                                     throw new EvalError('invalid matrix indexing or function arguments.');
                                 }
@@ -1151,6 +1210,8 @@ export class Evaluator {
                                 this.localTable[tree.expr.id] = {};
                                 for (let i = 0; i < tree.args.length; i++) {
                                     /* Evaluate defined function arguments list. */
+                                    tree.args[i].parent = tree;
+                                    tree.args[i].index = i;
                                     this.localTable[tree.expr.id][this.nameTable[tree.expr.id].args[i].id] = this.reduceIfReturnList(this.Evaluator(tree.args[i], true, fname));
                                 }
                                 const temp = this.reduceIfReturnList(this.Evaluator(this.nameTable[tree.expr.id].expr, true, tree.expr.id));
@@ -1163,11 +1224,17 @@ export class Evaluator {
                         }
                     } else {
                         /* literal indexing, ex: [1,2;3,4](1,2). */
-                        return this.getItems(
+                        const result = this.getItems(
                             tree.expr,
                             this.Unparse(tree.expr),
-                            tree.args.map((arg: any) => this.reduceIfReturnList(this.Evaluator(arg, local, fname))),
+                            tree.args.map((arg: any, i: number) => {
+                                arg.parent = tree;
+                                arg.index = i;
+                                return this.reduceIfReturnList(this.Evaluator(arg, local, fname));
+                            }),
                         );
+                        result.parent = tree;
+                        return result;
                     }
                 case 'CmdWList':
                     this.commandWordListTable[tree.id].func(...tree.args.map((word: { str: string }) => word.str));
@@ -1187,6 +1254,7 @@ export class Evaluator {
     public Evaluate(tree: any): any {
         try {
             this.exitStatus = Evaluator.response.OK;
+            tree.parent = null;
             return this.Evaluator(tree);
         } catch (e) {
             this.exitStatus = Evaluator.response.EVAL_ERROR;
@@ -1291,6 +1359,8 @@ export class Evaluator {
                         } else {
                             return ':';
                         }
+                    case 'ENDRANGE':
+                        return 'end';
                     case 'ARG':
                         return this.Unparse(tree.expr) + '(' + tree.args.map((value: any) => this.Unparse(value)).join(',') + ')';
                     case 'RETLIST':
@@ -1398,7 +1468,7 @@ export class Evaluator {
                     case "'":
                         return '<msup><mrow>' + this.unparserML(tree.left) + '</mrow><mrow><mi>H</mi></mrow></msup>';
                     case 'NAME':
-                        return '<mi>' + substGreek(tree.id) + '</mi>';
+                        return '<mi>' + substSymbol(tree.id) + '</mi>';
                     case 'LIST':
                         return `<mtable>${tree.list.map((value: any) => `<mtr><mtd>${this.unparserML(value)}</mtd></mtr>`).join('')}</mtable>`;
                     case 'RANGE':
@@ -1411,6 +1481,8 @@ export class Evaluator {
                         } else {
                             return '<mo>:</mo>';
                         }
+                    case 'ENDRANGE':
+                        return '<mi>end</mi>';
                     case 'ARG':
                         if (tree.args.length === 0) {
                             return this.unparserML(tree.expr) + '<mrow><mo>(</mo><mo>)</mo></mrow>';
@@ -1421,7 +1493,7 @@ export class Evaluator {
                                 if (aliasTreeName in this.baseFunctionTable && this.baseFunctionTable[aliasTreeName].unparserML) {
                                     return this.baseFunctionTable[aliasTreeName].unparserML!(tree);
                                 } else {
-                                    return '<mi>' + substGreek(tree.expr.id) + '</mi><mrow><mo>(</mo>' + arglist + '<mo>)</mo></mrow>';
+                                    return '<mi>' + substSymbol(tree.expr.id) + '</mi><mrow><mo>(</mo>' + arglist + '<mo>)</mo></mrow>';
                                 }
                             } else {
                                 return this.unparserML(tree.expr) + '<mrow><mo>(</mo>' + arglist + '<mo>)</mo></mrow>';

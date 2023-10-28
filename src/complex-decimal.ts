@@ -141,6 +141,7 @@ export class ComplexDecimal {
     public re: Decimal;
     public im: Decimal;
     public type: number;
+    public parent: any;
 
     public static setNumberType(value: ComplexDecimal): void {
         if (value.im.eq(0)) {

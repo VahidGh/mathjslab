@@ -64,15 +64,15 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 <FQIDENT_AS_STRING><<EOF>>                      { this.popState(); return "END_OF_INPUT"; }
 <FQIDENT_AS_STRING>{ANY_EXCEPT_S_NL}+           return "STRING";
 {FQIDENT}       {
-        let i = keywordsTable.indexOf(this.match);
-	if (i>=0) {
-		if (keywordsTable[i].substring(0,3)=='end') {
+    let i = keywordsTable.indexOf(this.match);
+	if (i >= 0) {
+		if (keywordsTable[i].substring(0,3) === 'end') {
 			return "END";
 		}
-		else if (keywordsTable[i]=='unwind_protect') {
+		else if (keywordsTable[i] === 'unwind_protect') {
 			return "UNWIND";
 		}
-		else if (keywordsTable[i]=='unwind_protect_cleanup') {
+		else if (keywordsTable[i] === 'unwind_protect_cleanup') {
 			return "CLEANUP";
 		}
 		else {
@@ -80,7 +80,7 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 		}
 	}
 	i = commandsTable.indexOf(this.match);
-	if (i>=0) {
+	if (i >= 0) {
 		this.pushState('FQIDENT_AS_STRING');
 	}
 	return "NAME";
@@ -133,7 +133,7 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 ".**="                                          return ".**=";
 "&="                                            return "&=";
 "|="                                            return "|=";
-[\+\-\*\/\÷\^\(\)\=\,\;\[\]\:\\\&\|\<\>\~\!]    return this.match;
+[\+\-\*\/\^\(\)\=\,\;\[\]\:\\\&\|\<\>\~\!]      return this.match;
 <<EOF>>                                         return "END_OF_INPUT";
 .                                               return "INVALID";
 
@@ -358,14 +358,14 @@ primary_expr
 
 magic_colon
         : ':'
-                {$$ = EvaluatorPointer.nodeReserved($1)}
+                {$$ = EvaluatorPointer.nodeReserved($1);}
         ;
 
 magic_tilde
         : '!'
-                {$$ = EvaluatorPointer.nodeReserved($1)}
+                {$$ = EvaluatorPointer.nodeReserved($1);}
         | '~'
-                {$$ = EvaluatorPointer.nodeReserved($1)}
+                {$$ = EvaluatorPointer.nodeReserved($1);}
         ;
 
 arg_list
@@ -461,11 +461,21 @@ power_expr
                 {$$ = EvaluatorPointer.nodeOp('-_',$2);}
         ;
 
+colon_item
+        : oper_expr
+        | END
+                {$$ = EvaluatorPointer.nodeReserved('ENDRANGE');}
+        ;
+
 colon_expr
-        : oper_expr ':' oper_expr
-                {$$ = EvaluatorPointer.nodeRange($1,$3)}
-        | oper_expr ':' oper_expr ':' oper_expr
-                {$$ = EvaluatorPointer.nodeRange($1,$2,$3)}
+        : oper_expr ':' colon_item
+                {$$ = EvaluatorPointer.nodeRange($1,$3);}
+        | END ':' colon_item
+                {$$ = EvaluatorPointer.nodeRange(EvaluatorPointer.nodeReserved('ENDRANGE'),$3);}
+        | oper_expr ':' colon_item ':' colon_item
+                {$$ = EvaluatorPointer.nodeRange($1,$3,$5);}
+        | END ':' colon_item ':' colon_item
+                {$$ = EvaluatorPointer.nodeRange(EvaluatorPointer.nodeReserved('ENDRANGE'),$3,$5);}
         ;
 
 simple_expr

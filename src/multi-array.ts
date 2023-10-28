@@ -84,6 +84,11 @@ export class MultiArray {
     public type: number;
 
     /**
+     * Parent node property.
+     */
+    public parent: number;
+
+    /**
      * MultiArray constructor.
      * @param shape
      * @param fill
@@ -95,6 +100,44 @@ export class MultiArray {
             this.type = -1;
         } else {
             this.dim = shape.slice();
+            if (!fill) {
+                this.array = new Array(this.dim[0]);
+                this.type = -1;
+            } else {
+                this.array = new Array(this.dim[0]);
+                this.type = fill.type;
+                for (let i = 0; i < this.dim[0]; i++) {
+                    this.array[i] = new Array(this.dim[1]).fill(fill);
+                }
+            }
+        }
+    }
+
+    public static getDimension(M: MultiArray, n: number): number {
+        if (n < 2) {
+            return M.dim[n];
+        } else {
+            return 1;
+        }
+    }
+
+    public static removeSingletonTail(dim: number[]): number[] {
+        const dimensions = dim.slice();
+        let i = dimensions.length - 1;
+        while (dimensions[i] === 1 && i > 1) {
+            dimensions.pop();
+            i--;
+        }
+        return dimensions;
+    }
+
+    public create(shape?: number[], fill?: ComplexDecimal) {
+        if (!shape) {
+            this.dim = [0, 0];
+            this.array = [];
+            this.type = -1;
+        } else {
+            this.dim = MultiArray.removeSingletonTail(shape);
             if (!fill) {
                 this.array = new Array(this.dim[0]);
                 this.type = -1;
@@ -188,11 +231,13 @@ export class MultiArray {
      * @returns MultiArray object evaluated.
      */
     public static evaluate(tree: MultiArray, that: Evaluator, local: boolean = false, fname: string = ''): MultiArray {
+        // if (tree.parent === undefined) console.log('(MultiArray) parent undefined');
         const result = new MultiArray();
         for (let i = 0, k = 0; i < tree.array.length; i++, k++) {
             result.array.push([]);
             let h = 1;
             for (let j = 0; j < tree.array[i].length; j++) {
+                tree.array[i][j].parent = result;
                 const temp = that.Evaluator(tree.array[i][j], local, fname);
                 if (MultiArray.isThis(temp)) {
                     if (j === 0) {
