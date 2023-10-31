@@ -81,10 +81,12 @@ The MathJSLab project started almost a decade ago, but it is still in its infanc
 Some are listed below:
 
 * Only 2-dimensional arrays (matrix) is supported. Extend to multidimensional
-arrays.
-* Only one single ComplexDecimal type based in Decimal.js is implemented.
+arrays. To do this is need a complete reestructuration of MultiArray class.
+* Only one single ComplexDecimal type based on Decimal.js is implemented.
 Extend to support ComplexDecimal type based on common javascript number type.
 It is necessary for faster and more efficient computing.
+* Use Web Workers and WebAssembly for more efficient computing. The complete
+evaluator can reside in a Web Worker.
 * Parser is designed to scan a line. Need to code a parser that scan multiple
 lines calling Evaluator when need.
 The real need is a parser that supports both modes: single-line and
@@ -131,6 +133,14 @@ Here are some references consulted to carry out this project.
 * [MATLAB&reg; parser by Tegala Sravani](https://github.com/TegalaSravani/MATLAB&reg;-PARSER)
 * [The Design and Implementation of a Parser and Scanner for the MATLAB&reg; Language in the MATCH Compiler](http://www.ece.northwestern.edu/cpdc/pjoisha/MAGICA/CPDC-TR-9909-017.pdf)
 * [MATLAB&reg; grammar from Grammar Zoo](https://slebok.github.io/zoo/markup/scientific/matlab/srour/extracted/index.html)
-* [Wikipedia - Row- and column-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order)
+* [Wikipedia: Row- and column-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order)
+* [Wikipedia: Lexicographic order](https://en.wikipedia.org/wiki/Lexicographic_order)
 * [Scratchapixel 3.0 - Geometry - Row Major vs Column Major Vector](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/row-major-vs-column-major-vector.html)
+* [The R Project for Statistical Computing](https://www.r-project.org/)
+* [JS for Science](https://indico.cern.ch/event/853710/contributions/3708132/attachments/1985053/3307323/Armina_Abramyan_JS_for_Science.pdf)
+* [D3: The JavaScript library for bespoke data visualization](https://d3js.org/)
+* [HIGHCHARTS](https://www.highcharts.com/)
+* [Mermaid: Diagramming and charting tool](https://mermaid.js.org/)
+* [highlight.js](https://highlightjs.org/)
+* [tangle](http://worrydream.com/Tangle/)
 

@@ -219,6 +219,7 @@ export class Evaluator {
         pi: ComplexDecimal.pi(),
         inf: ComplexDecimal.inf_0(),
         Inf: ComplexDecimal.inf_0(),
+        nan: ComplexDecimal.NaN_0(),
         NaN: ComplexDecimal.NaN_0(),
     };
 
@@ -1346,7 +1347,7 @@ export class Evaluator {
                     case '_--':
                         return this.Unparse(tree.left) + '--';
                     case 'NAME':
-                        return tree.id;
+                        return tree.id.replace(/^[Ii]nf$/, '&infin;');
                     case 'LIST':
                         return tree.list.map((value: any) => this.Unparse(value)).join('\n') + '\n';
                     case 'RANGE':

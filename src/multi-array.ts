@@ -51,7 +51,7 @@ export class MultiArray {
         adj: MultiArray.adj,
         pivot: MultiArray.pivot,
         lu: MultiArray.lu,
-        plu: MultiArray.plu,
+        // plu: MultiArray.plu,
         qr: MultiArray.qr,
         gauss: MultiArray.gauss,
         sub2ind: MultiArray.sub2ind,
@@ -1537,43 +1537,56 @@ export class MultiArray {
         return X;
     }
 
-    /**
-     * LU matrix factorization.
-     * @param M
-     * @returns
-     */
-    public static lu(M: MultiArray): any {
-        if (M.dim[0] !== M.dim[1]) {
-            throw new Error(`LU decomposition can only be applied to square matrices.`);
-        }
-        const n = M.dim[0]; // Size of the square M
-        const L = new MultiArray([n, n], ComplexDecimal.zero()); // Initialize the lower triangular matrix
-        const U = new MultiArray([n, n], ComplexDecimal.zero()); // Initialize the upper triangular matrix
-        for (let i = 0; i < n; i++) {
-            // Initialize the diagonal of L to 1
-            L.array[i][i] = ComplexDecimal.one();
-            // Upper Triangular
-            for (let j = i; j < n; j++) {
-                // Summation of L(i, k) * U(k, j)
-                let sum: ComplexDecimal = ComplexDecimal.zero();
-                for (let k = 0; k < i; k++) {
-                    sum = ComplexDecimal.add(sum, ComplexDecimal.mul(L.array[i][k], U.array[k][j]));
+    static lu_chatgpt(matrix: MultiArray): { P: MultiArray; L: MultiArray; U: MultiArray } {
+        const n = matrix.dim[0]; // Size of the square matrix
+        const L = MultiArray.eye(new ComplexDecimal(n)) as MultiArray; // Initialize the lower triangular matrix as an identity matrix
+        const U = MultiArray.copy(matrix); // Initialize the upper triangular matrix with input
+        const P = MultiArray.eye(new ComplexDecimal(n)) as MultiArray; // Initialize the permutation matrix as an identity matrix
+
+        for (let k = 0; k < n; k++) {
+            // Find the pivot element and its row index in the k-th column
+            let maxVal = ComplexDecimal.abs(U.array[k][k]);
+            let maxIdx = k;
+
+            for (let i = k + 1; i < n; i++) {
+                const absVal = ComplexDecimal.abs(U.array[i][k]);
+                if (ComplexDecimal.gt(absVal, maxVal)) {
+                    maxVal = absVal;
+                    maxIdx = i;
                 }
-                // Evaluating U(i, j)
-                U.array[i][j] = ComplexDecimal.sub(M.array[i][j], sum);
             }
-            // Lower Triangular
-            for (let j = i + 1; j < n; j++) {
-                // Summation of L(j, k) * U(k, i)
-                let sum: ComplexDecimal = ComplexDecimal.zero();
-                for (let k = 0; k < i; k++) {
-                    sum = ComplexDecimal.add(sum, ComplexDecimal.mul(L.array[j][k], U.array[k][i]));
+
+            // Swap rows in U and P if needed
+            if (maxIdx !== k) {
+                MultiArray.swapRows(U, k, maxIdx);
+                MultiArray.swapRows(P, k, maxIdx);
+            }
+
+            for (let i = k + 1; i < n; i++) {
+                // Compute the multiplier for the row transformation and store it in L
+                const multiplier = ComplexDecimal.rdiv(U.array[i][k], U.array[k][k]);
+                L.array[i][k] = multiplier;
+
+                // Update the elements in the lower part of U
+                for (let j = k; j < n; j++) {
+                    U.array[i][j] = ComplexDecimal.sub(U.array[i][j], ComplexDecimal.mul(multiplier, U.array[k][j]));
                 }
-                // Evaluating L(j, i)
-                L.array[j][i] = ComplexDecimal.rdiv(ComplexDecimal.sub(M.array[j][i], sum), U.array[i][i]);
             }
         }
-        return EvaluatorPointer.nodeOp('*', L, U);
+        return EvaluatorPointer.nodeReturnList((length: number, index: number): any => {
+            if (length === 1) {
+                return U;
+            } else {
+                switch (index) {
+                    case 0:
+                        return L;
+                    case 1:
+                        return U;
+                    case 2:
+                        return P;
+                }
+            }
+        });
     }
 
     /**
@@ -1581,7 +1594,7 @@ export class MultiArray {
      * @param M
      * @returns
      */
-    public static plu(M: MultiArray): any {
+    public static lu(M: MultiArray): any {
         // https://www.codeproject.com/Articles/1203224/A-Note-on-PA-equals-LU-in-Javascript
         // https://rosettacode.org/wiki/LU_decomposition#JavaScript
         if (M.dim[0] !== M.dim[1]) {
@@ -1634,8 +1647,20 @@ export class MultiArray {
                 }
             }
         }
-
-        return EvaluatorPointer.nodeOp('*', P, EvaluatorPointer.nodeOp('*', L, U));
+        return EvaluatorPointer.nodeReturnList((length: number, index: number): any => {
+            if (length === 1) {
+                return U;
+            } else {
+                switch (index) {
+                    case 0:
+                        return L;
+                    case 1:
+                        return U;
+                    case 2:
+                        return P;
+                }
+            }
+        });
     }
 
     /**

@@ -297,7 +297,7 @@ export class ComplexDecimal {
                 );
             }
         } else {
-            return value.isNaN() ? '<mi>NaN</mi>' : (value.isNegative() ? '<mo>-</mo>' : '') + '<mi>&infin;</mi>';
+            return value.isNaN() ? '<mi><b>NaN</b></mi>' : (value.isNegative() ? '<mo>-</mo>' : '') + '<mi>&infin;</mi>';
         }
     }
 

@@ -1,6 +1,6 @@
 export class CharString {
     readonly type = 3;
-    str: string;
+    public str: string;
     constructor(str: string) {
         this.str = str;
     }

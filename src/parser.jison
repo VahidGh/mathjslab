@@ -353,7 +353,7 @@ primary_expr
         | matrix
                 {$$ = $1;}
         | '(' expression ')'
-                {$$ = $2;}
+                {$$ = EvaluatorPointer.nodeOp('()', $2);}
         ;
 
 magic_colon

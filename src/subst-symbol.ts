@@ -91,5 +91,6 @@ export function substSymbol(id: string): string {
         regex = new RegExp('^([' + greekLetters[i][0] + greekLetters[i][0].toUpperCase() + ']' + greekLetters[i].substring(1) + ')(?![a-zA-Z0-9;])', 'g');
         id = id.replace(regex, '&$1;');
     }
+    id = id.replace(/^[Ii]nf$/, '&infin;').replace(/^NaN$|^nan$/, '<b>NaN</b>');
     return id;
 }
