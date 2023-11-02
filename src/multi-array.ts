@@ -131,7 +131,7 @@ export class MultiArray {
         return dimensions;
     }
 
-    public create(shape?: number[], fill?: ComplexDecimal) {
+    public recreate(shape?: number[], fill?: ComplexDecimal) {
         if (!shape) {
             this.dim = [0, 0];
             this.array = [];

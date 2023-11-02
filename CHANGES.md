@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.1.20
+- Changes in build scripts in package.json
+- Magic tilde (:) when indexing
+- Discard output (~ at left side).
+
 ## 1.1.19
 - Fix parser parenthsis node.
 

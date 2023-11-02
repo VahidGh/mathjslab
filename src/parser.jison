@@ -362,10 +362,8 @@ magic_colon
         ;
 
 magic_tilde
-        : '!'
-                {$$ = EvaluatorPointer.nodeReserved($1);}
-        | '~'
-                {$$ = EvaluatorPointer.nodeReserved($1);}
+        : '~'
+                {$$ = EvaluatorPointer.nodeReserved('<~>');}
         ;
 
 arg_list
