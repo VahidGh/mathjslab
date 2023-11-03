@@ -10,6 +10,11 @@ help this project come to fruition.
 All notable changes to this project will be documented in
 [CHANGES.md](https://github.com/sergiolindau/mathjslab/blob/main/CHANGES.md) file.
 
+This project has an ISBN assigned to it. Whenever significant changes are made
+to the project, or new contributing authors are added, a new ISBN will be
+assigned to the project. Therefore, the project must continue to be
+educational software.
+
 #### Table Of Contents
 
 * [Code of Conduct](#code-of-conduct)

@@ -222,6 +222,14 @@ export class MultiArray {
         return temp;
     }
 
+    public static link(M: MultiArray): void {
+        M.array.forEach((row) => {
+            row.forEach((value) => {
+                value.parent = M;
+            });
+        });
+    }
+
     /**
      * Evaluate MultiArray object. Calls `that.Evaluator` for each element of
      * Matrix

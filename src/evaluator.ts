@@ -892,15 +892,19 @@ export class Evaluator {
      */
     public Evaluator(tree: any, local: boolean = false, fname: string = ''): any {
         if (this._debug) {
-            console.log(`Evaluator(\ntree:${JSON.stringify(tree, (key: string, value: any) => (key !== 'parent' ? value : true), 2)},\nlocal:${local},\nfname:${fname});`);
+            console.log(
+                `Evaluator(\ntree:${JSON.stringify(
+                    tree,
+                    (key: string, value: any) => (key !== 'parent' ? value : value === null ? 'root' : true),
+                    2,
+                )},\nlocal:${local},\nfname:${fname});`,
+            );
         }
         if (this.isNumber(tree) || this.isString(tree)) {
             /* NUMBER or STRING */
-            // if (tree.parent === undefined) console.log('(literal) parent undefined');
             return tree;
         } else if (this.isTensor(tree)) {
             /* MATRIX */
-            // if (tree.parent === undefined) console.log('(tensor) parent undefined');
             return this.evaluateTensor(tree, this, local, fname);
         } else {
             switch (tree.type) {
@@ -971,10 +975,8 @@ export class Evaluator {
                     tree.right.parent = tree;
                     const assignment = this.validateAssignment(tree.left);
                     const op: string = tree.type.substring(0, tree.type.length - 1);
-                    if (assignment.length > 1) {
-                        if (op.length > 0) {
-                            throw new EvalError('computed multiple assignment not allowed.');
-                        }
+                    if (assignment.length > 1 && op.length > 0) {
+                        throw new EvalError('computed multiple assignment not allowed.');
                     }
                     let right: any;
                     try {
@@ -1000,7 +1002,9 @@ export class Evaluator {
                                 if (right.type !== 'RETLIST') {
                                     right = this.Evaluator(right, false, fname);
                                 }
-                                const expr = op.length ? this.nodeOp(op, left, right.selector(assignment.length, n)) : right.selector(assignment.length, n);
+                                const rightN = right.selector(assignment.length, n);
+                                rightN.parent = tree.right;
+                                const expr = op.length ? this.nodeOp(op, left, rightN) : rightN;
                                 try {
                                     this.nameTable[id] = { args: [], expr: this.reduceIfReturnList(this.Evaluator(expr)) };
                                     this.nodeList(resultList, this.nodeOp('=', left, this.nameTable[id].expr));
@@ -1062,7 +1066,7 @@ export class Evaluator {
                                         this.setItems(
                                             this.nameTable,
                                             id,
-                                            args.map((arg: any) => this.linearize(this.reduceIfReturnList(this.Evaluator(arg)))),
+                                            args.map((arg: any, i: number) => this.linearize(this.reduceIfReturnList(this.Evaluator(arg)))),
                                             this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                         );
                                         this.nodeList(resultList, this.nodeOp('=', this.nodeName(id), this.nameTable[id].expr));
@@ -1072,10 +1076,18 @@ export class Evaluator {
                             }
                         }
                     }
-                    if (resultList.list.length === 1) {
-                        return resultList.list[0];
+                    if (tree.parent.parent === null) {
+                        /* assignment at root expression */
+                        if (resultList.list.length === 1) {
+                            /* single assignment */
+                            return resultList.list[0];
+                        } else {
+                            /* multiple assignment */
+                            return resultList;
+                        }
                     } else {
-                        return resultList;
+                        /* assignment at right side */
+                        return (resultList.list[0] as any).right;
                     }
                 case 'NAME':
                     if (local && this.localTable[fname] && this.localTable[fname][tree.id]) {
@@ -1099,7 +1111,7 @@ export class Evaluator {
                     const result = {
                         type: 'LIST',
                         list: new Array(tree.list.length),
-                        parent: tree,
+                        parent: tree.parent === null ? null : tree,
                     };
                     for (let i = 0; i < tree.list.length; i++) {
                         /* Convert undefined name, defined in word-list command, to word-list command.
@@ -1113,7 +1125,7 @@ export class Evaluator {
                             tree.list[i].type = 'CmdWList';
                             tree.list[i]['args'] = [];
                         }
-                        tree.list[i].parent = tree;
+                        tree.list[i].parent = result;
                         tree.list[i].index = i;
                         result.list[i] = this.reduceIfReturnList(this.Evaluator(tree.list[i], local, fname));
                         if (typeof result.list[i].type === 'number') {
@@ -1159,7 +1171,7 @@ export class Evaluator {
                             ? this.expandRange(ComplexDecimal.one(), this.newNumber(this.linearLength(this.nameTable[parent.expr.id].expr)))
                             : this.expandRange(ComplexDecimal.one(), this.newNumber(this.getDimension(this.nameTable[parent.expr.id].expr, tree.parent.index)));
                     } else {
-                        throw new SyntaxError('indeterminate tilde. The tilde is valid only in indexing.');
+                        throw new SyntaxError('indeterminate colon. The colon to refer a range is valid only in indexing.');
                     }
                 case 'ARG':
                     if (typeof tree.expr === 'undefined') {
