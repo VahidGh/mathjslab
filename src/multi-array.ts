@@ -149,7 +149,7 @@ export class MultiArray {
      * @returns One-based subscript
      */
     public static linearIndexToSubscript(dimension: number[], index: number): number[] {
-        return dimension.map((dim, i) => Math.floor(index / dimension.slice(0, i).reduce((p, c) => p * c, 1)) % dim + 1);
+        return dimension.map((dim, i) => (Math.floor(index / dimension.slice(0, i).reduce((p, c) => p * c, 1)) % dim) + 1);
     }
 
     /**
@@ -173,14 +173,11 @@ export class MultiArray {
     public static getDimensionTensor(M: MultiArray, n: number): number {
         if (n === 0) {
             return M.dimension[0];
-        }
-        else if (n === 1) {
+        } else if (n === 1) {
             return M.column;
-        }
-        else if (n <= M.dimension.length) {
+        } else if (n <= M.dimension.length) {
             return M.dimension[n - 1];
-        }
-        else {
+        } else {
             return 1;
         }
     }
@@ -207,7 +204,7 @@ export class MultiArray {
     public static appendRow(M: MultiArray, row: any[]): MultiArray {
         M.array.push(row);
         M.dim[0]++;
-        M.dimension[0]++
+        M.dimension[0]++;
         return M;
     }
 
@@ -249,9 +246,12 @@ export class MultiArray {
         if (M.dimension.length > 1) {
             let result = '';
             for (let p = 0; p < M.dimension.reduce((p, c) => p * c, 1); p += M.dimension[0]) {
-                arraystr = M.array.slice(p, p + M.dimension[0]).map((row) => row.map((value) => that.Unparse(value)).join(',') + ';\n').join('');
+                arraystr = M.array
+                    .slice(p, p + M.dimension[0])
+                    .map((row) => row.map((value) => that.Unparse(value)).join(',') + ';\n')
+                    .join('');
                 arraystr = arraystr.substring(0, arraystr.length - 2);
-                result += `[${arraystr}] (:,:,${MultiArray.linearIndexToSubscript(M.dimension, p).slice(1).join(',')})\n`
+                result += `[${arraystr}] (:,:,${MultiArray.linearIndexToSubscript(M.dimension, p).slice(1).join(',')})\n`;
             }
             return result;
         } else {
@@ -281,13 +281,21 @@ export class MultiArray {
         if (M.dimension.length > 1) {
             let result = '';
             for (let p = 0; p < M.dimension.reduce((p, c) => p * c, 1); p += M.dimension[0]) {
-                const array = M.array.slice(p, p + M.dimension[0]).map((row) => `<mtr>${row.map((value) => `<mtd>${that.unparserML(value)}</mtd>`).join('')}</mtr>`).join('');
-                const subscript = MultiArray.linearIndexToSubscript(M.dimension, p).slice(1).map((d) => `<mn>${d}</mn>`).join('<mo>,</mo>');
+                const array = M.array
+                    .slice(p, p + M.dimension[0])
+                    .map((row) => `<mtr>${row.map((value) => `<mtd>${that.unparserML(value)}</mtd>`).join('')}</mtr>`)
+                    .join('');
+                const subscript = MultiArray.linearIndexToSubscript(M.dimension, p)
+                    .slice(1)
+                    .map((d) => `<mn>${d}</mn>`)
+                    .join('<mo>,</mo>');
                 result += `<mrow><mo>[</mo><mtable>${array}</mtable><mo>]</mo></mrow><mo>(</mo><mo>:</mo><mo>,</mo><mo>:</mo><mo>,</mo>${subscript}<mo>)</mo>`;
             }
             return result;
         } else {
-            return `<mrow><mo>[</mo><mtable>${M.array.map((row) => `<mtr>${row.map((value) => `<mtd>${that.unparserML(value)}</mtd>`).join('')}</mtr>`).join('')}</mtable><mo>]</mo></mrow>`;
+            return `<mrow><mo>[</mo><mtable>${M.array
+                .map((row) => `<mtr>${row.map((value) => `<mtd>${that.unparserML(value)}</mtd>`).join('')}</mtr>`)
+                .join('')}</mtable><mo>]</mo></mrow>`;
         }
     }
 
@@ -527,7 +535,7 @@ export class MultiArray {
                 result[destIndex + i] = M.array[p + i];
             }
         }
-        M.dimension = resultDimension
+        M.dimension = resultDimension;
         M.array = result;
         return M;
     }
@@ -550,7 +558,7 @@ export class MultiArray {
     public static expandRange(startNode: ComplexDecimal, stopNode: ComplexDecimal, strideNode?: ComplexDecimal | null): MultiArray {
         const temp = [];
         const s = strideNode ? strideNode.re.toNumber() : 1;
-        for (let n = startNode.re.toNumber(), i = 0; (s > 0) ? (n <= stopNode.re.toNumber()) : (n >= stopNode.re.toNumber()); n += s, i++) {
+        for (let n = startNode.re.toNumber(), i = 0; s > 0 ? n <= stopNode.re.toNumber() : n >= stopNode.re.toNumber(); n += s, i++) {
             temp[i] = new ComplexDecimal(n, 0);
         }
         const result = new MultiArray([1, temp.length]);
