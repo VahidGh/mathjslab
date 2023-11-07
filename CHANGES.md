@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.1.22
+- Fix `end` in ranges. The `colon_item` parser rule has been removed and the `end` descriptor in ranges has been created in the `primary_expr` rule.
+- Fix range expansion. Before it could only be increasing, now it can also be decreasing.
+- Reference to contribute to MathJSLab Calculator in CONTRIBUTING.md file.
+
 ## 1.1.21
 - Fix evaluator: 'LIST' `parent` setting.
 - Fix evaluator: assignment at right side.

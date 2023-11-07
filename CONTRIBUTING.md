@@ -10,6 +10,11 @@ help this project come to fruition.
 All notable changes to this project will be documented in
 [CHANGES.md](https://github.com/sergiolindau/mathjslab/blob/main/CHANGES.md) file.
 
+Please consider contributing to the [MathJSLab Calculator](https://github.com/sergiolindau/mathjslab-calculator)
+project, which is the standard use case of the [MathJSLab](https://github.com/sergiolindau/mathjslab).
+See the [Work fronts](#work-fronts) section in the [CONTRIBUTING.md](https://github.com/sergiolindau/mathjslab/blob/main/CONTRIBUTING.md)
+file for each project to see which project your contribution fits into.
+
 This project has an ISBN assigned to it. Whenever significant changes are made
 to the project, or new contributing authors are added, a new ISBN will be
 assigned to the project. Therefore, the project must continue to be
@@ -21,6 +26,7 @@ educational software.
 * [How to Contribute](#how-to-contribute)
 * [Community](#community)
 * [Code conventions](#code-conventions)
+* [Work fronts](#work-fronts)
 * [References](#references)
 
 ## Code of Conduct
@@ -143,9 +149,3 @@ Here are some references consulted to carry out this project.
 * [Scratchapixel 3.0 - Geometry - Row Major vs Column Major Vector](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/row-major-vs-column-major-vector.html)
 * [The R Project for Statistical Computing](https://www.r-project.org/)
 * [JS for Science](https://indico.cern.ch/event/853710/contributions/3708132/attachments/1985053/3307323/Armina_Abramyan_JS_for_Science.pdf)
-* [D3: The JavaScript library for bespoke data visualization](https://d3js.org/)
-* [HIGHCHARTS](https://www.highcharts.com/)
-* [Mermaid: Diagramming and charting tool](https://mermaid.js.org/)
-* [highlight.js](https://highlightjs.org/)
-* [tangle](http://worrydream.com/Tangle/)
-

@@ -272,7 +272,7 @@ export class Evaluator {
                         this.nameTable[tree.id].expr = Tensor[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
                         return this.nameTable[tree.id].expr;
                     } else {
-                        throw new Error('in x++ or ++x, x must be defined first.');
+                        throw new EvalError('in x++ or ++x, x must be defined first.');
                     }
                 } else {
                     throw new SyntaxError(`invalid ${operation === 'plus' ? 'increment' : 'decrement'} variable.`);
@@ -286,7 +286,7 @@ export class Evaluator {
                         this.nameTable[tree.id].expr = Tensor[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
                         return value;
                     } else {
-                        throw new Error('in x++ or ++x, x must be defined first.');
+                        throw new EvalError('in x++ or ++x, x must be defined first.');
                     }
                 } else {
                     throw new SyntaxError(`invalid ${operation === 'plus' ? 'increment' : 'decrement'} variable.`);
@@ -748,7 +748,7 @@ export class Evaluator {
         const invalidMessage = `${invalidMessageBase}: cannot assign to a read only value:`;
         if (tree.type === 'NAME') {
             if (this.readonlyNameTable.includes(tree.id)) {
-                throw new Error(`${invalidMessage} ${tree.id}.`);
+                throw new EvalError(`${invalidMessage} ${tree.id}.`);
             }
             return [
                 {
@@ -759,7 +759,7 @@ export class Evaluator {
             ];
         } else if (tree.type === 'ARG' && tree.expr.type === 'NAME') {
             if (this.readonlyNameTable.includes(tree.expr.id)) {
-                throw new Error(`${invalidMessage} ${tree.expr.id}.`);
+                throw new EvalError(`${invalidMessage} ${tree.expr.id}.`);
             }
             return [
                 {
@@ -779,7 +779,7 @@ export class Evaluator {
         } else if (shallow && this.isTensor(tree) && tree.dim[0] === 1) {
             return tree.array[0].map((left: any) => this.validateAssignment(left, false)[0]);
         } else {
-            throw new Error(`${invalidMessageBase}.`);
+            throw new EvalError(`${invalidMessageBase}.`);
         }
     }
 
@@ -810,7 +810,7 @@ export class Evaluator {
                 if (operand.length === 1) {
                     return func(operand[0]);
                 } else {
-                    throw new Error(`Invalid call to ${name}.`);
+                    throw new EvalError(`Invalid call to ${name}.`);
                 }
             },
         };
@@ -829,7 +829,7 @@ export class Evaluator {
                 if (right.length === 1) {
                     return func(left, right[0]);
                 } else {
-                    throw new Error(`Invalid call to ${name}.`);
+                    throw new EvalError(`Invalid call to ${name}.`);
                 }
             },
         };
@@ -854,7 +854,7 @@ export class Evaluator {
                     }
                     return result;
                 } else {
-                    throw new Error(`Invalid call to ${name}.`);
+                    throw new EvalError(`Invalid call to ${name}.`);
                 }
             },
         };
@@ -1145,8 +1145,12 @@ export class Evaluator {
                         tree.stride ? this.reduceIfReturnList(this.Evaluator(tree.stride, local, fname)) : null,
                     );
                 case 'ENDRANGE': {
-                    const parent = tree.parent.parent;
+                    let parent = tree.parent;
+                    while (parent !== null && parent.type !== 'ARG') {
+                        parent = parent.parent;
+                    }
                     if (
+                        parent &&
                         parent.type === 'ARG' &&
                         parent.expr.id in this.nameTable &&
                         this.nameTable[parent.expr.id].args.length === 0 &&

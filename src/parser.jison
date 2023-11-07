@@ -354,6 +354,8 @@ primary_expr
                 {$$ = $1;}
         | '(' expression ')'
                 {$$ = EvaluatorPointer.nodeOp('()', $2);}
+        | END
+                {$$ = EvaluatorPointer.nodeReserved('ENDRANGE');}
         ;
 
 magic_colon
@@ -459,21 +461,11 @@ power_expr
                 {$$ = EvaluatorPointer.nodeOp('-_',$2);}
         ;
 
-colon_item
-        : oper_expr
-        | END
-                {$$ = EvaluatorPointer.nodeReserved('ENDRANGE');}
-        ;
-
 colon_expr
-        : oper_expr ':' colon_item
+        : oper_expr ':' oper_expr
                 {$$ = EvaluatorPointer.nodeRange($1,$3);}
-        | END ':' colon_item
-                {$$ = EvaluatorPointer.nodeRange(EvaluatorPointer.nodeReserved('ENDRANGE'),$3);}
-        | oper_expr ':' colon_item ':' colon_item
+        | oper_expr ':' oper_expr ':' oper_expr
                 {$$ = EvaluatorPointer.nodeRange($1,$3,$5);}
-        | END ':' colon_item ':' colon_item
-                {$$ = EvaluatorPointer.nodeRange(EvaluatorPointer.nodeReserved('ENDRANGE'),$3,$5);}
         ;
 
 simple_expr
