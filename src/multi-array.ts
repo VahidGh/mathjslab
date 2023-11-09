@@ -651,7 +651,7 @@ export class MultiArray {
      * @param right Value to assign.
      */
     public static setItems(nameTable: TNameTable, id: string, args: any[], right: MultiArray): void {
-        const linright = this.linearize(right);
+        const linright = MultiArray.linearize(right);
         args = args.map((arg: any) => arg.map((value: any) => MultiArray.testIndex(value, id) - 1));
         const argsMax = args.map((arg: number[]) => Math.max(...arg));
         const argsLength = args.map((arg: number[]) => arg.length);
@@ -745,6 +745,30 @@ export class MultiArray {
         // console.log('nameTable[id].expr:', nameTable[id].expr);
     }
 
+    public static setItemsLogical(nameTable: TNameTable, id: string, arg: ComplexDecimal[], right: MultiArray): void {
+        const linright = MultiArray.linearize(right);
+        const test = arg.map((value: ComplexDecimal) => value.re.toNumber());
+        const testCount = test.reduce((p, c) => p + c, 0);
+        if (testCount !== linright.length) {
+            throw new EvalError(`=: nonconformant arguments (op1 is ${testCount}x1, op2 is ${right.dim[0]}x${right.dim[1]})`);
+        }
+        const isDefinedId = typeof nameTable[id] !== 'undefined';
+        const isNotFunction = isDefinedId && nameTable[id].args.length === 0;
+        const isMultiArray = isNotFunction && 'array' in nameTable[id].expr;
+        if (isMultiArray) {
+            for (let j = 0, n = 0, r = 0; j < nameTable[id].expr.dim[1]; j++) {
+                for (let i = 0; i < nameTable[id].expr.dim[0]; i++, r++) {
+                    if (test[r]) {
+                        nameTable[id].expr.array[i][j] = linright[n];
+                        n++;
+                    }
+                }
+            }
+        } else {
+            throw new EvalError(`${id}(_): invalid matrix indexing.`);
+        }
+    }
+
     /**
      * Get selected items from MultiArray by linear indices or subscripts.
      * @param M Matrix
@@ -799,6 +823,24 @@ export class MultiArray {
         }
         result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
         return MultiArray.matrixToNumber(result);
+    }
+
+    public static getItemsLogical(M: MultiArray, id: string, items: MultiArray): MultiArray {
+        const result = new MultiArray();
+        const linM = MultiArray.linearize(M);
+        const test = MultiArray.linearize(items).map((value: ComplexDecimal) => value.re.toNumber());
+        if (test.length > linM.length) {
+            throw new EvalError(`${id}(${test.length}): out of bound ${linM.length} (dimensions are ${M.dim[0]}x${M.dim[1]})`);
+        }
+        for (let n = 0; n < linM.length; n++) {
+            if (test[n]) {
+                result.array.push([linM[n]]);
+            }
+        }
+        result.column = 1;
+        result.dimension = [result.array.length];
+        result.dim = [result.dimension[0], result.column];
+        return result;
     }
 
     /**

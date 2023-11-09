@@ -350,7 +350,9 @@ export class Evaluator {
     public readonly evaluateTensor = MultiArray.evaluate;
     public readonly mapTensor = MultiArray.map;
     public readonly getItems = MultiArray.getItems;
+    public readonly getItemsLogical = MultiArray.getItemsLogical;
     public readonly setItems = MultiArray.setItems;
+    public readonly setItemsLogical = MultiArray.setItemsLogical;
     public readonly expandRange = MultiArray.expandRange;
     public readonly firstRow = MultiArray.firstRow;
     public readonly appendRow = MultiArray.appendRow;
@@ -738,6 +740,7 @@ export class Evaluator {
             return value;
         }
     }
+
     /**
      * Validate left hand side of assignment node.
      * @param tree
@@ -1019,26 +1022,30 @@ export class Evaluator {
                                     if (typeof this.nameTable[id] !== 'undefined') {
                                         if (this.nameTable[id].args.length === 0) {
                                             /* Indexed matrix reference on left hand side with operator. */
-                                            this.setItems(
-                                                this.nameTable,
-                                                id,
-                                                args.map((arg: any) => this.linearize(this.reduceIfReturnList(this.Evaluator(arg)))),
-                                                this.toTensor(
-                                                    this.reduceIfReturnList(
-                                                        this.Evaluator(
-                                                            this.nodeOp(
-                                                                op,
-                                                                this.getItems(this.nameTable[id].expr, id, args),
-                                                                this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                            if (tree.args.length === 1) {
+                                                /* Test logical indexing. */
+                                            } else {
+                                                this.setItems(
+                                                    this.nameTable,
+                                                    id,
+                                                    args.map((arg: any) => this.linearize(this.reduceIfReturnList(this.Evaluator(arg)))),
+                                                    this.toTensor(
+                                                        this.reduceIfReturnList(
+                                                            this.Evaluator(
+                                                                this.nodeOp(
+                                                                    op,
+                                                                    this.getItems(this.nameTable[id].expr, id, args),
+                                                                    this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                                                ),
+                                                                false,
+                                                                fname,
                                                             ),
-                                                            false,
-                                                            fname,
                                                         ),
                                                     ),
-                                                ),
-                                            );
-                                            this.nodeList(resultList, this.nodeOp('=', this.nodeName(id), this.nameTable[id].expr));
-                                            continue;
+                                                );
+                                                this.nodeList(resultList, this.nodeOp('=', this.nodeName(id), this.nameTable[id].expr));
+                                                continue;
+                                            }
                                         } else {
                                             throw new EvalError(`in computed assignment ${id}(index) OP= X, ${id} cannot be a function.`);
                                         }
@@ -1063,12 +1070,34 @@ export class Evaluator {
                                         continue;
                                     } else {
                                         /* Indexed matrix reference on left hand side. */
-                                        this.setItems(
-                                            this.nameTable,
-                                            id,
-                                            args.map((arg: any, i: number) => this.linearize(this.reduceIfReturnList(this.Evaluator(arg)))),
-                                            this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
-                                        );
+                                        if (args.length === 1) {
+                                            /* Test logical indexing. */
+                                            const arg0 = this.reduceIfReturnList(this.Evaluator(args[0], local, fname));
+                                            if (this.isTensor(arg0) && arg0.type === ComplexDecimal.numberClass.logical) {
+                                                /* Logical indexing. */
+                                                this.setItemsLogical(
+                                                    this.nameTable,
+                                                    id,
+                                                    this.linearize(arg0),
+                                                    this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                                );
+                                            } else {
+                                                /* Not logical indexing. */
+                                                this.setItems(
+                                                    this.nameTable,
+                                                    id,
+                                                    [this.linearize(arg0)],
+                                                    this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                                );
+                                            }
+                                        } else {
+                                            this.setItems(
+                                                this.nameTable,
+                                                id,
+                                                args.map((arg: any, i: number) => this.linearize(this.reduceIfReturnList(this.Evaluator(arg)))),
+                                                this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                            );
+                                        }
                                         this.nodeList(resultList, this.nodeOp('=', this.nodeName(id), this.nameTable[id].expr));
                                         continue;
                                     }
@@ -1228,15 +1257,28 @@ export class Evaluator {
                                     return temp;
                                 } else if (this.isTensor(temp)) {
                                     /* Defined indexed matrix reference. */
-                                    const result = this.getItems(
-                                        temp,
-                                        tree.expr.id,
-                                        tree.args.map((arg: any, i: number) => {
-                                            arg.parent = tree;
-                                            arg.index = i;
-                                            return this.reduceIfReturnList(this.Evaluator(arg, local, fname));
-                                        }),
-                                    );
+                                    let result: ComplexDecimal | MultiArray;
+                                    if (tree.args.length === 1) {
+                                        /* Test logical indexing. */
+                                        const arg0 = this.reduceIfReturnList(this.Evaluator(tree.args[0], local, fname));
+                                        if (this.isTensor(arg0) && arg0.type === ComplexDecimal.numberClass.logical) {
+                                            /* Logical indexing. */
+                                            result = this.getItemsLogical(temp, tree.expr.id, arg0);
+                                        } else {
+                                            /* Not logical indexing. */
+                                            result = this.getItems(temp, tree.expr.id, [arg0]);
+                                        }
+                                    } else {
+                                        result = this.getItems(
+                                            temp,
+                                            tree.expr.id,
+                                            tree.args.map((arg: any, i: number) => {
+                                                arg.parent = tree;
+                                                arg.index = i;
+                                                return this.reduceIfReturnList(this.Evaluator(arg, local, fname));
+                                            }),
+                                        );
+                                    }
                                     result.parent = tree;
                                     return result;
                                 } else {
