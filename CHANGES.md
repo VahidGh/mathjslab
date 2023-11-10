@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.1.25
+- More bug fix in indexing (some `end` in ranges stop to work after 1.1.23. The problem is parent link absent in some constructions).
+
 ## 1.1.24
 - Fix logical indexing (with operation and literal).
 

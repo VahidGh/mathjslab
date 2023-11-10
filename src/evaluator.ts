@@ -1114,6 +1114,8 @@ export class Evaluator {
                                         /* Indexed matrix reference on left hand side. */
                                         if (args.length === 1) {
                                             /* Test logical indexing. */
+                                            args[0].parent = tree.left;
+                                            args[0].index = 0;
                                             const arg0 = this.reduceIfReturnList(this.Evaluator(args[0], local, fname));
                                             if (this.isTensor(arg0) && arg0.type === ComplexDecimal.numberClass.logical) {
                                                 /* Logical indexing. */
@@ -1136,7 +1138,11 @@ export class Evaluator {
                                             this.setItems(
                                                 this.nameTable,
                                                 id,
-                                                args.map((arg: any, i: number) => this.linearize(this.reduceIfReturnList(this.Evaluator(arg)))),
+                                                args.map((arg: any, i: number) => {
+                                                    arg.parent = tree.left;
+                                                    arg.index = i;
+                                                    return this.linearize(this.reduceIfReturnList(this.Evaluator(arg)));
+                                                }),
                                                 this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                             );
                                         }
@@ -1217,6 +1223,7 @@ export class Evaluator {
                     );
                 case 'ENDRANGE': {
                     let parent = tree.parent;
+                    /* Search for 'ARG' node until reach 'ARG' or root node */
                     while (parent !== null && parent.type !== 'ARG') {
                         parent = parent.parent;
                     }
@@ -1244,7 +1251,7 @@ export class Evaluator {
                     ) {
                         return parent.args.length === 1
                             ? this.expandRange(ComplexDecimal.one(), this.newNumber(this.linearLength(this.nameTable[parent.expr.id].expr)))
-                            : this.expandRange(ComplexDecimal.one(), this.newNumber(this.getDimension(this.nameTable[parent.expr.id].expr, tree.parent.index)));
+                            : this.expandRange(ComplexDecimal.one(), this.newNumber(this.getDimension(this.nameTable[parent.expr.id].expr, tree.index)));
                     } else {
                         throw new SyntaxError('indeterminate colon. The colon to refer a range is valid only in indexing.');
                     }
@@ -1296,12 +1303,15 @@ export class Evaluator {
                                 const temp = this.reduceIfReturnList(this.Evaluator(this.nameTable[tree.expr.id].expr));
                                 if (tree.args.length === 0) {
                                     /* Defined name. */
+                                    temp.parent = tree;
                                     return temp;
                                 } else if (this.isTensor(temp)) {
                                     /* Defined indexed matrix reference. */
                                     let result: ComplexDecimal | MultiArray;
                                     if (tree.args.length === 1) {
                                         /* Test logical indexing. */
+                                        tree.args[0].parent = tree;
+                                        tree.args[0].index = 0;
                                         const arg0 = this.reduceIfReturnList(this.Evaluator(tree.args[0], local, fname));
                                         if (this.isTensor(arg0) && arg0.type === ComplexDecimal.numberClass.logical) {
                                             /* Logical indexing. */
@@ -1352,6 +1362,8 @@ export class Evaluator {
                         let result: ComplexDecimal | MultiArray;
                         if (tree.args.length === 1) {
                             /* Test logical indexing. */
+                            tree.args[0].parent = tree;
+                            tree.args[0].index = 0;
                             const arg0 = this.reduceIfReturnList(this.Evaluator(tree.args[0], local, fname));
                             if (this.isTensor(arg0) && arg0.type === ComplexDecimal.numberClass.logical) {
                                 /* Logical indexing. */
