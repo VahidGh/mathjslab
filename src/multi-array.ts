@@ -645,9 +645,9 @@ export class MultiArray {
 
     /**
      * Set selected items from MultiArray by linear index or subscripts.
-     * @param nameTable Name Table
-     * @param id Identifier
-     * @param args linear indices or subscripts
+     * @param nameTable Name Table.
+     * @param id Identifier.
+     * @param args Linear indices or subscripts.
      * @param right Value to assign.
      */
     public static setItems(nameTable: TNameTable, id: string, args: any[], right: MultiArray): void {
@@ -745,6 +745,13 @@ export class MultiArray {
         // console.log('nameTable[id].expr:', nameTable[id].expr);
     }
 
+    /**
+     * Set selected items from MultiArray by logical indexing.
+     * @param nameTable Name Table.
+     * @param id Identifier.
+     * @param arg Logical index.
+     * @param right Value to assign.
+     */
     public static setItemsLogical(nameTable: TNameTable, id: string, arg: ComplexDecimal[], right: MultiArray): void {
         const linright = MultiArray.linearize(right);
         const test = arg.map((value: ComplexDecimal) => value.re.toNumber());
@@ -771,10 +778,10 @@ export class MultiArray {
 
     /**
      * Get selected items from MultiArray by linear indices or subscripts.
-     * @param M Matrix
-     * @param id Identifier
+     * @param M Matrix.
+     * @param id Identifier.
      * @param indexList
-     * @returns MultiArray of selected items
+     * @returns MultiArray of selected items.
      */
     public static getItems(M: MultiArray, id: string, indexList: (ComplexDecimal | MultiArray)[]): MultiArray | ComplexDecimal {
         let result: MultiArray;
@@ -825,6 +832,13 @@ export class MultiArray {
         return MultiArray.matrixToNumber(result);
     }
 
+    /**
+     * Get selected items from MultiArray by logical indexing.
+     * @param M Matrix.
+     * @param id Identifier.
+     * @param items Logical index.
+     * @returns MultiArray of selected items.
+     */
     public static getItemsLogical(M: MultiArray, id: string, items: MultiArray): MultiArray {
         const result = new MultiArray();
         const linM = MultiArray.linearize(M);
