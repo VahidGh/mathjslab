@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.1.26
+- A fix for a major bug in element wise operations. Assymetric operations produce incorrect results. This shouldn't even be called a bug. This was like finding a lizard in your bathroom, coming up the drain. The fix was simple, but the lizard is old, it certainly comes from the first version. It is necessary to extend the tests.
+- `horzcat` and `vertcat` functions defined as function mappings.
+- Start to extend MultiArray class to support multidimensional arrays.
+
 ## 1.1.25
 - More bug fix in indexing (some `end` in ranges stop to work after 1.1.23. The problem is parent link absent in some constructions).
 
