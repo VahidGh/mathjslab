@@ -146,6 +146,7 @@ The control and loop structures are not yet implemented.
 
 Some differences from the original MATLAB&reg;/Octave language are
 
+* The comma is mandatory inside arrays (MATLAB&reg;/Octave supports space too).
 * Only two dimensional arrays can be defined (only Matrix, no Tensors).
 * Defining functions is done simply using:
 ```

@@ -8,7 +8,7 @@ import { substSymbol } from './subst-symbol';
 import { CharString } from './char-string';
 import { ComplexDecimal } from './complex-decimal';
 import { MultiArray } from './multi-array';
-import { Tensor } from './tensor';
+import { MathObject } from './math-object';
 
 /**
  * aliasNameTable type.
@@ -269,7 +269,7 @@ export class Evaluator {
             return (tree: any): any => {
                 if (tree.type === 'NAME') {
                     if (this.nameTable[tree.id].expr) {
-                        this.nameTable[tree.id].expr = Tensor[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
+                        this.nameTable[tree.id].expr = MathObject[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
                         return this.nameTable[tree.id].expr;
                     } else {
                         throw new EvalError('in x++ or ++x, x must be defined first.');
@@ -282,8 +282,8 @@ export class Evaluator {
             return (tree: any): any => {
                 if (tree.type === 'NAME') {
                     if (this.nameTable[tree.id].expr) {
-                        const value = Tensor.copy(this.nameTable[tree.id].expr);
-                        this.nameTable[tree.id].expr = Tensor[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
+                        const value = MathObject.copy(this.nameTable[tree.id].expr);
+                        this.nameTable[tree.id].expr = MathObject[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
                         return value;
                     } else {
                         throw new EvalError('in x++ or ++x, x must be defined first.');
@@ -299,31 +299,31 @@ export class Evaluator {
      * Operator table.
      */
     private readonly opTable: Record<string, Function> = {
-        '+': Tensor.plus,
-        '-': Tensor.minus,
-        '.*': Tensor.times,
-        '*': Tensor.mtimes,
-        './': Tensor.rdivide,
-        '/': Tensor.mrdivide,
-        '.\\': Tensor.ldivide,
-        '\\': Tensor.mldivide,
-        '.^': Tensor.power,
-        '^': Tensor.mpower,
-        '+_': Tensor.uplus,
-        '-_': Tensor.uminus,
-        ".'": Tensor.transpose,
-        "'": Tensor.ctranspose,
-        '<': Tensor.lt,
-        '<=': Tensor.le,
-        '==': Tensor.eq,
-        '>=': Tensor.ge,
-        '>': Tensor.gt,
-        '!=': Tensor.ne,
-        '&': Tensor.and,
-        '|': Tensor.or,
-        '!': Tensor.not,
-        '&&': Tensor.mand,
-        '||': Tensor.mor,
+        '+': MathObject.plus,
+        '-': MathObject.minus,
+        '.*': MathObject.times,
+        '*': MathObject.mtimes,
+        './': MathObject.rdivide,
+        '/': MathObject.mrdivide,
+        '.\\': MathObject.ldivide,
+        '\\': MathObject.mldivide,
+        '.^': MathObject.power,
+        '^': MathObject.mpower,
+        '+_': MathObject.uplus,
+        '-_': MathObject.uminus,
+        ".'": MathObject.transpose,
+        "'": MathObject.ctranspose,
+        '<': MathObject.lt,
+        '<=': MathObject.le,
+        '==': MathObject.eq,
+        '>=': MathObject.ge,
+        '>': MathObject.gt,
+        '!=': MathObject.ne,
+        '&': MathObject.and,
+        '|': MathObject.or,
+        '!': MathObject.not,
+        '&&': MathObject.mand,
+        '||': MathObject.mor,
         '++_': this.incDecOp(true, 'plus'),
         '--_': this.incDecOp(true, 'minus'),
         '_++': this.incDecOp(false, 'plus'),
@@ -390,14 +390,14 @@ export class Evaluator {
         /* Load nativeNameTable and constantsTable in nameTable */
         this.loadNativeTable();
         /* Define function operators */
-        for (const func in Tensor.twoMoreOpFunction) {
-            this.DefBinMoreOpFunction(func, Tensor.twoMoreOpFunction[func]);
+        for (const func in MathObject.twoMoreOpFunction) {
+            this.DefBinMoreOpFunction(func, MathObject.twoMoreOpFunction[func]);
         }
-        for (const func in Tensor.binaryOpFunction) {
-            this.DefBinOpFunction(func, Tensor.binaryOpFunction[func]);
+        for (const func in MathObject.binaryOpFunction) {
+            this.DefBinOpFunction(func, MathObject.binaryOpFunction[func]);
         }
-        for (const func in Tensor.unaryOpFunction) {
-            this.DefUnOpFunction(func, Tensor.unaryOpFunction[func]);
+        for (const func in MathObject.unaryOpFunction) {
+            this.DefUnOpFunction(func, MathObject.unaryOpFunction[func]);
         }
         /* Define function mappers */
         for (const func in ComplexDecimal.mapFunction) {

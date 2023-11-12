@@ -1,4 +1,5 @@
 import { Decimal } from 'decimal.js';
+import { type } from 'os';
 
 /**
  * decimal.js and ComplexDecimal configuration parameters.
@@ -44,6 +45,16 @@ Decimal.set({
     toExpNeg: DecimaltoExpNeg,
     toExpPos: DecimaltoExpPos,
 });
+
+/**
+ * Binary operations name type.
+ */
+export type TBinaryOperationName = 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'xor' | 'mod' | 'rem';
+
+/**
+ * Unary operations name type.
+ */
+export type TUnaryOperationLeftName = 'copy' | 'neg' | 'not';
 
 /**
  * # ComplexDecimal

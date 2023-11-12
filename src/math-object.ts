@@ -1,42 +1,42 @@
 import { ComplexDecimal } from './complex-decimal';
 import { MultiArray } from './multi-array';
 
-export abstract class Tensor {
+export abstract class MathObject {
     public static unaryOpFunction: { [name: string]: Function } = {
-        uplus: Tensor.uplus,
-        uminus: Tensor.uminus,
-        not: Tensor.not,
-        transpose: Tensor.transpose,
-        ctranspose: Tensor.ctranspose,
+        uplus: MathObject.uplus,
+        uminus: MathObject.uminus,
+        not: MathObject.not,
+        transpose: MathObject.transpose,
+        ctranspose: MathObject.ctranspose,
     };
 
     public static binaryOpFunction: { [name: string]: Function } = {
-        minus: Tensor.minus,
-        mod: Tensor.mod,
-        rem: Tensor.rem,
-        rdivide: Tensor.rdivide,
-        mrdivide: Tensor.mrdivide,
-        ldivide: Tensor.ldivide,
-        mldivide: Tensor.mldivide,
-        power: Tensor.power,
-        mpower: Tensor.mpower,
-        le: Tensor.le,
-        ge: Tensor.ge,
-        gt: Tensor.gt,
-        eq: Tensor.eq,
-        ne: Tensor.ne,
+        minus: MathObject.minus,
+        mod: MathObject.mod,
+        rem: MathObject.rem,
+        rdivide: MathObject.rdivide,
+        mrdivide: MathObject.mrdivide,
+        ldivide: MathObject.ldivide,
+        mldivide: MathObject.mldivide,
+        power: MathObject.power,
+        mpower: MathObject.mpower,
+        le: MathObject.le,
+        ge: MathObject.ge,
+        gt: MathObject.gt,
+        eq: MathObject.eq,
+        ne: MathObject.ne,
     };
 
     public static twoMoreOpFunction: { [name: string]: Function } = {
-        plus: Tensor.plus,
-        times: Tensor.times,
-        mtimes: Tensor.mtimes,
-        and: Tensor.and,
-        or: Tensor.or,
-        xor: Tensor.xor,
+        plus: MathObject.plus,
+        times: MathObject.times,
+        mtimes: MathObject.mtimes,
+        and: MathObject.and,
+        or: MathObject.or,
+        xor: MathObject.xor,
     };
 
-    public readonly linearize = MultiArray.linearize;
+    public static readonly linearize = MultiArray.linearize;
 
     public static copy(right: any): any {
         if ('re' in right) {
@@ -71,23 +71,23 @@ export abstract class Tensor {
     }
 
     public static plus(left: any, right: any): any {
-        return Tensor.ewiseOp('add', left, right);
+        return MathObject.ewiseOp('add', left, right);
     }
 
     public static minus(left: any, right: any): any {
-        return Tensor.ewiseOp('sub', left, right);
+        return MathObject.ewiseOp('sub', left, right);
     }
 
     public static mod(left: any, right: any): any {
-        return Tensor.ewiseOp('mod', left, right);
+        return MathObject.ewiseOp('mod', left, right);
     }
 
     public static rem(left: any, right: any): any {
-        return Tensor.ewiseOp('rem', left, right);
+        return MathObject.ewiseOp('rem', left, right);
     }
 
     public static times(left: any, right: any): any {
-        return Tensor.ewiseOp('mul', left, right);
+        return MathObject.ewiseOp('mul', left, right);
     }
 
     public static mtimes(left: any, right: any): any {
@@ -103,7 +103,7 @@ export abstract class Tensor {
     }
 
     public static rdivide(left: any, right: any): any {
-        return Tensor.ewiseOp('rdiv', left, right);
+        return MathObject.ewiseOp('rdiv', left, right);
     }
 
     public static mrdivide(left: any, right: any): any {
@@ -119,13 +119,13 @@ export abstract class Tensor {
     }
 
     public static ldivide(left: any, right: any): any {
-        return Tensor.ewiseOp('ldiv', left, right);
+        return MathObject.ewiseOp('ldiv', left, right);
     }
 
     public static mldivide(left: any, right: any): any {}
 
     public static power(left: any, right: any): any {
-        return Tensor.ewiseOp('power', left, right);
+        return MathObject.ewiseOp('power', left, right);
     }
 
     public static mpower(left: any, right: any): any {
@@ -139,11 +139,11 @@ export abstract class Tensor {
     }
 
     public static uplus(right: any): any {
-        return Tensor.leftOp('copy', right);
+        return MathObject.leftOp('copy', right);
     }
 
     public static uminus(right: any): any {
-        return Tensor.leftOp('neg', right);
+        return MathObject.leftOp('neg', right);
     }
 
     public static transpose(left: any): any {
@@ -163,27 +163,27 @@ export abstract class Tensor {
     }
 
     public static lt(left: any, right: any): any {
-        return Tensor.ewiseOp('lt', left, right);
+        return MathObject.ewiseOp('lt', left, right);
     }
 
     public static le(left: any, right: any): any {
-        return Tensor.ewiseOp('le', left, right);
+        return MathObject.ewiseOp('le', left, right);
     }
 
     public static eq(left: any, right: any): any {
-        return Tensor.ewiseOp('eq', left, right);
+        return MathObject.ewiseOp('eq', left, right);
     }
 
     public static ge(left: any, right: any): any {
-        return Tensor.ewiseOp('ge', left, right);
+        return MathObject.ewiseOp('ge', left, right);
     }
 
     public static gt(left: any, right: any): any {
-        return Tensor.ewiseOp('gt', left, right);
+        return MathObject.ewiseOp('gt', left, right);
     }
 
     public static ne(left: any, right: any): any {
-        return Tensor.ewiseOp('ne', left, right);
+        return MathObject.ewiseOp('ne', left, right);
     }
 
     public static mand(left: any, right: any): any {
@@ -219,14 +219,14 @@ export abstract class Tensor {
     }
 
     public static and(left: any, right: any): any {
-        return Tensor.ewiseOp('and', left, right);
+        return MathObject.ewiseOp('and', left, right);
     }
 
     public static or(left: any, right: any): any {
-        return Tensor.ewiseOp('or', left, right);
+        return MathObject.ewiseOp('or', left, right);
     }
 
     public static xor(left: any, right: any): any {
-        return Tensor.ewiseOp('xor', left, right);
+        return MathObject.ewiseOp('xor', left, right);
     }
 }

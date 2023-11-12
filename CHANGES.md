@@ -2,8 +2,15 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.1.27
+- The linear-algebra.ts file and its corresponding test file were created. The relevant methods of the MultiArray class will be moved to this file as support for multidimensional arrays evolves in the MultiArray class. Some methods moved.
+- More evolve to support multidimensional arrays in the MultiArray class. MultiArray constructor upgraded to support multidimensional arrays. Constructor overloaded.
+- The class `Tensor` has been renamed to `MathObject` and the file 'tensor.ts' has been renamed to 'math-object.ts'. The file 'math-object.spec.ts' has been created.
+- The corresponding test file for char-string.ts file has been created.
+- Unary and binary operations name type defined in complex-decimal.ts for use in generic operations methods of the MultiArray class.
+
 ## 1.1.26
-- A fix for a major bug in element wise operations. Assymetric operations produce incorrect results. This shouldn't even be called a bug. This was like finding a lizard in your bathroom, coming up the drain. The fix was simple, but the lizard is old, it certainly comes from the first version. It is necessary to extend the tests.
+- A fix for a major bug in element wise operations. Assymetric operations produce incorrect results. This shouldn't even be called a bug. This was like finding a lizard in your bathroom, coming up the drain. The fix has been simple, but the lizard is old, it certainly comes from the first version. It is necessary to extend the tests.
 - `horzcat` and `vertcat` functions defined as function mappings.
 - Start to extend MultiArray class to support multidimensional arrays.
 
@@ -36,7 +43,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Fix parser parenthsis node.
 
 ## 1.1.18
-- `end` in ranges implemented in parser rule `colon_item`. To do this, it was necessary to track the context creating the `parent` property in each node, set during `Evaluator`, and also the `index` property in the 'LIST' and 'ARG' type nodes. This can be useful in `Unparse` and `UnparseML`, to eliminate unnecessary parentheses.
+- `end` in ranges implemented in parser rule `colon_item`. To do this it was necessary to track the context creating the `parent` property in each node, set during `Evaluator`, and also the `index` property in the 'LIST' and 'ARG' type nodes. This can be useful in `Unparse` and `UnparseML`, to eliminate unnecessary parentheses.
 
 ## 1.1.17
 - Project launch.
