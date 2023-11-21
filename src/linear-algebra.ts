@@ -14,13 +14,11 @@ import { MultiArray } from './multi-array';
  */
 export abstract class LinearAlgebra {
     /**
-     * LinearAlgebra class methods.
+     * LinearAlgebra functions.
      */
     public static functions: { [name: string]: Function } = {
+        eye: LinearAlgebra.eye,
         trace: LinearAlgebra.trace,
-        transpose: LinearAlgebra.transpose,
-        ctranspose: LinearAlgebra.ctranspose,
-        mul: LinearAlgebra.mul,
         det: LinearAlgebra.det,
         inv: LinearAlgebra.inv,
         gauss: LinearAlgebra.gauss,
@@ -28,12 +26,61 @@ export abstract class LinearAlgebra {
     };
 
     /**
+     * Identity matrix
+     * @param args
+     * * `eye(N)` - create identity N x N
+     * * `eye(N,M)` - create identity N x M
+     * * `eye([N,M])` - create identity N x M
+     * @returns Identity matrix
+     */
+    public static eye(...args: any): MultiArray | ComplexDecimal {
+        let rows: number = 0;
+        let columns: number = 0;
+        if (args.length === 0) {
+            return ComplexDecimal.one();
+        } else if (args.length === 1) {
+            if (MultiArray.isThis(args[0])) {
+                const linear = MultiArray.linearize(args[0]);
+                if (linear.length === 0) {
+                    throw new SyntaxError('eye (A): use eye (size (A)) instead');
+                } else if (linear.length === 1) {
+                    rows = MultiArray.testIndex(linear[0]);
+                    columns = rows;
+                } else if (linear.length === 2) {
+                    rows = MultiArray.testIndex(linear[0]);
+                    columns = MultiArray.testIndex(linear[1]);
+                } else {
+                    throw new SyntaxError('eye (A): use eye (size (A)) instead');
+                }
+            } else {
+                rows = MultiArray.testIndex(args[0]);
+                columns = rows;
+            }
+        } else if (args.length === 2) {
+            if (ComplexDecimal.isThis(args[0]) && ComplexDecimal.isThis(args[1])) {
+                rows = MultiArray.testIndex(args[0]);
+                columns = MultiArray.testIndex(args[1]);
+            } else {
+                throw new SyntaxError(`Invalid call to eye.  Type 'help eye' to see correct usage.`);
+            }
+        } else {
+            throw new SyntaxError(`Invalid call to eye.  Type 'help eye' to see correct usage.`);
+        }
+        //result = MultiArray.zeros(new ComplexDecimal(rows), new ComplexDecimal(columns)) as MultiArray;
+        const result = new MultiArray([rows, columns], ComplexDecimal.zero());
+        for (let n = 0; n < Math.min((result as MultiArray).dim[0], (result as MultiArray).dim[1]); n++) {
+            (result as MultiArray).array[n][n] = ComplexDecimal.one();
+        }
+        return result;
+    }
+
+    /**
      * Sum of diagonal elements.
      * @param M Matrix.
      * @returns Trace of matrix.
      */
     public static trace(M: MultiArray): ComplexDecimal {
-        if (M.dimension.length === 1) {
+        if (M.dim.length === 2) {
             return M.array.map((row, i) => (row[i] ? row[i] : ComplexDecimal.zero())).reduce((p, c) => ComplexDecimal.add(p, c), ComplexDecimal.zero());
         } else {
             throw new Error('trace: only valid on 2-D objects');
@@ -46,15 +93,15 @@ export abstract class LinearAlgebra {
      * @returns Transpose matrix with `func` applied to each element.
      */
     private static applyTranspose(M: MultiArray, func: Function = (value: any) => value): MultiArray {
-        if (M.dimension.length === 1) {
-            const result = new MultiArray([M.column, M.dimension[0]]);
-            for (let i = 0; i < M.column; i++) {
-                result.array[i] = new Array(M.dimension[0]);
-                for (let j = 0; j < M.dimension[0]; j++) {
+        if (M.dim.length === 2) {
+            const result = new MultiArray([M.dim[1], M.dim[0]]);
+            for (let i = 0; i < M.dim[1]; i++) {
+                result.array[i] = new Array(M.dim[0]);
+                for (let j = 0; j < M.dim[0]; j++) {
                     result.array[i][j] = Object.assign({}, func(M.array[j][i]));
                 }
             }
-            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
+            result.setType();
             return result;
         } else {
             throw new Error('transpose not defined for N-D objects');
@@ -86,20 +133,49 @@ export abstract class LinearAlgebra {
      * @returns left * right.
      */
     public static mul(left: MultiArray, right: MultiArray): MultiArray {
-        if (left.column !== right.dimension[0] && left.dimension.length === 1 && right.dimension.length === 1) {
-            throw new Error(`operator *: nonconformant arguments (op1 is ${left.dimension[0]}x${left.column}, op2 is ${right.dimension[0]}x${right.column}).`);
+        if (left.dim[1] !== right.dim[0] && left.dim.length === 2 && right.dim.length === 2) {
+            throw new Error(`operator *: nonconformant arguments (op1 is ${left.dim[0]}x${left.dim[1]}, op2 is ${right.dim[0]}x${right.dim[1]}).`);
         } else {
-            const result = new MultiArray([left.dimension[0], right.column]);
-            for (let i = 0; i < left.dimension[0]; i++) {
-                result.array[i] = new Array(right.column).fill(ComplexDecimal.zero());
-                for (let j = 0; j < right.column; j++) {
-                    for (let n = 0; n < left.column; n++) {
+            const result = new MultiArray([left.dim[0], right.dim[1]]);
+            for (let i = 0; i < left.dim[0]; i++) {
+                result.array[i] = new Array(right.dim[1]).fill(ComplexDecimal.zero());
+                for (let j = 0; j < right.dim[1]; j++) {
+                    for (let n = 0; n < left.dim[1]; n++) {
                         result.array[i][j] = ComplexDecimal.add(result.array[i][j], ComplexDecimal.mul(left.array[i][n], right.array[n][j]));
                     }
                 }
             }
-            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
+            result.setType();
             return result;
+        }
+    }
+
+    /**
+     * Matrix power (multiple multiplication).
+     * @param left
+     * @param right
+     * @returns
+     */
+    public static power(left: MultiArray, right: ComplexDecimal): MultiArray {
+        let temp1;
+        if (right.re.isInteger() && right.im.eq(0)) {
+            if (right.re.eq(0)) {
+                temp1 = LinearAlgebra.eye(new ComplexDecimal(left.dim[0], 0)) as MultiArray;
+            } else if (right.re.gt(0)) {
+                temp1 = MultiArray.copy(left);
+            } else {
+                temp1 = LinearAlgebra.inv(left);
+            }
+            if (Math.abs(right.re.toNumber()) != 1) {
+                let temp2 = MultiArray.copy(temp1);
+                for (let i = 1; i < Math.abs(right.re.toNumber()); i++) {
+                    temp2 = LinearAlgebra.mul(temp2, temp1);
+                }
+                temp1 = temp2;
+            }
+            return temp1;
+        } else {
+            throw new Error(`exponent must be integer real in matrix '^'.`);
         }
     }
 
@@ -109,8 +185,8 @@ export abstract class LinearAlgebra {
      * @returns Matrix determinant.
      */
     public static det(M: MultiArray): ComplexDecimal {
-        if (M.dimension[0] === M.column && M.dimension.length === 1) {
-            const n = M.column;
+        if (M.dim.length === 2 && M.dim[0] === M.dim[1]) {
+            const n = M.dim[1];
             let det = ComplexDecimal.zero();
             if (n === 1) det = M.array[0][0];
             else if (n === 2) det = ComplexDecimal.sub(ComplexDecimal.mul(M.array[0][0], M.array[1][1]), ComplexDecimal.mul(M.array[0][1], M.array[1][0]));
@@ -126,7 +202,7 @@ export abstract class LinearAlgebra {
                             j2++;
                         }
                     }
-                    det = ComplexDecimal.add(det, ComplexDecimal.mul(new ComplexDecimal(Math.pow(-1, 2.0 + j1), 0), ComplexDecimal.mul(M.array[0][j1], MultiArray.det(m))));
+                    det = ComplexDecimal.add(det, ComplexDecimal.mul(new ComplexDecimal(Math.pow(-1, 2.0 + j1), 0), ComplexDecimal.mul(M.array[0][j1], LinearAlgebra.det(m))));
                 }
             }
             return det;
@@ -151,13 +227,13 @@ export abstract class LinearAlgebra {
      */
     public static inv(M: MultiArray): MultiArray {
         // if the matrix isn't square: exit (error)
-        if (M.dimension[0] === M.column && M.dimension.length === 1) {
+        if (M.dim.length === 2 && M.dim[0] === M.dim[1]) {
             // create the identity matrix (I), and a copy (C) of the original
             let i = 0,
                 ii = 0,
                 j = 0,
                 e = ComplexDecimal.zero();
-            const numRows = M.dimension[0];
+            const numRows = M.dim[0];
             const I: ComplexDecimal[][] = [],
                 C: any[][] = [];
             for (i = 0; i < numRows; i += 1) {
@@ -204,7 +280,7 @@ export abstract class LinearAlgebra {
                     e = C[i][i];
                     // if it's still 0, not invertable (error)
                     if (e.re.eq(0) && e.im.eq(0)) {
-                        return new MultiArray([M.dimension[0], M.column], ComplexDecimal.inf_0());
+                        return new MultiArray([M.dim[0], M.dim[1]], ComplexDecimal.inf_0());
                     }
                 }
 
@@ -239,9 +315,9 @@ export abstract class LinearAlgebra {
 
             // we've done all operations, C should be the identity
             // matrix I should be the inverse:
-            const result = new MultiArray([M.dimension[0], M.column]);
+            const result = new MultiArray([M.dim[0], M.dim[1]]);
             result.array = I;
-            result.type = Math.max(...result.array.map((row) => ComplexDecimal.maxNumberType(...row)));
+            result.setType();
             return result;
         } else {
             throw new Error('inv: matrix must be square.');
@@ -258,19 +334,21 @@ export abstract class LinearAlgebra {
      * @returns Solution of linear system.
      */
     public static gauss(M: MultiArray, m: MultiArray): MultiArray {
-        if (M.dimension[0] !== M.column || M.dimension.length !== 1) throw new Error(`invalid dimensions in function gauss.`);
+        if (M.dim.length > 2 || M.dim[0] !== M.dim[1]) {
+            throw new Error(`invalid dimensions in function gauss.`);
+        }
         const A: MultiArray = MultiArray.copy(M);
         let i: number, k: number, j: number;
-        const DMin = Math.min(m.dimension[0], m.column);
-        if (DMin === m.column) {
-            m = MultiArray.transpose(m);
+        const DMin = Math.min(m.dim[0], m.dim[1]);
+        if (DMin === m.dim[1]) {
+            m = LinearAlgebra.transpose(m);
         }
 
         // Just make a single matrix
-        for (i = 0; i < A.dimension[0]; i++) {
+        for (i = 0; i < A.dim[0]; i++) {
             A.array[i].push(m.array[0][i]);
         }
-        const n = A.dimension[0];
+        const n = A.dim[0];
 
         for (i = 0; i < n; i++) {
             // Search for maximum in this column
@@ -311,7 +389,7 @@ export abstract class LinearAlgebra {
                 A.array[k][n] = ComplexDecimal.sub(A.array[k][n], ComplexDecimal.mul(A.array[k][i], X.array[0][i]));
             }
         }
-        X.type = Math.max(...X.array.map((row) => ComplexDecimal.maxNumberType(...row)));
+        X.setType();
         return X;
     }
 
@@ -324,17 +402,17 @@ export abstract class LinearAlgebra {
      * * https://rosettacode.org/wiki/LU_decomposition#JavaScript
      */
     public static lu(M: MultiArray): any {
-        if (M.dimension[0] !== M.column) {
+        if (M.dim[0] !== M.dim[1]) {
             throw new Error(`PLU decomposition can only be applied to square matrices.`);
         }
 
-        const n = M.dimension[0]; // Size of the square matrix
+        const n = M.dim[0]; // Size of the square matrix
 
         // Initialize P as an identity matrix with the appropriate dimensions
-        const P = MultiArray.eye(new ComplexDecimal(n)) as MultiArray;
+        const P = LinearAlgebra.eye(new ComplexDecimal(n)) as MultiArray;
 
         // Initialize L as an identity matrix with the same dimensions as the input matrix
-        const L = MultiArray.eye(new ComplexDecimal(n)) as MultiArray;
+        const L = LinearAlgebra.eye(new ComplexDecimal(n)) as MultiArray;
 
         // Initialize U as a copy of the input matrix
         const U = MultiArray.copy(M);
@@ -374,7 +452,7 @@ export abstract class LinearAlgebra {
                 }
             }
         }
-        return EvaluatorPointer.nodeReturnList((length: number, index: number): any => {
+        return global.EvaluatorPointer.nodeReturnList((length: number, index: number): any => {
             if (length === 1) {
                 return U;
             } else {

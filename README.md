@@ -93,7 +93,7 @@ let result = evaluator.Evaluate(tree);
 
 * MathML generation
 ```typescript
-let mathml = evaluator.UnparseML(tree);
+let mathml = evaluator.UnparseMathML(tree);
 ```
 
 ## Using UNPKG CDN
@@ -147,13 +147,12 @@ The control and loop structures are not yet implemented.
 Some differences from the original MATLAB&reg;/Octave language are
 
 * The comma is mandatory inside arrays (MATLAB&reg;/Octave supports space too).
-* Only two dimensional arrays can be defined (only Matrix, no Tensors).
 * Defining functions is done simply using:
 ```
 function_name(argument, argument, ...) = <expression>
 ```
 * Parsing is executed line-by-line.
-* There are only one complex numeric type. Other implemented types is boolean and character string;
+* There are only one a complex numeric type. Other implemented types is boolean and character string;
 
 ## License
 

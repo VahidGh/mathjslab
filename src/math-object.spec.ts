@@ -3,10 +3,9 @@ import { MathObject } from './math-object';
 describe('MathObject', () => {
     it('MathObject and its generic methods should be defined', () => {
         expect(MathObject).toBeDefined();
-        expect(MathObject.linearize).toBeDefined();
         expect(MathObject.copy).toBeDefined();
-        expect(MathObject.ewiseOp).toBeDefined();
-        expect(MathObject.leftOp).toBeDefined();
+        expect(MathObject.elementWiseOperation).toBeDefined();
+        expect(MathObject.leftOperation).toBeDefined();
         expect(MathObject.mand).toBeDefined();
         expect(MathObject.mor).toBeDefined();
     });

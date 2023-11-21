@@ -1,5 +1,4 @@
 import { Decimal } from 'decimal.js';
-import { type } from 'os';
 
 /**
  * decimal.js and ComplexDecimal configuration parameters.
@@ -49,7 +48,26 @@ Decimal.set({
 /**
  * Binary operations name type.
  */
-export type TBinaryOperationName = 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'xor' | 'mod' | 'rem';
+export type TBinaryOperationName =
+    | 'add'
+    | 'sub'
+    | 'mul'
+    | 'rdiv'
+    | 'ldiv'
+    | 'power'
+    | 'lt'
+    | 'le'
+    | 'eq'
+    | 'ge'
+    | 'gt'
+    | 'ne'
+    | 'and'
+    | 'or'
+    | 'xor'
+    | 'mod'
+    | 'rem'
+    | 'minWise'
+    | 'maxWise';
 
 /**
  * Unary operations name type.
@@ -140,14 +158,14 @@ export class ComplexDecimal {
     /**
      * Most restricted number class.
      */
-    public static numberClass: Record<string, number> = {
+    public static readonly numberClass: Record<string, number> = {
         logical: 0,
         real: 1,
         complex: 2,
     };
 
     /**
-     * Real, imaginary and class properties.
+     * Real, imaginary and type properties.
      */
     public re: Decimal;
     public im: Decimal;
@@ -320,7 +338,7 @@ export class ComplexDecimal {
      * @param value value to unparse.
      * @returns string of unparsed value.
      */
-    public static unparseML(value: ComplexDecimal): string {
+    public static unparseMathML(value: ComplexDecimal): string {
         if (value.type !== ComplexDecimal.numberClass.logical) {
             const value_prec = ComplexDecimal.toMaxPrecision(value);
             if (!value_prec.re.eq(0) && !value_prec.im.eq(0)) {
@@ -446,15 +464,6 @@ export class ComplexDecimal {
     }
 
     /**
-     * Gets the highest number type.
-     * @param args ComplexDecimal values.
-     * @returns Highest number type.
-     */
-    public static maxNumberType(...args: ComplexDecimal[]): number {
-        return Math.max(...args.map((arg) => arg.type));
-    }
-
-    /**
      * Gets the maximum or minimum of an array of ComplexDecimal using real comparison.
      * @param cmp 'lt' for minimum or 'gt' for maximum.
      * @param args ComplexDecimal values.
@@ -462,6 +471,22 @@ export class ComplexDecimal {
      */
     public static minMaxArrayReal(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): ComplexDecimal {
         return args.reduce((previous: ComplexDecimal, current: ComplexDecimal): ComplexDecimal => (previous.re[cmp](current.re) ? previous : current), args[0]);
+    }
+
+    public static minMaxArrayRealWithIndex(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): [ComplexDecimal, number] {
+        let index: number = 0;
+        const result = args.reverse().reduce(
+            (previous: ComplexDecimal, current: ComplexDecimal, i: number): ComplexDecimal => {
+                if (previous.re[cmp](current.re)) {
+                    return previous;
+                } else {
+                    index = args.length - 1 - i;
+                    return current;
+                }
+            },
+            args[args.length - 1],
+        );
+        return [result, index];
     }
 
     /**
@@ -483,6 +508,33 @@ export class ComplexDecimal {
                 return previous_abs[cmp](current_abs) ? previous : current;
             }
         }, args[0]);
+    }
+
+    public static minMaxArrayComplexWithIndex(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): [ComplexDecimal, number] {
+        let index: number = 0;
+        const result = args.reverse().reduce(
+            (previous: ComplexDecimal, current: ComplexDecimal, i: number): ComplexDecimal => {
+                const previous_abs = ComplexDecimal.abs(previous).re;
+                const current_abs = ComplexDecimal.abs(current).re;
+                if (previous_abs.eq(current_abs)) {
+                    if (ComplexDecimal.arg(previous).re[cmp](ComplexDecimal.arg(current).re)) {
+                        return previous;
+                    } else {
+                        index = args.length - 1 - i;
+                        return current;
+                    }
+                } else {
+                    if (previous_abs[cmp](current_abs)) {
+                        return previous;
+                    } else {
+                        index = args.length - 1 - i;
+                        return current;
+                    }
+                }
+            },
+            args[args.length - 1],
+        );
+        return [result, index];
     }
 
     /**
@@ -507,6 +559,20 @@ export class ComplexDecimal {
         }
     }
 
+    public static minWise(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+        if (left.type <= ComplexDecimal.numberClass.real && left.type <= ComplexDecimal.numberClass.real) {
+            return left.re.lt(right.re) ? left : right;
+        } else {
+            const left_abs = ComplexDecimal.abs(left).re;
+            const right_abs = ComplexDecimal.abs(right).re;
+            if (left_abs.eq(right_abs)) {
+                return ComplexDecimal.arg(left).re.lt(ComplexDecimal.arg(right).re) ? left : right;
+            } else {
+                return left_abs.lt(right_abs) ? left : right;
+            }
+        }
+    }
+
     /**
      * Returns the maximum of arguments. The arguments are in polar
      * lexicographical ordering (ordered by absolute value, or by polar angle
@@ -517,6 +583,20 @@ export class ComplexDecimal {
      */
     public static max(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         if (left.im.eq(0) && right.im.eq(0)) {
+            return left.re.gte(right.re) ? left : right;
+        } else {
+            const left_abs = ComplexDecimal.abs(left).re;
+            const right_abs = ComplexDecimal.abs(right).re;
+            if (left_abs.eq(right_abs)) {
+                return ComplexDecimal.arg(left).re.gte(ComplexDecimal.arg(right).re) ? left : right;
+            } else {
+                return left_abs.gte(right_abs) ? left : right;
+            }
+        }
+    }
+
+    public static maxWise(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
+        if (left.type <= ComplexDecimal.numberClass.real && left.type <= ComplexDecimal.numberClass.real) {
             return left.re.gte(right.re) ? left : right;
         } else {
             const left_abs = ComplexDecimal.abs(left).re;

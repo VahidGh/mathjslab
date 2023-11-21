@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.2.0
+- The MultiArray class now supports multidimensional arrays. More integration tests are needed. Several methods have been renamed to express their functions more clearly. Methods related to linear algebra in MultiArray class have been moved to the LinearAlgebra class in linear-algebra.ts file.
+- The core-functions.ts file and its corresponding test file were created. Functions in MultiArray class have been moved to the CoreFunctions class in core-functions.ts file. The generalized methods have been left in MultiArray class and the user functions have been moved to the CoreFunctions class. The linearizedFunctions in MultiArray class have been removed (and corresponding methods and code in Evaluator class removed too).
+
 ## 1.1.27
 - The linear-algebra.ts file and its corresponding test file were created. The relevant methods of the MultiArray class will be moved to this file as support for multidimensional arrays evolves in the MultiArray class. Some methods moved.
 - More evolve to support multidimensional arrays in the MultiArray class. MultiArray constructor upgraded to support multidimensional arrays. Constructor overloaded.
@@ -40,10 +44,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Discard output (~ at left side).
 
 ## 1.1.19
-- Fix parser parenthsis node.
+- Fix parser parenthesis node.
 
 ## 1.1.18
-- `end` in ranges implemented in parser rule `colon_item`. To do this it was necessary to track the context creating the `parent` property in each node, set during `Evaluator`, and also the `index` property in the 'LIST' and 'ARG' type nodes. This can be useful in `Unparse` and `UnparseML`, to eliminate unnecessary parentheses.
+- `end` in ranges implemented in parser rule `colon_item`. To do this it was necessary to track the context creating the `parent` property in each node, set during `Evaluator`, and also the `index` property in the 'LIST' and 'ARG' type nodes. This can be useful in `Unparse` and `UnparseMathML`, to eliminate unnecessary parentheses.
 
 ## 1.1.17
 - Project launch.

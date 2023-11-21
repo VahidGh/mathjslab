@@ -16,7 +16,7 @@ export class CharString {
     static unparse(value: CharString): string {
         return value.str;
     }
-    static unparseML(value: CharString): string {
+    static unparseMathML(value: CharString): string {
         return '<mn>' + value.str + '</mn>';
     }
     static removeQuotes(value: CharString): CharString {

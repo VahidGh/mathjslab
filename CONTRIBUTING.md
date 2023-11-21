@@ -91,12 +91,10 @@ The MathJSLab project started almost a decade ago, but it is still in its infanc
 
 Some are listed below:
 
-* Only 2-dimensional arrays (matrix) is supported. Extend to multidimensional
-arrays. To do this is need a complete reestructuration of MultiArray class.
 * Only one single ComplexDecimal type based on Decimal.js is implemented.
 Extend to support ComplexDecimal type based on common javascript number type.
 It is necessary for faster and more efficient computing.
-* Use Web Workers and WebAssembly for more efficient computing. The complete
+* Use Web Workers and/or WebAssembly for more efficient computing. The complete
 evaluator can reside in a Web Worker.
 * Parser is designed to scan a line. Need to code a parser that scan multiple
 lines calling Evaluator when need.
