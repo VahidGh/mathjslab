@@ -91,6 +91,9 @@ The MathJSLab project started almost a decade ago, but it is still in its infanc
 
 Some are listed below:
 
+* Optimize the ComplexDecimal class so that methods avoid using other
+functions in the class. To do this, it will be necessary to deduce the
+definitions of each function in terms of the real and imaginary parts.
 * Only one single ComplexDecimal type based on Decimal.js is implemented.
 Extend to support ComplexDecimal type based on common javascript number type.
 It is necessary for faster and more efficient computing.

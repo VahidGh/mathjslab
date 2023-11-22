@@ -1,4 +1,4 @@
-import { ComplexDecimal } from './complex-decimal';
+import { ComplexDecimal, TBinaryOperationName } from './complex-decimal';
 import { MultiArray } from './multi-array';
 import { NodeReturnList } from './evaluator';
 
@@ -37,13 +37,13 @@ export abstract class CoreFunctions {
                     let dims = MultiArray.linearize(DIMS).map((value) => value.re.toNumber());
                     let lenghtGreater = false;
                     if (length > dims.length) {
-                        MultiArray.appendSingletonTail(dims, length - 1);
+                        MultiArray.appendSingletonTail(dims, length);
                         lenghtGreater = true;
                     } else {
                         dims = dims.slice(0, length - 1);
                     }
                     const ind = MultiArray.scalarToMultiArray(IND);
-                    const result = new MultiArray(ind.dim);
+                    const result = new MultiArray(ind.dimension);
                     const subscript = ind.array.map((row) => row.map((value) => MultiArray.ind2subNumber(dims, value.re.toNumber())));
                     if (index === length - 1 && lenghtGreater) {
                         result.array = subscript.map((row) => row.map((value) => new ComplexDecimal(value[length])));
@@ -70,19 +70,19 @@ export abstract class CoreFunctions {
             const dims = MultiArray.linearize(DIMS).map((value) => value.re.toNumber());
             const subscript: MultiArray[] = S.map((s: any) => MultiArray.scalarToMultiArray(s));
             for (let s = 1; s < subscript.length; s++) {
-                if (!MultiArray.arrayEquals(subscript[0].dim, subscript[s].dim)) {
+                if (!MultiArray.arrayEquals(subscript[0].dimension, subscript[s].dimension)) {
                     throw new Error('sub2ind: all subscripts must be of the same size.');
                 }
             }
             MultiArray.appendSingletonTail(dims, subscript.length);
-            const result = new MultiArray(subscript[0].dim);
+            const result = new MultiArray(subscript[0].dimension);
             for (let n = 0; n < MultiArray.linearLength(subscript[0]); n++) {
                 const subscriptN = subscript.map((s) => {
-                    const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(s.dim[0], s.dim[1], n);
+                    const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(s.dimension[0], s.dimension[1], n);
                     return s.array[i][j];
                 });
                 const index = MultiArray.parseSubscript(dims, subscriptN, 'index ');
-                const [p, q] = MultiArray.linearIndexToMultiArrayRowColumn(result.dim[0], result.dim[1], n);
+                const [p, q] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], n);
                 result.array[p][q] = new ComplexDecimal(index + 1);
             }
             return MultiArray.MultiArrayToScalar(result);
@@ -105,7 +105,7 @@ export abstract class CoreFunctions {
             }
             return dim;
         };
-        const sizeDim = 'array' in M ? M.dim.slice() : [1, 1];
+        const sizeDim = 'array' in M ? M.dimension.slice() : [1, 1];
         if (DIM.length === 0) {
             const result = new MultiArray([1, sizeDim.length]);
             result.array[0] = sizeDim.map((d) => new ComplexDecimal(d));
@@ -115,8 +115,7 @@ export abstract class CoreFunctions {
             const dims =
                 DIM.length === 1 && 'array' in DIM[0]
                     ? MultiArray.linearize(DIM[0]).map((dim) => parseDimension(dim))
-                    : // DIM.map((dim: any) => ('array' in dim) ? parseDimension(dim.array[0][0]) : parseDimension(dim));
-                      DIM.map((dim: any) => parseDimension(MultiArray.firstElement(dim)));
+                    : DIM.map((dim: any) => parseDimension(MultiArray.firstElement(dim)));
             MultiArray.appendSingletonTail(sizeDim, Math.max(...dims));
             const result = new MultiArray([1, dims.length]);
             result.array[0] = dims.map((dim: number) => new ComplexDecimal(sizeDim[dim - 1]));
@@ -143,6 +142,12 @@ export abstract class CoreFunctions {
         return MultiArray.newFilled(ComplexDecimal.one(), ...dimension);
     }
 
+    /**
+     * Uniformly distributed pseudorandom numbers distributed on the
+     * interval (0, 1).
+     * @param dimension
+     * @returns
+     */
     public static rand(...dimension: any): MultiArray | ComplexDecimal {
         return MultiArray.newFilledEach((n: number) => new ComplexDecimal(Math.random()), ...dimension);
     }
@@ -153,15 +158,39 @@ export abstract class CoreFunctions {
      * @param args
      * @returns
      */
-    public static randi(imax: ComplexDecimal, ...dimension: any): MultiArray | ComplexDecimal {
-        if (imax.re.lt(1)) {
-            throw new Error(`randi: require imax >= 1.`);
+    public static randi(range: MultiArray | ComplexDecimal, ...dimension: any): MultiArray | ComplexDecimal {
+        let imin = 0;
+        let imax = 0;
+        if ('array' in range) {
+            const rangeLinearized = MultiArray.linearize(range);
+            if (rangeLinearized.length > 1) {
+                imin = rangeLinearized[0].re.toNumber();
+                imax = rangeLinearized[1].re.toNumber();
+            } else if (rangeLinearized.length > 0) {
+                imax = rangeLinearized[0].re.toNumber();
+            } else {
+                throw new Error('bounds(1): out of bound 0 (dimensions are 0x0)');
+            }
+        } else {
+            imax = range.re.toNumber();
         }
-        if (!imax.re.trunc().eq(imax.re)) {
+        if (Math.trunc(imin) !== imin || Math.trunc(imax) !== imax) {
             throw new Error(`randi: must be integer bounds.`);
         }
-        const max = Math.trunc(imax.re.toNumber());
-        return MultiArray.newFilledEach((n: number) => new ComplexDecimal(Math.round(max * Math.random())), ...dimension);
+        if (imax > imin) {
+            return MultiArray.newFilledEach(
+                imin === 0
+                    ? (n: number) => new ComplexDecimal(Math.round(imax * Math.random()))
+                    : (n: number) => new ComplexDecimal(Math.round((imax - imin) * Math.random() + imin)),
+                ...dimension,
+            );
+        } else {
+            if ((imin = 0)) {
+                throw new Error(`randi: require imax >= 1.`);
+            } else {
+                throw new Error(`randi: require imax > imin.`);
+            }
+        }
     }
 
     /**
@@ -172,12 +201,7 @@ export abstract class CoreFunctions {
      * @returns Concatenated arrays along dimension `DIM`.
      */
     public static cat(DIM: MultiArray | any, ...ARRAY: (MultiArray | any)[]): MultiArray {
-        let dimension: number;
-        if ('array' in DIM && DIM.dim.reduce((p: number, c: number) => p * c, 1) > 0) {
-            dimension = DIM.array[0][0].re.toNumber() - 1;
-        } else {
-            dimension = DIM.re.toNumber() - 1;
-        }
+        const dimension = MultiArray.firstElement(DIM);
         const array = ARRAY.map((m) => MultiArray.scalarToMultiArray(m));
         return MultiArray.concatenate(dimension, 'cat', ...array);
     }
@@ -209,7 +233,7 @@ export abstract class CoreFunctions {
      * @returns Array with sum of elements along dimension DIM.
      */
     public static sum(M: MultiArray, DIM?: ComplexDecimal): MultiArray | ComplexDecimal {
-        const dim = DIM ? DIM.re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M);
+        const dim = DIM ? MultiArray.firstElement(DIM).re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M);
         return MultiArray.reduce(dim, M, (p, c) => ComplexDecimal.add(p, c));
     }
 
@@ -220,7 +244,7 @@ export abstract class CoreFunctions {
      * @returns One dimensional matrix with sum of squares of elements along dimension DIM.
      */
     public static sumsq(M: MultiArray, DIM?: ComplexDecimal): MultiArray | ComplexDecimal {
-        const dim = DIM ? DIM.re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M);
+        const dim = DIM ? MultiArray.firstElement(DIM).re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M);
         return MultiArray.reduce(dim, M, (p, c) => ComplexDecimal.add(ComplexDecimal.mul(p, ComplexDecimal.conj(p)), ComplexDecimal.mul(c, ComplexDecimal.conj(c))));
     }
 
@@ -231,7 +255,7 @@ export abstract class CoreFunctions {
      * @returns One dimensional matrix with product of elements along dimension DIM.
      */
     public static prod(M: MultiArray, DIM?: ComplexDecimal): MultiArray | ComplexDecimal {
-        const dim = DIM ? DIM.re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M);
+        const dim = DIM ? MultiArray.firstElement(DIM).re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M);
         return MultiArray.reduce(dim, M, (p, c) => ComplexDecimal.mul(p, c));
     }
 
@@ -242,9 +266,53 @@ export abstract class CoreFunctions {
      * @returns One dimensional matrix with product of elements along dimension DIM.
      */
     public static mean(M: MultiArray, DIM?: ComplexDecimal): MultiArray | ComplexDecimal {
-        const dim = DIM ? DIM.re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M);
+        const dim = DIM ? MultiArray.firstElement(DIM).re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M);
         const sum = MultiArray.reduce(dim, M, (p, c) => ComplexDecimal.add(p, c));
-        return MultiArray.MultiArrayOpScalar('rdiv', MultiArray.scalarToMultiArray(sum), new ComplexDecimal(M.dim[dim]));
+        return MultiArray.MultiArrayOpScalar('rdiv', MultiArray.scalarToMultiArray(sum), new ComplexDecimal(M.dimension[dim]));
+    }
+
+    /**
+     * Base method of min and max user functions.
+     * @param op 'min' or 'max'
+     * @param args One to three arguments like user function.
+     * @returns Return like user function.
+     */
+    private static minMax(op: 'min' | 'max', ...args: any[]): MultiArray | NodeReturnList {
+        const minMaxAlogDimension = (M: MultiArray, dimension: number) => {
+            const reduced = MultiArray.reduceToArray(dimension, M);
+            const resultM = new MultiArray(reduced.dimension);
+            const indexM = new MultiArray(reduced.dimension);
+            const cmp = op === 'min' ? 'lt' : 'gt';
+            for (let i = 0; i < indexM.array.length; i++) {
+                for (let j = 0; j < indexM.array[0].length; j++) {
+                    const [m, n] = ComplexDecimal[`minMaxArray${args[0].type < 2 ? 'Real' : 'Complex'}WithIndex`](cmp, ...(reduced.array[i][j] as unknown as ComplexDecimal[]));
+                    resultM.array[i][j] = m;
+                    indexM.array[i][j] = new ComplexDecimal(n + 1);
+                }
+            }
+            return global.EvaluatorPointer.nodeReturnList((length: number, index: number): any => {
+                global.EvaluatorPointer.throwErrorIfGreaterThanReturnList(2, length);
+                return MultiArray.MultiArrayToScalar(index === 0 ? resultM : indexM);
+            });
+        };
+        switch (args.length) {
+            case 1:
+                // Along first non singleton dimension.
+                const dimension = MultiArray.firstNonSingleDimension(MultiArray.scalarToMultiArray(args[0]));
+                return minMaxAlogDimension(MultiArray.scalarToMultiArray(args[0]), dimension);
+            case 2:
+                // Broadcast
+                return MultiArray.elementWiseOperation((op + 'Wise') as TBinaryOperationName, MultiArray.scalarToMultiArray(args[0]), args[1]);
+            case 3:
+                // Along selected dimension.
+                if (!('array' in args[1] && args[1].dimension.length === 2 && args[1].dimension[0] === 0 && args[1].dimension[1] === 0)) {
+                    // Error if second argument is different from [].
+                    throw new Error(`${op}: second argument is ignored`);
+                }
+                return minMaxAlogDimension(MultiArray.scalarToMultiArray(args[0]), MultiArray.firstElement(args[2]).re.toNumber() - 1);
+            default:
+                throw new Error(`Invalid call to ${op}.  Type 'help ${op}' to see correct usage.`);
+        }
     }
 
     /**
@@ -253,7 +321,7 @@ export abstract class CoreFunctions {
      * @returns
      */
     public static min(...args: any[]): MultiArray | NodeReturnList {
-        return MultiArray.minMax('min', ...args);
+        return CoreFunctions.minMax('min', ...args);
     }
 
     /**
@@ -262,6 +330,6 @@ export abstract class CoreFunctions {
      * @returns
      */
     public static max(...args: any[]): MultiArray | NodeReturnList {
-        return MultiArray.minMax('max', ...args);
+        return CoreFunctions.minMax('max', ...args);
     }
 }

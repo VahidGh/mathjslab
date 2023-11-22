@@ -1,4 +1,4 @@
-import { ComplexDecimal } from './complex-decimal';
+import { ComplexDecimal, TBinaryOperationName, TUnaryOperationLeftName } from './complex-decimal';
 import { MultiArray } from './multi-array';
 import { LinearAlgebra } from './linear-algebra';
 
@@ -45,11 +45,7 @@ export abstract class MathObject {
         }
     }
 
-    public static elementWiseOperation(
-        op: 'add' | 'sub' | 'mul' | 'rdiv' | 'ldiv' | 'power' | 'lt' | 'le' | 'eq' | 'ge' | 'gt' | 'ne' | 'and' | 'or' | 'xor' | 'mod' | 'rem',
-        left: any,
-        right: any,
-    ): any {
+    public static elementWiseOperation(op: TBinaryOperationName, left: any, right: any): any {
         if ('re' in left && 're' in right) {
             return ComplexDecimal[op](left, right);
         } else if ('re' in left && 'array' in right) {
@@ -61,7 +57,7 @@ export abstract class MathObject {
         }
     }
 
-    public static leftOperation(op: 'copy' | 'neg' | 'not', right: any): any {
+    public static leftOperation(op: TUnaryOperationLeftName, right: any): any {
         if ('re' in right) {
             return ComplexDecimal[op](right);
         } else if ('array' in right) {

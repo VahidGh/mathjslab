@@ -13,6 +13,60 @@ import { MathObject } from './math-object';
 import Parser from './parser.js';
 
 /**
+ * Operator type.
+ */
+export type TOperator =
+    | '+'
+    | '-'
+    | '.*'
+    | '*'
+    | './'
+    | '/'
+    | '.\\'
+    | '\\'
+    | '.^'
+    | '^'
+    | '.**'
+    | '**'
+    | '<'
+    | '<='
+    | '=='
+    | '>='
+    | '>'
+    | '!='
+    | '~='
+    | '&'
+    | '|'
+    | '&&'
+    | '||'
+    | '='
+    | '+='
+    | '-='
+    | '*='
+    | '/='
+    | '\\='
+    | '^='
+    | '**='
+    | '.*='
+    | './='
+    | '.\\='
+    | '.^='
+    | '.**='
+    | '&='
+    | '|='
+    | '()'
+    | '!'
+    | '~'
+    | '+_'
+    | '-_'
+    | '++_'
+    | '--_'
+    | ".'"
+    | "'"
+    | '_++'
+    | '_--';
+
+/**
  * aliasNameTable type.
  */
 export type TAliasNameTable = Record<string, RegExp>;
@@ -177,7 +231,8 @@ declare global {
 /**
  * Evaluator object.
  * It is implemented as a class but cannot be instantiated more than one time
- * simultaneously. Instance is given by `Evaluator.initialize` static method.
+ * simultaneously. Instance is given by `Evaluator.initialize` static method
+ * or global variable global.EvaluatorPointer.
  */
 export class Evaluator {
     /**
@@ -242,6 +297,9 @@ export class Evaluator {
      */
     public baseFunctionTable: TBaseFunctionTable = {};
 
+    /**
+     * Get a list of names of defined functions in baseFunctionTable.
+     */
     public get baseFunctionList(): string[] {
         return Object.keys(this.baseFunctionTable);
     }
@@ -266,6 +324,12 @@ export class Evaluator {
      */
     public exitStatus: number;
 
+    /**
+     * Increment and decrement operator
+     * @param pre `true` if prefixed. `false` if postfixed.
+     * @param operation Operation (`'plus'` or `'minus'`).
+     * @returns Operator function with signature `(tree: any) => any`.
+     */
     private incDecOp(pre: boolean, operation: 'plus' | 'minus'): (tree: any) => any {
         if (pre) {
             return (tree: any): any => {
@@ -332,6 +396,9 @@ export class Evaluator {
         '_--': this.incDecOp(false, 'minus'),
     };
 
+    /**
+     * User functions.
+     */
     private readonly functions: Record<string, Function> = {
         unparse: (tree: any): CharString => new CharString(EvaluatorPointer.Unparse(tree)),
     };
@@ -339,7 +406,6 @@ export class Evaluator {
     /**
      * Parser AST (Abstract Syntax Tree) constructor methods.
      */
-
     public readonly nodeString = CharString.parse;
     public readonly isString = CharString.isThis;
     public readonly unparseString = CharString.unparse;
@@ -351,6 +417,7 @@ export class Evaluator {
     public readonly unparseNumber = ComplexDecimal.unparse;
     public readonly unparseNumberMathML = ComplexDecimal.unparseMathML;
     public readonly isTensor = MultiArray.isThis;
+    public readonly isRowVector = MultiArray.isRowVector;
     public readonly unparseTensor = MultiArray.unparse;
     public readonly unparseTensorMathML = MultiArray.unparseMathML;
     public readonly evaluateTensor = MultiArray.evaluate;
@@ -363,12 +430,14 @@ export class Evaluator {
     public readonly firstRow = MultiArray.firstRow;
     public readonly appendRow = MultiArray.appendRow;
     public readonly tensor0x0 = MultiArray.array_0x0;
-
     public readonly linearize = MultiArray.linearize;
     public readonly toTensor = MultiArray.scalarToMultiArray;
     public readonly linearLength = MultiArray.linearLength;
     public readonly getDimension = MultiArray.getDimension;
 
+    /**
+     * Special functions MathML unparser.
+     */
     private readonly unparseMathMLFunctions: Record<string, (tree: any) => string> = {
         abs: (tree: any) => '<mrow><mo>|</mo>' + this.unparserMathML(tree.args[0]) + '<mo>|</mo></mrow>',
         conj: (tree: any) => '<mover><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow><mo>&OverBar;</mo></mover>',
@@ -397,33 +466,33 @@ export class Evaluator {
         this.loadNativeTable();
         /* Define Evaluator functions */
         for (const func in this.functions) {
-            this.defFunction(func, this.functions[func]);
+            this.defineFunction(func, this.functions[func]);
         }
         /* Define function operators */
         for (const func in MathObject.twoMoreOpFunction) {
-            this.DefBinMoreOpFunction(func, MathObject.twoMoreOpFunction[func]);
+            this.defineTwoOrMoreOperandFunction(func, MathObject.twoMoreOpFunction[func]);
         }
         for (const func in MathObject.binaryOpFunction) {
-            this.DefBinOpFunction(func, MathObject.binaryOpFunction[func]);
+            this.defineBinaryOperatorFunction(func, MathObject.binaryOpFunction[func]);
         }
         for (const func in MathObject.unaryOpFunction) {
-            this.DefUnOpFunction(func, MathObject.unaryOpFunction[func]);
+            this.defineUnaryOperatorFunction(func, MathObject.unaryOpFunction[func]);
         }
         /* Define function mappers */
         for (const func in ComplexDecimal.mapFunction) {
-            this.defFunction(func, ComplexDecimal.mapFunction[func], true);
+            this.defineFunction(func, ComplexDecimal.mapFunction[func], true);
         }
         /* Define other functions */
         for (const func in ComplexDecimal.twoArgFunction) {
-            this.defFunction(func, ComplexDecimal.twoArgFunction[func]);
+            this.defineFunction(func, ComplexDecimal.twoArgFunction[func]);
         }
         /* Define CoreFunctions functions */
         for (const func in CoreFunctions.functions) {
-            this.defFunction(func, CoreFunctions.functions[func]);
+            this.defineFunction(func, CoreFunctions.functions[func]);
         }
         /* Define LinearAlgebra functions */
         for (const func in LinearAlgebra.functions) {
-            this.defFunction(func, LinearAlgebra.functions[func]);
+            this.defineFunction(func, LinearAlgebra.functions[func]);
         }
         /* Load unparserMathML for special functions */
         for (const func in this.unparseMathMLFunctions) {
@@ -476,9 +545,9 @@ export class Evaluator {
     }
 
     /**
-     * Alias name function.
-     * @param name
-     * @returns
+     * Alias name function. This property is set when running Evaluator.initialize.
+     * @param name Alias name.
+     * @returns Canonical name.
      */
     public aliasName: (name: string) => string = (name: string): string => name;
 
@@ -510,7 +579,7 @@ export class Evaluator {
 
     /**
      * Clear variables. If names is 0 lenght restart evaluator.
-     * @param names
+     * @param names Variable names to clear in nameTable and basFunctionTable.
      */
     public Clear(...names: string[]): void {
         if (names.length === 0) {
@@ -527,8 +596,8 @@ export class Evaluator {
 
     /**
      * Parse input.
-     * @param input
-     * @returns
+     * @param input Input string
+     * @returns Parsed input.
      */
     public Parse(input: string): any {
         return this.parser.parse(input);
@@ -584,13 +653,13 @@ export class Evaluator {
     }
 
     /**
-     * Create range node.
-     * @param left
-     * @param right
-     * @returns
+     * Create range node. If two arguments are passed then it is 'start' and
+     * 'stop' of range. If three arguments are passed then it is 'start',
+     * 'stride' and 'stop'.
+     * @param args 'start' and 'stop' or 'start', 'stride' and 'stop'.
+     * @returns NodeRange.
      */
     public nodeRange(...args: any): NodeRange {
-        /* https://www.mathworks.com/help/matlab/ref/end.html */
         if (args.length === 2) {
             return {
                 type: 'RANGE',
@@ -617,7 +686,7 @@ export class Evaluator {
      * @param data2
      * @returns
      */
-    public nodeOp(op: string, data1: any, data2: any): NodeOperation {
+    public nodeOp(op: TOperator, data1: any, data2?: any): NodeOperation {
         switch (op) {
             case '+':
             case '-':
@@ -678,8 +747,8 @@ export class Evaluator {
 
     /**
      * Create first element of list node.
-     * @param node
-     * @returns
+     * @param node First element of list node.
+     * @returns A NodeList.
      */
     public nodeListFirst(node?: any): NodeList {
         if (node) {
@@ -699,9 +768,9 @@ export class Evaluator {
 
     /**
      * Append node to list node.
-     * @param lnode
-     * @param node
-     * @returns
+     * @param lnode NodeList.
+     * @param node Element to append to list.
+     * @returns NodeList with element appended.
      */
     public nodeList(lnode: NodeList, node: any): NodeList {
         node.parent = lnode;
@@ -710,7 +779,7 @@ export class Evaluator {
     }
 
     /**
-     * Create first row of a matrix MultiArray.
+     * Create first row of a MultiArray.
      * @param row
      * @returns
      */
@@ -723,19 +792,24 @@ export class Evaluator {
     }
 
     /**
-     * Append row to matrix MultiArray.
-     * @param matrix
+     * Append row to MultiArray.
+     * @param M
      * @param row
      * @returns
      */
-    public nodeAppendRow(matrix: MultiArray, row: NodeList): MultiArray {
+    public nodeAppendRow(M: MultiArray, row: NodeList): MultiArray {
         if (row) {
-            return this.appendRow(matrix, row.list);
+            return this.appendRow(M, row.list);
         } else {
-            return matrix;
+            return M;
         }
     }
 
+    /**
+     * Creates NodeReturnList (multiple assignment)
+     * @param selector Left side selector function.
+     * @returns Return list node.
+     */
     public nodeReturnList(selector: ReturnSelector): NodeReturnList {
         return {
             type: 'RETLIST',
@@ -743,20 +817,39 @@ export class Evaluator {
         };
     }
 
-    public reduceIfReturnList(value: any): any {
-        if (value.type === 'RETLIST') {
-            const result = value.selector(1, 0);
-            result.parent = value.parent;
-            return result;
-        } else {
-            return value;
+    /**
+     * Throws error if left hand side length of multiple assignment greater
+     * than maximum length (to be used in ReturnSelector functions).
+     * @param maxLength Maximum length of return list.
+     * @param currentLength Requested length of return list.
+     */
+    public throwErrorIfGreaterThanReturnList(maxLength: number, currentLength: number): void {
+        if (currentLength > maxLength) {
+            throw new EvalError(`element number ${maxLength + 1} undefined in return list`);
         }
     }
 
     /**
-     * Validate left hand side of assignment node.
-     * @param tree
-     * @returns
+     * Tests if it is a NodeReturnList and if so reduces it to its first
+     * element.
+     * @param value A node.
+     * @returns Reduced node if `tree` is a NodeReturnList.
+     */
+    public reduceIfReturnList(tree: any): any {
+        if (tree.type === 'RETLIST') {
+            const result = tree.selector(1, 0);
+            result.parent = tree.parent;
+            return result;
+        } else {
+            return tree;
+        }
+    }
+
+    /**
+     * Validate left side of assignment node.
+     * @param tree Left side of assignment node
+     * @param shallow True if tree is a left root of assignment.
+     * @returns An object with three properties: `left`, `id` and `args`.
      */
     public validateAssignment(tree: any, shallow: boolean = true): { left: any; id: string; args: any[] }[] {
         const invalidMessageBase = 'invalid left hand side of assignment';
@@ -791,7 +884,7 @@ export class Evaluator {
                     args: [],
                 },
             ];
-        } else if (shallow && this.isTensor(tree) && tree.dim[0] === 1) {
+        } else if (shallow && this.isRowVector(tree)) {
             return tree.array[0].map((left: any) => this.validateAssignment(left, false)[0]);
         } else {
             throw new EvalError(`${invalidMessageBase}.`);
@@ -800,11 +893,13 @@ export class Evaluator {
 
     /**
      * Define function in baseFunctionTable.
-     * @param name
-     * @param func
-     * @param map
+     * @param name Name of function.
+     * @param func Function body.
+     * @param map `true` if function is a mapper function.
+     * @param ev A `boolean` array indicating which function argument should
+     * be evaluated before executing the function.
      */
-    private defFunction(name: string, func: Function, map?: boolean, ev?: boolean[]): void {
+    private defineFunction(name: string, func: Function, map?: boolean, ev?: boolean[]): void {
         this.baseFunctionTable[name] = {
             mapper: map ?? false,
             ev: ev ?? [],
@@ -814,10 +909,10 @@ export class Evaluator {
 
     /**
      * Define unary operator function in baseFunctionTable.
-     * @param name
-     * @param func
+     * @param name Name of function.
+     * @param func Function body.
      */
-    private DefUnOpFunction(name: string, func: Function): void {
+    private defineUnaryOperatorFunction(name: string, func: Function): void {
         this.baseFunctionTable[name] = {
             mapper: false,
             ev: [],
@@ -833,10 +928,10 @@ export class Evaluator {
 
     /**
      * Define binary operator function in baseFunctionTable.
-     * @param name
-     * @param func
+     * @param name Name of function.
+     * @param func Function body.
      */
-    private DefBinOpFunction(name: string, func: Function): void {
+    private defineBinaryOperatorFunction(name: string, func: Function): void {
         this.baseFunctionTable[name] = {
             mapper: false,
             ev: [],
@@ -851,11 +946,11 @@ export class Evaluator {
     }
 
     /**
-     * Define define two-or-more operator function in baseFunctionTable.
+     * Define define two-or-more operand function in baseFunctionTable.
      * @param name
      * @param func
      */
-    private DefBinMoreOpFunction(name: string, func: Function): void {
+    private defineTwoOrMoreOperandFunction(name: string, func: Function): void {
         this.baseFunctionTable[name] = {
             mapper: false,
             ev: [],
@@ -879,8 +974,8 @@ export class Evaluator {
      * Expression tree recursive evaluator.
      * @param tree Expression to evaluate.
      * @param local Set `true` if evaluating function.
-     * @param fname Function name.
-     * @returns Expression tree evaluated.
+     * @param fname Function name if evaluating function.
+     * @returns Expression `tree` evaluated.
      */
     public Evaluator(tree: any, local: boolean = false, fname: string = ''): any {
         if (this._debug) {
@@ -897,7 +992,7 @@ export class Evaluator {
             return tree;
         } else if (this.isTensor(tree)) {
             /* MATRIX */
-            return this.evaluateTensor(tree, this, local, fname);
+            return this.evaluateTensor(tree, local, fname);
         } else {
             switch (tree.type) {
                 case '+':
@@ -966,7 +1061,7 @@ export class Evaluator {
                     tree.left.parent = tree;
                     tree.right.parent = tree;
                     const assignment = this.validateAssignment(tree.left);
-                    const op: string = tree.type.substring(0, tree.type.length - 1);
+                    const op: TOperator = tree.type.substring(0, tree.type.length - 1);
                     if (assignment.length > 1 && op.length > 0) {
                         throw new EvalError('computed multiple assignment not allowed.');
                     }
@@ -1386,9 +1481,9 @@ export class Evaluator {
     }
 
     /**
-     * Evaluate expression tree.
-     * @param tree
-     * @returns
+     * Evaluate expression `tree`.
+     * @param tree Expression to evaluate.
+     * @returns Expression `tree` evaluated.
      */
     public Evaluate(tree: any): any {
         try {
@@ -1402,9 +1497,9 @@ export class Evaluator {
     }
 
     /**
-     * Unparse expression tree.
-     * @param tree
-     * @returns
+     * Unparse expression `tree`.
+     * @param tree Expression to unparse.
+     * @returns Expression `tree` unparsed.
      */
     public Unparse(tree: any): string {
         try {
@@ -1418,7 +1513,7 @@ export class Evaluator {
                 return this.unparseString(tree);
             } else if (this.isTensor(tree)) {
                 /* MATRIX */
-                return this.unparseTensor(tree, this);
+                return this.unparseTensor(tree);
             } else {
                 switch (tree.type) {
                     case '+':
@@ -1518,7 +1613,7 @@ export class Evaluator {
     /**
      * Unparse recursively expression tree generating MathML representation.
      * @param tree Expression tree.
-     * @returns String of expression tree unparsed as MathML language.
+     * @returns String of expression `tree` unparsed as MathML language.
      */
     public unparserMathML(tree: any): string {
         try {
@@ -1532,7 +1627,7 @@ export class Evaluator {
                 return this.unparseStringMathML(tree);
             } else if (this.isTensor(tree)) {
                 /* MATRIX */
-                return this.unparseTensorMathML(tree, this);
+                return this.unparseTensorMathML(tree);
             } else {
                 switch (tree.type) {
                     case '+':
@@ -1665,7 +1760,13 @@ export class Evaluator {
         return `<math xmlns = "http://www.w3.org/1998/Math/MathML" display="${display}">${result}</math>`;
     }
 
-    public toMathML(text: string, display: 'inline' | 'block' = 'block'): string {
-        return this.UnparseMathML(this.Parse(text), display);
+    /**
+     * Generates MathML representation of input without evaluation.
+     * @param input Input to parse and generate MathML representation.
+     * @param display `'inline'` or `'block'`.
+     * @returns MathML representation of input.
+     */
+    public toMathML(input: string, display: 'inline' | 'block' = 'block'): string {
+        return this.UnparseMathML(this.Parse(input), display);
     }
 }
