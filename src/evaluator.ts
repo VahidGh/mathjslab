@@ -421,7 +421,7 @@ export class Evaluator {
     public readonly unparseTensor = MultiArray.unparse;
     public readonly unparseTensorMathML = MultiArray.unparseMathML;
     public readonly evaluateTensor = MultiArray.evaluate;
-    public readonly mapTensor = MultiArray.map;
+    public readonly mapTensor = MultiArray.rawMap;
     public readonly getElements = MultiArray.getElements;
     public readonly getElementsLogical = MultiArray.getElementsLogical;
     public readonly setElements = MultiArray.setElements;
@@ -429,7 +429,7 @@ export class Evaluator {
     public readonly expandRange = MultiArray.expandRange;
     public readonly firstRow = MultiArray.firstRow;
     public readonly appendRow = MultiArray.appendRow;
-    public readonly tensor0x0 = MultiArray.array_0x0;
+    public readonly tensor0x0 = MultiArray.emptyArray;
     public readonly linearize = MultiArray.linearize;
     public readonly toTensor = MultiArray.scalarToMultiArray;
     public readonly linearLength = MultiArray.linearLength;
@@ -810,7 +810,7 @@ export class Evaluator {
      * @param selector Left side selector function.
      * @returns Return list node.
      */
-    public nodeReturnList(selector: ReturnSelector): NodeReturnList {
+    public static nodeReturnList(selector: ReturnSelector): NodeReturnList {
         return {
             type: 'RETLIST',
             selector,
@@ -823,7 +823,7 @@ export class Evaluator {
      * @param maxLength Maximum length of return list.
      * @param currentLength Requested length of return list.
      */
-    public throwErrorIfGreaterThanReturnList(maxLength: number, currentLength: number): void {
+    public static throwErrorIfGreaterThanReturnList(maxLength: number, currentLength: number): void {
         if (currentLength > maxLength) {
             throw new EvalError(`element number ${maxLength + 1} undefined in return list`);
         }
@@ -920,7 +920,7 @@ export class Evaluator {
                 if (operand.length === 1) {
                     return func(operand[0]);
                 } else {
-                    throw new EvalError(`Invalid call to ${name}.`);
+                    throw new EvalError(`Invalid call to ${name}. Type 'help ${name}' to see correct usage.`);
                 }
             },
         };
@@ -939,7 +939,7 @@ export class Evaluator {
                 if (right.length === 1) {
                     return func(left, right[0]);
                 } else {
-                    throw new EvalError(`Invalid call to ${name}.`);
+                    throw new EvalError(`Invalid call to ${name}. Type 'help ${name}' to see correct usage.`);
                 }
             },
         };
@@ -964,7 +964,7 @@ export class Evaluator {
                     }
                     return result;
                 } else {
-                    throw new EvalError(`Invalid call to ${name}.`);
+                    throw new EvalError(`Invalid call to ${name}. Type 'help ${name}' to see correct usage.`);
                 }
             },
         };
@@ -1072,7 +1072,7 @@ export class Evaluator {
                         right = tree.right;
                     }
                     if (right.type !== 'RETLIST') {
-                        right = this.nodeReturnList((length: number, index: number) => {
+                        right = Evaluator.nodeReturnList((length: number, index: number) => {
                             if (index === 0) {
                                 return tree.right;
                             } else {
@@ -1358,7 +1358,7 @@ export class Evaluator {
                                 });
                                 if (this.baseFunctionTable[aliasTreeName].mapper && argumentsList.length !== 1) {
                                     /* Error if mapper and #arguments!==1 (Invalid call). */
-                                    throw new EvalError(`Invalid call to ${aliasTreeName}.`);
+                                    throw new EvalError(`Invalid call to ${aliasTreeName}. Type 'help ${tree.expr.id}' to see correct usage.`);
                                 }
                                 if (argumentsList.length === 1 && this.isTensor(argumentsList[0]) && this.baseFunctionTable[aliasTreeName].mapper) {
                                     /* Test if is mapper. */

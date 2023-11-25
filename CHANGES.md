@@ -2,8 +2,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.2.2
+- Bug fix in function 'cat'.
+- User functions cummin, cummax, cumsum, cumprod, ndims, rows, columns, length, numel, isempty and reshape.
+- Bug fix in MultiArray.unparse and MultiArray.unparseMathML (null array).
+- Bug fix in MultiArray constructor (dimension.length >= 2).
+- Bug fix in MultiArray.isEmpty.
+- Functions newFilled and newFilledEach in MultiArray class moved to CoreFunctions and optimized.
+- Some methods related to multiple assignment in Evaluator changed to static functions.
+
 ## 1.2.1
-- Several methods and properties have been renamed to express their functions more clearly.
+- More methods and properties have been renamed to express their functions more clearly.
 - Code cleaning by hand.
 - Bug fix in MultiArray.newFilledEach (used in rand and randi functions).
 

@@ -7,7 +7,7 @@ import { Decimal } from 'decimal.js';
 /**
  * The maximum number of significant digits of the result of an operation.
  * Values equal to or greater than 336 is used to produce correct rounding of
- * trigonometric functions.
+ * trigonometric, hyperbolic and exponential functions.
  */
 const DecimalPrecision = 336;
 
@@ -84,7 +84,7 @@ export type TUnaryOperationLeftName = 'copy' | 'neg' | 'not';
  */
 export class ComplexDecimal {
     /**
-     * Functions with one argument (mappings)
+     * Functions with one argument (mappers)
      */
     public static mapFunction: Record<string, Function> = {
         real: ComplexDecimal.real,
@@ -474,6 +474,7 @@ export class ComplexDecimal {
     }
 
     public static minMaxArrayRealWithIndex(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): [ComplexDecimal, number] {
+        // TODO: check if reverse can be removed and reducedRight used.
         let index: number = 0;
         const result = args.reverse().reduce(
             (previous: ComplexDecimal, current: ComplexDecimal, i: number): ComplexDecimal => {
@@ -511,6 +512,7 @@ export class ComplexDecimal {
     }
 
     public static minMaxArrayComplexWithIndex(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): [ComplexDecimal, number] {
+        // TODO: check if reverse can be removed and reducedRight used.
         let index: number = 0;
         const result = args.reverse().reduce(
             (previous: ComplexDecimal, current: ComplexDecimal, i: number): ComplexDecimal => {

@@ -1,5 +1,6 @@
 import { ComplexDecimal } from './complex-decimal';
 import { MultiArray } from './multi-array';
+import { Evaluator } from './evaluator';
 
 /**
  * # LinearAlgebra
@@ -61,10 +62,10 @@ export abstract class LinearAlgebra {
                 rows = MultiArray.testIndex(args[0]);
                 columns = MultiArray.testIndex(args[1]);
             } else {
-                throw new SyntaxError(`Invalid call to eye.  Type 'help eye' to see correct usage.`);
+                throw new SyntaxError(`Invalid call to eye. Type 'help eye' to see correct usage.`);
             }
         } else {
-            throw new SyntaxError(`Invalid call to eye.  Type 'help eye' to see correct usage.`);
+            throw new SyntaxError(`Invalid call to eye. Type 'help eye' to see correct usage.`);
         }
         //result = MultiArray.zeros(new ComplexDecimal(rows), new ComplexDecimal(columns)) as MultiArray;
         const result = new MultiArray([rows, columns], ComplexDecimal.zero());
@@ -452,7 +453,7 @@ export abstract class LinearAlgebra {
                 }
             }
         }
-        return global.EvaluatorPointer.nodeReturnList((length: number, index: number): any => {
+        return Evaluator.nodeReturnList((length: number, index: number): any => {
             if (length === 1) {
                 return U;
             } else {
