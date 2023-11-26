@@ -69,7 +69,7 @@ Start reading our code and you'll get the hang of it. In summary, we adopted:
 
 * We indent using four spaces for code files and two spaces for json files, set by EditorConfig.
 * We ALWAYS put spaces after list items and method parameters (`[1, 2, 3]`, not `[1,2,3]`), around operators (`x += 1`, not `x+=1`), and around hash arrows.
-* Prefer the object spread operator (`{...anotherObj}`) to `Object.assign()`.
+* Prefer the `Object.assign()` to object spread operator (`{...anotherObj}`).
 * Inline exports with expressions whenever possible:
 ```typescript
 // Use this:
@@ -87,18 +87,17 @@ export default ClassName
 
 ## Work fronts
 
-The MathJSLab project started almost a decade ago, but it is still in its infancy. There are several work fronts, some already open, others yet to begin, none yet completed.
+The MathJSLab project started almost a decade ago, but it is still in its
+infancy. There are several work fronts, some already open, others yet to
+begin, none yet completed.
 
 Some are listed below:
 
 * Optimize the ComplexDecimal class so that methods avoid using other
 functions in the class. To do this, it will be necessary to deduce the
 definitions of each function in terms of the real and imaginary parts.
-* Only one single ComplexDecimal type based on Decimal.js is implemented.
-Extend to support ComplexDecimal type based on common javascript number type.
-It is necessary for faster and more efficient computing.
-* Use Web Workers and/or WebAssembly for more efficient computing. The complete
-evaluator can reside in a Web Worker.
+* All operations over array elements are complex. Create and use real
+operations for arrays with only real elements.
 * Parser is designed to scan a line. Need to code a parser that scan multiple
 lines calling Evaluator when need.
 The real need is a parser that supports both modes: single-line and
@@ -110,9 +109,11 @@ evaluator.
 [Jison](https://gerhobbelt.github.io/jison/) has many limitations and the
 generated parser is not suitable for compiling together with
 [ES6](https://262.ecma-international.org/6.0/) modules written in
-[Typescript](https://www.typescriptlang.org/).
+[Typescript](https://www.typescriptlang.org/). This is the reason why
+MathJSLab is compiled as an ES5 module.
 
-You are welcome to contribute to this project. I will be very grateful if you participate in some way.
+You are welcome to contribute to this project. I will be very grateful if you
+participate in some way.
 
 Thanks,
 Sergio Lindau

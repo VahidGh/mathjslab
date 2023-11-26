@@ -16,6 +16,9 @@ export class CharString {
     static unparse(value: CharString): string {
         return value.str;
     }
+    public unparse(): string {
+        return this.str;
+    }
     static unparseMathML(value: CharString): string {
         return '<mn>' + value.str + '</mn>';
     }

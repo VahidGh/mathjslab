@@ -1,78 +1,102 @@
 import { Decimal } from 'decimal.js';
 
-/**
- * decimal.js and ComplexDecimal configuration parameters.
- */
+/* eslint-disable-next-line  @typescript-eslint/no-namespace */
+export namespace ComplexDecimal {
+    export type Rounding = Decimal.Rounding;
 
-/**
- * The maximum number of significant digits of the result of an operation.
- * Values equal to or greater than 336 is used to produce correct rounding of
- * trigonometric, hyperbolic and exponential functions.
- */
-const DecimalPrecision = 336;
+    export type Modulo = Decimal.Modulo;
 
-/**
- * Number of significant digits to reduce precision in compare operations and
- * unparse.
- */
-const DecimalPrecisionCompare = 7;
+    export type ComplexDecimalConfig = {
+        /**
+         * The maximum number of significant digits of the result of an operation.
+         * Values equal to or greater than 336 is used to produce correct rounding of
+         * trigonometric, hyperbolic and exponential functions.
+         */
+        precision?: number;
+        /**
+         * Number of significant digits to reduce precision before compare operations and
+         * unparse.
+         */
+        precisionCompare?: number;
+        /**
+         * The default rounding mode used when rounding the result of an operation to
+         * precision significant digits.
+         */
+        rounding?: Rounding;
+        /**
+         * The positive exponent value at and above which unparse returns exponential
+         * notation.
+         */
+        toExpPos?: number;
+        /**
+         * The negative exponent limit, i.e. the exponent value below which underflow
+         * to zero occurs.
+         */
+        minE?: number;
+        /**
+         * The positive exponent limit, i.e. the exponent value above which overflow
+         * to Infinity occurs.
+         */
+        maxE?: number;
+        /**
+         * The negative exponent value at and below which unparse returns exponential
+         * notation.
+         */
+        toExpNeg?: number;
+        /**
+         * The modulo mode used when calculating the modulus: a mod n.
+         */
+        modulo?: Decimal.Modulo;
+        /**
+         * The value that determines whether cryptographically-secure
+         * pseudo-random number generation is used.
+         */
+        crypto?: boolean;
+    };
 
-/**
- * The default rounding mode used when rounding the result of an operation to
- * precision significant digits.
- */
-const DecimalRounding = Decimal.ROUND_HALF_DOWN;
+    /**
+     * Binary operations name type.
+     */
+    export type TBinaryOperationName =
+        | 'add'
+        | 'sub'
+        | 'mul'
+        | 'rdiv'
+        | 'ldiv'
+        | 'power'
+        | 'lt'
+        | 'le'
+        | 'eq'
+        | 'ge'
+        | 'gt'
+        | 'ne'
+        | 'and'
+        | 'or'
+        | 'xor'
+        | 'mod'
+        | 'rem'
+        | 'minWise'
+        | 'maxWise';
 
-/**
- * The positive exponent value at and above which toString returns exponential
- * notation.
- */
-const DecimaltoExpPos = 20;
+    /**
+     * Unary operations name type.
+     */
+    export type TUnaryOperationLeftName = 'copy' | 'neg' | 'not';
+}
 
-/**
- * The negative exponent value at and below which toString returns exponential
- * notation.
- */
-const DecimaltoExpNeg = -7;
+const ComplexDecimalConfig: ComplexDecimal.ComplexDecimalConfig = {
+    precision: 336,
+    precisionCompare: 7,
+    rounding: Decimal.ROUND_HALF_DOWN,
+    toExpPos: 20,
+    toExpNeg: -7,
+    minE: -9e15,
+    maxE: 9e15,
+    modulo: Decimal.ROUND_DOWN,
+    crypto: false,
+};
 
-/**
- * decimal.js setup.
- */
-Decimal.set({
-    precision: DecimalPrecision,
-    rounding: DecimalRounding,
-    toExpNeg: DecimaltoExpNeg,
-    toExpPos: DecimaltoExpPos,
-});
-
-/**
- * Binary operations name type.
- */
-export type TBinaryOperationName =
-    | 'add'
-    | 'sub'
-    | 'mul'
-    | 'rdiv'
-    | 'ldiv'
-    | 'power'
-    | 'lt'
-    | 'le'
-    | 'eq'
-    | 'ge'
-    | 'gt'
-    | 'ne'
-    | 'and'
-    | 'or'
-    | 'xor'
-    | 'mod'
-    | 'rem'
-    | 'minWise'
-    | 'maxWise';
-
-/**
- * Unary operations name type.
- */
-export type TUnaryOperationLeftName = 'copy' | 'neg' | 'not';
+const defaultComplexDecimalConfig = Object.assign({}, ComplexDecimalConfig);
 
 /**
  * # ComplexDecimal
@@ -83,6 +107,50 @@ export type TUnaryOperationLeftName = 'copy' | 'neg' | 'not';
  * * https://mathworld.wolfram.com/ComplexNumber.html
  */
 export class ComplexDecimal {
+    public static readonly defaultConfiguration = defaultComplexDecimalConfig;
+
+    public static get settings() {
+        return ComplexDecimalConfig;
+    }
+
+    /**
+     *
+     * @param config
+     */
+    public static set(config: ComplexDecimal.ComplexDecimalConfig): void {
+        const decimal: Decimal.Config = {};
+        if (typeof config.precision !== 'undefined') {
+            ComplexDecimalConfig.precision = decimal.precision = config.precision;
+        }
+        if (typeof config.rounding !== 'undefined') {
+            ComplexDecimalConfig.rounding = decimal.rounding = config.rounding;
+        }
+        if (typeof config.toExpPos !== 'undefined') {
+            ComplexDecimalConfig.toExpPos = decimal.toExpPos = config.toExpPos;
+        }
+        if (typeof config.toExpNeg !== 'undefined') {
+            ComplexDecimalConfig.toExpNeg = decimal.toExpNeg = config.toExpNeg;
+        }
+        if (typeof config.minE !== 'undefined') {
+            ComplexDecimalConfig.minE = decimal.minE = config.minE;
+        }
+        if (typeof config.maxE !== 'undefined') {
+            ComplexDecimalConfig.maxE = decimal.maxE = config.maxE;
+        }
+        if (typeof config.modulo !== 'undefined') {
+            ComplexDecimalConfig.modulo = decimal.modulo = config.modulo;
+        }
+        if (typeof config.crypto !== 'undefined') {
+            ComplexDecimalConfig.crypto = decimal.crypto = config.crypto;
+        }
+        if (typeof config.precisionCompare !== 'undefined') {
+            ComplexDecimalConfig.precisionCompare = config.precisionCompare;
+        }
+        if (Object.keys(decimal).length > 0) {
+            Decimal.set(decimal);
+        }
+    }
+
     /**
      * Functions with one argument (mappers)
      */
@@ -306,6 +374,10 @@ export class ComplexDecimal {
         }
     }
 
+    public unparse(): string {
+        return ComplexDecimal.unparse(this);
+    }
+
     /**
      * Unparse real or imaginary part.
      * @param value Decimal value
@@ -380,7 +452,9 @@ export class ComplexDecimal {
      * @returns Reduced precision value.
      */
     private static toMaxPrecisionDecimal(value: Decimal): Decimal {
-        return value.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare);
+        return value
+            .toSignificantDigits(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number))
+            .toDecimalPlaces(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number));
     }
 
     /**
@@ -390,8 +464,12 @@ export class ComplexDecimal {
      */
     public static toMaxPrecision(value: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(
-            value.re.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare),
-            value.im.toSignificantDigits(Decimal.precision - DecimalPrecisionCompare).toDecimalPlaces(Decimal.precision - DecimalPrecisionCompare),
+            value.re
+                .toSignificantDigits(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number))
+                .toDecimalPlaces(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number)),
+            value.im
+                .toSignificantDigits(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number))
+                .toDecimalPlaces(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number)),
         );
     }
 
@@ -401,7 +479,7 @@ export class ComplexDecimal {
      * @returns Minimal diference of two consecutive numbers.
      */
     private static epsilonDecimal(): Decimal {
-        return Decimal.pow(10, -Decimal.precision + DecimalPrecisionCompare);
+        return Decimal.pow(10, -Decimal.precision + (ComplexDecimalConfig.precisionCompare as number));
     }
 
     /**
@@ -1618,3 +1696,8 @@ export class ComplexDecimal {
         return result;
     }
 }
+
+/**
+ * Initial setup.
+ */
+ComplexDecimal.set(defaultComplexDecimalConfig);

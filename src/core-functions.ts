@@ -1,10 +1,10 @@
-import { ComplexDecimal, TBinaryOperationName } from './complex-decimal';
+import { ComplexDecimal } from './complex-decimal';
 import { MultiArray } from './multi-array';
-import { Evaluator, NodeReturnList } from './evaluator';
+import { Evaluator } from './evaluator';
 import { CharString } from './char-string';
 
 export abstract class CoreFunctions {
-    public static functions: { [name: string]: Function } = {
+    public static functions: Record<string, Function> = {
         ndims: CoreFunctions.ndims,
         rows: CoreFunctions.rows,
         columns: CoreFunctions.columns,
@@ -327,7 +327,7 @@ export abstract class CoreFunctions {
      * @returns
      */
     public static rand(...dimension: (MultiArray | ComplexDecimal)[]): MultiArray | ComplexDecimal {
-        return CoreFunctions.newFilledEach((n: number) => new ComplexDecimal(Math.random()), ...dimension);
+        return CoreFunctions.newFilledEach(() => new ComplexDecimal(Math.random()), ...dimension);
     }
 
     /**
@@ -357,9 +357,7 @@ export abstract class CoreFunctions {
         }
         if (imax > imin) {
             return CoreFunctions.newFilledEach(
-                imin === 0
-                    ? (n: number) => new ComplexDecimal(Math.round(imax * Math.random()))
-                    : (n: number) => new ComplexDecimal(Math.round((imax - imin) * Math.random() + imin)),
+                imin === 0 ? () => new ComplexDecimal(Math.round(imax * Math.random())) : () => new ComplexDecimal(Math.round((imax - imin) * Math.random() + imin)),
                 ...dimension,
             );
         } else {
@@ -459,7 +457,7 @@ export abstract class CoreFunctions {
      * @param args One to three arguments like user function.
      * @returns Return like user function.
      */
-    private static minMax(op: 'min' | 'max', ...args: any[]): MultiArray | NodeReturnList | undefined {
+    private static minMax(op: 'min' | 'max', ...args: any[]): MultiArray | Evaluator.NodeReturnList | undefined {
         const minMaxAlogDimension = (M: MultiArray, dimension: number) => {
             const reduced = MultiArray.reduceToArray(dimension, M);
             const resultM = new MultiArray(reduced.dimension);
@@ -484,7 +482,7 @@ export abstract class CoreFunctions {
                 return minMaxAlogDimension(MultiArray.scalarToMultiArray(args[0]), dimension);
             case 2:
                 // Broadcast
-                return MultiArray.elementWiseOperation((op + 'Wise') as TBinaryOperationName, MultiArray.scalarToMultiArray(args[0]), args[1]);
+                return MultiArray.elementWiseOperation((op + 'Wise') as ComplexDecimal.TBinaryOperationName, MultiArray.scalarToMultiArray(args[0]), args[1]);
             case 3:
                 // Along selected dimension.
                 if (!MultiArray.isEmpty(args[1])) {
@@ -502,7 +500,7 @@ export abstract class CoreFunctions {
      * @param M
      * @returns
      */
-    public static min(...args: any[]): MultiArray | NodeReturnList | undefined {
+    public static min(...args: any[]): MultiArray | Evaluator.NodeReturnList | undefined {
         return CoreFunctions.minMax('min', ...args);
     }
 
@@ -511,7 +509,7 @@ export abstract class CoreFunctions {
      * @param M
      * @returns
      */
-    public static max(...args: any[]): MultiArray | NodeReturnList | undefined {
+    public static max(...args: any[]): MultiArray | Evaluator.NodeReturnList | undefined {
         return CoreFunctions.minMax('max', ...args);
     }
 
@@ -522,7 +520,7 @@ export abstract class CoreFunctions {
      * @param DIM Dimension in which the cumulative operation occurs.
      * @returns MultiArray with cumulative values along dimension DIM.
      */
-    private static cumMinMax(op: 'min' | 'max', M: MultiArray | ComplexDecimal, DIM?: MultiArray | ComplexDecimal): NodeReturnList {
+    private static cumMinMax(op: 'min' | 'max', M: MultiArray | ComplexDecimal, DIM?: MultiArray | ComplexDecimal): Evaluator.NodeReturnList {
         const dim = DIM ? MultiArray.firstElement(DIM).re.toNumber() - 1 : 1;
         M = MultiArray.scalarToMultiArray(M);
         const indexM = new MultiArray(M.dimension);
@@ -553,7 +551,7 @@ export abstract class CoreFunctions {
      * @param DIM
      * @returns
      */
-    public static cummin(M: MultiArray, DIM?: MultiArray | ComplexDecimal): NodeReturnList {
+    public static cummin(M: MultiArray, DIM?: MultiArray | ComplexDecimal): Evaluator.NodeReturnList {
         return CoreFunctions.cumMinMax('min', M, DIM);
     }
 
@@ -563,7 +561,7 @@ export abstract class CoreFunctions {
      * @param DIM
      * @returns
      */
-    public static cummax(M: MultiArray, DIM?: MultiArray | ComplexDecimal): NodeReturnList {
+    public static cummax(M: MultiArray, DIM?: MultiArray | ComplexDecimal): Evaluator.NodeReturnList {
         return CoreFunctions.cumMinMax('max', M, DIM);
     }
 

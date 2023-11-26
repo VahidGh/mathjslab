@@ -5,4 +5,5 @@ export { MultiArray } from './multi-array';
 export { CoreFunctions } from './core-functions';
 export { LinearAlgebra } from './linear-algebra';
 export { MathObject } from './math-object';
-export { TEvaluatorConfig, TBaseFunctionTable, NodeName, NodeExpr, Evaluator, TAliasNameTable } from './evaluator';
+export { Configuration } from './configuration';
+export { Evaluator } from './evaluator';

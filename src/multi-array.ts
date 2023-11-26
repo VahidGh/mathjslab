@@ -1,5 +1,5 @@
-import { ComplexDecimal, TBinaryOperationName, TUnaryOperationLeftName } from './complex-decimal';
-import { Evaluator, TNameTable } from './evaluator';
+import { ComplexDecimal } from './complex-decimal';
+import { Evaluator } from './evaluator';
 
 /**
  * # MultiArray
@@ -733,7 +733,7 @@ export class MultiArray {
      * @param right Right operand (array).
      * @returns Result of operation.
      */
-    public static scalarOpMultiArray(op: TBinaryOperationName, left: ComplexDecimal, right: MultiArray): MultiArray {
+    public static scalarOpMultiArray(op: ComplexDecimal.TBinaryOperationName, left: ComplexDecimal, right: MultiArray): MultiArray {
         const result = new MultiArray(right.dimension);
         result.array = right.array.map((row) => row.map((value) => ComplexDecimal[op](left, value)));
         MultiArray.setType(result);
@@ -747,7 +747,7 @@ export class MultiArray {
      * @param right Right operaand (scalar).
      * @returns Result of operation.
      */
-    public static MultiArrayOpScalar(op: TBinaryOperationName, left: MultiArray, right: ComplexDecimal): MultiArray {
+    public static MultiArrayOpScalar(op: ComplexDecimal.TBinaryOperationName, left: MultiArray, right: ComplexDecimal): MultiArray {
         const result = new MultiArray(left.dimension);
         result.array = left.array.map((row) => row.map((value) => ComplexDecimal[op](value, right)));
         MultiArray.setType(result);
@@ -760,7 +760,7 @@ export class MultiArray {
      * @param right Operand (array)
      * @returns Result of operation.
      */
-    public static leftOperation(op: TUnaryOperationLeftName, right: MultiArray): MultiArray {
+    public static leftOperation(op: ComplexDecimal.TUnaryOperationLeftName, right: MultiArray): MultiArray {
         const result = new MultiArray(right.dimension);
         result.array = right.array.map((row) => row.map((value) => ComplexDecimal[op](value)));
         MultiArray.setType(result);
@@ -774,7 +774,7 @@ export class MultiArray {
      * @param right Right operand.
      * @returns Binary element-wise result.
      */
-    public static elementWiseOperation(op: TBinaryOperationName, left: MultiArray, right: MultiArray): MultiArray {
+    public static elementWiseOperation(op: ComplexDecimal.TBinaryOperationName, left: MultiArray, right: MultiArray): MultiArray {
         let leftDimension = left.dimension.slice();
         let rightDimension = right.dimension.slice();
         if (leftDimension.length < rightDimension.length) {
@@ -1107,7 +1107,7 @@ export class MultiArray {
      * @param args Linear indices or subscripts.
      * @param right Value to assign.
      */
-    public static setElements(nameTable: TNameTable, id: string, indexList: (ComplexDecimal | MultiArray)[], right: MultiArray, input?: string, that?: Evaluator): void {
+    public static setElements(nameTable: Evaluator.TNameTable, id: string, indexList: (ComplexDecimal | MultiArray)[], right: MultiArray, input?: string, that?: Evaluator): void {
         if (indexList.length === 0) {
             throw new RangeError('invalid empty index list.');
         } else {
@@ -1164,7 +1164,7 @@ export class MultiArray {
      * @param arg Logical index.
      * @param right Value to assign.
      */
-    public static setElementsLogical(nameTable: TNameTable, id: string, arg: ComplexDecimal[], right: MultiArray): void {
+    public static setElementsLogical(nameTable: Evaluator.TNameTable, id: string, arg: ComplexDecimal[], right: MultiArray): void {
         const linright = MultiArray.linearize(right);
         const test = arg.map((value: ComplexDecimal) => value.re.toNumber());
         const testCount = test.reduce((p, c) => p + c, 0);

@@ -152,7 +152,11 @@ Some differences from the original MATLAB&reg;/Octave language are
 function_name(argument, argument, ...) = <expression>
 ```
 * Parsing is executed line-by-line.
-* There are only one a complex numeric type. Other implemented types is boolean and character string;
+* There are only one a complex numeric type. Other implemented types is
+boolean and character string. Character strings are treated differently than
+in MATLAB&reg;/Octave. An entire string can be placed as an element of an
+array and operations with strings are not supported, nor are they converted
+to numbers.
 
 ## License
 

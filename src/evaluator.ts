@@ -10,212 +10,216 @@ import { MultiArray } from './multi-array';
 import { CoreFunctions } from './core-functions';
 import { LinearAlgebra } from './linear-algebra';
 import { MathObject } from './math-object';
+import { Configuration } from './configuration';
 import Parser from './parser.js';
 
-/**
- * Operator type.
- */
-export type TOperator =
-    | '+'
-    | '-'
-    | '.*'
-    | '*'
-    | './'
-    | '/'
-    | '.\\'
-    | '\\'
-    | '.^'
-    | '^'
-    | '.**'
-    | '**'
-    | '<'
-    | '<='
-    | '=='
-    | '>='
-    | '>'
-    | '!='
-    | '~='
-    | '&'
-    | '|'
-    | '&&'
-    | '||'
-    | '='
-    | '+='
-    | '-='
-    | '*='
-    | '/='
-    | '\\='
-    | '^='
-    | '**='
-    | '.*='
-    | './='
-    | '.\\='
-    | '.^='
-    | '.**='
-    | '&='
-    | '|='
-    | '()'
-    | '!'
-    | '~'
-    | '+_'
-    | '-_'
-    | '++_'
-    | '--_'
-    | ".'"
-    | "'"
-    | '_++'
-    | '_--';
+/* eslint-disable-next-line  @typescript-eslint/no-namespace */
+export namespace Evaluator {
+    /**
+     * Operator type.
+     */
+    export type TOperator =
+        | '+'
+        | '-'
+        | '.*'
+        | '*'
+        | './'
+        | '/'
+        | '.\\'
+        | '\\'
+        | '.^'
+        | '^'
+        | '.**'
+        | '**'
+        | '<'
+        | '<='
+        | '=='
+        | '>='
+        | '>'
+        | '!='
+        | '~='
+        | '&'
+        | '|'
+        | '&&'
+        | '||'
+        | '='
+        | '+='
+        | '-='
+        | '*='
+        | '/='
+        | '\\='
+        | '^='
+        | '**='
+        | '.*='
+        | './='
+        | '.\\='
+        | '.^='
+        | '.**='
+        | '&='
+        | '|='
+        | '()'
+        | '!'
+        | '~'
+        | '+_'
+        | '-_'
+        | '++_'
+        | '--_'
+        | ".'"
+        | "'"
+        | '_++'
+        | '_--';
 
-/**
- * aliasNameTable type.
- */
-export type TAliasNameTable = Record<string, RegExp>;
+    /**
+     * aliasNameTable type.
+     */
+    export type TAliasNameTable = Record<string, RegExp>;
 
-/**
- * baseFunctionTable type.
- */
-export type TBaseFunctionTableEntry = {
-    mapper?: boolean;
-    ev: boolean[];
-    func: Function;
-    unparserMathML?: (tree: any) => string;
-};
-export type TBaseFunctionTable = Record<string, TBaseFunctionTableEntry>;
+    /**
+     * baseFunctionTable type.
+     */
+    export type TBaseFunctionTableEntry = {
+        mapper?: boolean;
+        ev: boolean[];
+        func: Function;
+        unparserMathML?: (tree: any) => string;
+    };
+    export type TBaseFunctionTable = Record<string, TBaseFunctionTableEntry>;
 
-/**
- * nameTable type.
- */
-export type TNameTableEntry = {
-    args: Array<any>;
-    expr: any;
-};
-export type TNameTable = Record<string, TNameTableEntry>;
+    /**
+     * nameTable type.
+     */
+    export type TNameTableEntry = {
+        args: Array<any>;
+        expr: any;
+    };
+    export type TNameTable = Record<string, TNameTableEntry>;
 
-/**
- * commandWordListTable type.
- */
-export type TCommandWordListFunction = (...args: string[]) => void;
-export type TCommandWordListTableEntry = {
-    func: TCommandWordListFunction;
-};
-export type TCommandWordListTable = Record<string, TCommandWordListTableEntry>;
+    /**
+     * commandWordListTable type.
+     */
+    export type TCommandWordListFunction = (...args: string[]) => void;
+    export type TCommandWordListTableEntry = {
+        func: TCommandWordListFunction;
+    };
+    export type TCommandWordListTable = Record<string, TCommandWordListTableEntry>;
 
-/**
- * TEvaluatorConfig type.
- */
-export type TEvaluatorConfig = {
-    aliasTable?: TAliasNameTable;
-    externalFunctionTable?: TBaseFunctionTable;
-    externalCmdWListTable?: TCommandWordListTable;
-};
+    /**
+     * TEvaluatorConfig type.
+     */
+    export type TEvaluatorConfig = {
+        aliasTable?: TAliasNameTable;
+        externalFunctionTable?: TBaseFunctionTable;
+        externalCmdWListTable?: TCommandWordListTable;
+    };
 
-/**
- * AST (Abstract Syntax Tree) nodes.
- */
+    /**
+     * AST (Abstract Syntax Tree) nodes.
+     */
 
-/**
- * Common primary node.
- */
-interface PrimaryNode {
-    type: string | number;
-    parent?: any;
-    index?: number;
-}
+    /**
+     * Common primary node.
+     */
+    export interface PrimaryNode {
+        type: string | number;
+        parent?: any;
+        index?: number;
+    }
 
-/**
- * Expression node.
- */
-export type NodeExpr = NodeName | NodeArgExpr | NodeOperation | NodeList | NodeRange | NodeReturnList | MultiArray | ComplexDecimal;
+    /**
+     * Expression node.
+     */
+    export type NodeExpr = NodeName | NodeArgExpr | NodeOperation | NodeList | NodeRange | NodeReturnList | MultiArray | ComplexDecimal;
 
-/**
- * Reserved node.
- */
-interface NodeReserved extends PrimaryNode {}
+    /**
+     * Reserved node.
+     */
+    export interface NodeReserved extends PrimaryNode {}
 
-/**
- * Name node.
- */
-export interface NodeName extends PrimaryNode {
-    type: 'NAME';
-    id: string;
-}
+    /**
+     * Name node.
+     */
+    export interface NodeName extends PrimaryNode {
+        type: 'NAME';
+        id: string;
+    }
 
-/**
- * Command word list node.
- */
-interface NodeCmdWList extends PrimaryNode {
-    type: 'CmdWList';
-    id: string;
-    args: Array<CharString>;
-}
+    /**
+     * Command word list node.
+     */
+    export interface NodeCmdWList extends PrimaryNode {
+        type: 'CmdWList';
+        id: string;
+        args: Array<CharString>;
+    }
 
-/**
- * Expression and arguments node.
- */
-export interface NodeArgExpr extends PrimaryNode {
-    type: 'ARG';
-    expr: NodeExpr;
-    args: Array<NodeExpr>;
-}
+    /**
+     * Expression and arguments node.
+     */
+    export interface NodeArgExpr extends PrimaryNode {
+        type: 'ARG';
+        expr: NodeExpr;
+        args: Array<NodeExpr>;
+    }
 
-/**
- * Range node.
- */
-interface NodeRange extends PrimaryNode {
-    type: 'RANGE';
-    start: NodeExpr | null;
-    stop: NodeExpr | null;
-    stride: NodeExpr | null;
-}
+    /**
+     * Range node.
+     */
+    export interface NodeRange extends PrimaryNode {
+        type: 'RANGE';
+        start: NodeExpr | null;
+        stop: NodeExpr | null;
+        stride: NodeExpr | null;
+    }
 
-/**
- * Operation node.
- */
-export type NodeOperation = UnaryOperation | BinaryOperation;
+    /**
+     * Operation node.
+     */
+    export type NodeOperation = UnaryOperation | BinaryOperation;
 
-/**
- * Unary operation node.
- */
-type UnaryOperation = UnaryOperationL | UnaryOperationR;
+    /**
+     * Unary operation node.
+     */
+    export type UnaryOperation = UnaryOperationL | UnaryOperationR;
 
-/**
- * Right unary operation node.
- */
-interface UnaryOperationR extends PrimaryNode {
-    right: NodeExpr;
-}
+    /**
+     * Right unary operation node.
+     */
+    export interface UnaryOperationR extends PrimaryNode {
+        right: NodeExpr;
+    }
 
-/**
- * Left unary operation node.
- */
-interface UnaryOperationL extends PrimaryNode {
-    left: NodeExpr;
-}
+    /**
+     * Left unary operation node.
+     */
+    export interface UnaryOperationL extends PrimaryNode {
+        left: NodeExpr;
+    }
 
-/**
- * Binary operation.
- */
-interface BinaryOperation extends PrimaryNode {
-    left: NodeExpr;
-    right: NodeExpr;
-}
+    /**
+     * Binary operation.
+     */
+    export interface BinaryOperation extends PrimaryNode {
+        left: NodeExpr;
+        right: NodeExpr;
+    }
 
-/**
- * List node
- */
-export interface NodeList extends PrimaryNode {
-    type: 'LIST';
-    list: Array<NodeExpr>;
-}
+    /**
+     * List node
+     */
+    export interface NodeList extends PrimaryNode {
+        type: 'LIST';
+        list: Array<NodeExpr>;
+    }
 
-export type ReturnSelector = (length: number, index: number) => any;
+    export type ReturnSelector = (length: number, index: number) => any;
 
-/**
- * Return list node
- */
-export interface NodeReturnList extends PrimaryNode {
-    type: 'RETLIST';
-    selector: ReturnSelector;
+    /**
+     * Return list node
+     */
+    export interface NodeReturnList extends PrimaryNode {
+        type: 'RETLIST';
+        selector: ReturnSelector;
+    }
 }
 
 /**
@@ -283,19 +287,19 @@ export class Evaluator {
     /**
      * Name table.
      */
-    public nameTable: TNameTable = {};
+    public nameTable: Evaluator.TNameTable = {};
 
     public readonlyNameTable: string[] = [];
 
     /**
      * Alias table.
      */
-    private aliasTable: TAliasNameTable;
+    private aliasTable: Evaluator.TAliasNameTable;
 
     /**
      * Base function table.
      */
-    public baseFunctionTable: TBaseFunctionTable = {};
+    public baseFunctionTable: Evaluator.TBaseFunctionTable = {};
 
     /**
      * Get a list of names of defined functions in baseFunctionTable.
@@ -312,7 +316,7 @@ export class Evaluator {
     /**
      * Command word list table.
      */
-    public commandWordListTable: TCommandWordListTable = {};
+    public commandWordListTable: Evaluator.TCommandWordListTable = {};
 
     /**
      * Parser (generated by Jison).
@@ -486,6 +490,10 @@ export class Evaluator {
         for (const func in ComplexDecimal.twoArgFunction) {
             this.defineFunction(func, ComplexDecimal.twoArgFunction[func]);
         }
+        /* Define Configuration functions */
+        for (const func in Configuration.functions) {
+            this.defineFunction(func, Configuration.functions[func]);
+        }
         /* Define CoreFunctions functions */
         for (const func in CoreFunctions.functions) {
             this.defineFunction(func, CoreFunctions.functions[func]);
@@ -505,7 +513,7 @@ export class Evaluator {
      * @param config Evaluator configuration.
      * @returns Evaluator instance.
      */
-    public static initialize(config?: TEvaluatorConfig): Evaluator {
+    public static initialize(config?: Evaluator.TEvaluatorConfig): Evaluator {
         const evaluator = new Evaluator();
         if (config) {
             if (config.aliasTable) {
@@ -608,7 +616,7 @@ export class Evaluator {
      * @param nodeid
      * @returns
      */
-    public nodeReserved(nodeid: string): NodeReserved {
+    public nodeReserved(nodeid: string): Evaluator.NodeReserved {
         return { type: nodeid };
     }
 
@@ -617,7 +625,7 @@ export class Evaluator {
      * @param nodeid
      * @returns
      */
-    public nodeName(nodeid: string): NodeName {
+    public nodeName(nodeid: string): Evaluator.NodeName {
         return {
             type: 'NAME',
             id: nodeid.replace(/(\r\n|[\n\r])|[\ ]/gm, ''),
@@ -630,7 +638,7 @@ export class Evaluator {
      * @param nodelist
      * @returns
      */
-    public nodeCmdWList(nodename: NodeName, nodelist: NodeList): NodeCmdWList {
+    public nodeCmdWList(nodename: Evaluator.NodeName, nodelist: Evaluator.NodeList): Evaluator.NodeCmdWList {
         return {
             type: 'CmdWList',
             id: nodename.id,
@@ -644,7 +652,7 @@ export class Evaluator {
      * @param nodelist
      * @returns
      */
-    public nodeArgExpr(nodeexpr: any, nodelist?: any): NodeArgExpr {
+    public nodeArgExpr(nodeexpr: any, nodelist?: any): Evaluator.NodeArgExpr {
         return {
             type: 'ARG',
             expr: nodeexpr,
@@ -659,7 +667,7 @@ export class Evaluator {
      * @param args 'start' and 'stop' or 'start', 'stride' and 'stop'.
      * @returns NodeRange.
      */
-    public nodeRange(...args: any): NodeRange {
+    public nodeRange(...args: any): Evaluator.NodeRange {
         if (args.length === 2) {
             return {
                 type: 'RANGE',
@@ -686,7 +694,7 @@ export class Evaluator {
      * @param data2
      * @returns
      */
-    public nodeOp(op: TOperator, data1: any, data2?: any): NodeOperation {
+    public nodeOp(op: Evaluator.TOperator, data1: any, data2?: any): Evaluator.NodeOperation {
         switch (op) {
             case '+':
             case '-':
@@ -741,7 +749,7 @@ export class Evaluator {
             case '_--':
                 return { type: op, left: data1 };
             default:
-                return { type: 'INVALID' } as NodeOperation;
+                return { type: 'INVALID' } as Evaluator.NodeOperation;
         }
     }
 
@@ -750,14 +758,14 @@ export class Evaluator {
      * @param node First element of list node.
      * @returns A NodeList.
      */
-    public nodeListFirst(node?: any): NodeList {
+    public nodeListFirst(node?: any): Evaluator.NodeList {
         if (node) {
             const result = {
                 type: 'LIST',
                 list: [node],
             };
             node.parent = result;
-            return result as NodeList;
+            return result as Evaluator.NodeList;
         } else {
             return {
                 type: 'LIST',
@@ -772,7 +780,7 @@ export class Evaluator {
      * @param node Element to append to list.
      * @returns NodeList with element appended.
      */
-    public nodeList(lnode: NodeList, node: any): NodeList {
+    public nodeList(lnode: Evaluator.NodeList, node: any): Evaluator.NodeList {
         node.parent = lnode;
         lnode.list.push(node);
         return lnode;
@@ -783,7 +791,7 @@ export class Evaluator {
      * @param row
      * @returns
      */
-    public nodeFirstRow(row: NodeList): MultiArray {
+    public nodeFirstRow(row: Evaluator.NodeList): MultiArray {
         if (row) {
             return this.firstRow(row.list);
         } else {
@@ -797,7 +805,7 @@ export class Evaluator {
      * @param row
      * @returns
      */
-    public nodeAppendRow(M: MultiArray, row: NodeList): MultiArray {
+    public nodeAppendRow(M: MultiArray, row: Evaluator.NodeList): MultiArray {
         if (row) {
             return this.appendRow(M, row.list);
         } else {
@@ -810,7 +818,7 @@ export class Evaluator {
      * @param selector Left side selector function.
      * @returns Return list node.
      */
-    public static nodeReturnList(selector: ReturnSelector): NodeReturnList {
+    public static nodeReturnList(selector: Evaluator.ReturnSelector): Evaluator.NodeReturnList {
         return {
             type: 'RETLIST',
             selector,
@@ -1061,7 +1069,7 @@ export class Evaluator {
                     tree.left.parent = tree;
                     tree.right.parent = tree;
                     const assignment = this.validateAssignment(tree.left);
-                    const op: TOperator = tree.type.substring(0, tree.type.length - 1);
+                    const op: Evaluator.TOperator = tree.type.substring(0, tree.type.length - 1);
                     if (assignment.length > 1 && op.length > 0) {
                         throw new EvalError('computed multiple assignment not allowed.');
                     }
