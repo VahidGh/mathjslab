@@ -243,7 +243,7 @@ export class Evaluator {
      * After run Parser or Evaluate method, the exitStatus property will contains
      * exit state of method.
      */
-    public static response = {
+    public response = {
         EXTERNAL: -2,
         WARNING: -1,
         OK: 0,
@@ -460,7 +460,7 @@ export class Evaluator {
      */
     private constructor() {
         global.EvaluatorPointer = this;
-        this.exitStatus = Evaluator.response.OK;
+        this.exitStatus = this.response.OK;
         /* Set opTable aliases */
         this.opTable['**'] = this.opTable['^'];
         this.opTable['.**'] = this.opTable['.^'];
@@ -1480,7 +1480,7 @@ export class Evaluator {
                     }
                 case 'CmdWList':
                     this.commandWordListTable[tree.id].func(...tree.args.map((word: { str: string }) => word.str));
-                    this.exitStatus = Evaluator.response.EXTERNAL;
+                    this.exitStatus = this.response.EXTERNAL;
                     return tree;
                 default:
                     throw new EvalError(`evaluating undefined type '${tree.type}'.`);
@@ -1495,11 +1495,11 @@ export class Evaluator {
      */
     public Evaluate(tree: any): any {
         try {
-            this.exitStatus = Evaluator.response.OK;
+            this.exitStatus = this.response.OK;
             tree.parent = null;
             return this.Evaluator(tree);
         } catch (e) {
-            this.exitStatus = Evaluator.response.EVAL_ERROR;
+            this.exitStatus = this.response.EVAL_ERROR;
             throw e;
         }
     }

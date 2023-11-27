@@ -9,7 +9,7 @@
 
 This package emulates a parser and evaluator for a subset of
 [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/)
-language written completely in [Typescript](https://www.typescriptlang.org/).
+language. It is written completely in [Typescript](https://www.typescriptlang.org/).
 
 It can run in browser environment and implements an arbitrary precision
 arithmetics using [decimal.js](https://www.npmjs.com/package/decimal.js)
@@ -146,16 +146,14 @@ The control and loop structures are not yet implemented.
 
 Some differences from the original MATLAB&reg;/Octave language are
 
-* The comma is mandatory inside arrays (MATLAB&reg;/Octave supports space too).
 * Defining functions is done simply using:
 ```
 function_name(argument, argument, ...) = <expression>
 ```
-* Parsing is executed line-by-line.
 * There are only one a complex numeric type. Other implemented types is
 boolean and character string. Character strings are treated differently than
 in MATLAB&reg;/Octave. An entire string can be placed as an element of an
-array and operations with strings are not supported, nor are they converted
+array and operations with strings are not yet supported, nor are they converted
 to numbers.
 
 ## License

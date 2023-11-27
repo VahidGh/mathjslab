@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.2.4
+- The file 'symbol-table.ts' and 'symbol-table.spec.ts' has been created.
+- Changes in the lexer to support comment blocks spaces and line breaks to separate elements within arrays. Context variables created (previous_token and matrix_context).
+
 ## 1.2.3
 - The file 'configuration.ts' and 'configuration.spec.ts' has been created. Two user functions (configure and getconfig) was created to manage internal configurations of MathJSLab. Most of the settings refer to Decimal.js settings related to the accuracy of the results.
 - Namespaces wrapping external definitions in 'evaluator.ts' and 'complex-decimal.ts' files.

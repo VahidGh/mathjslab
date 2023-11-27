@@ -1,6 +1,4 @@
 /**
- * === parser.jison ===
- *
  * MATLAB®/Octave like syntax parser
  *
  * This file defines a parser for a subset of MATLAB®/Octave syntax.
@@ -50,92 +48,127 @@ ANY_EXCEPT_S_NL [^\ \r\n]
 STRING (\'[^\']*\'|\"[^\"]*\")
 
 %x FQIDENT_AS_STRING
-%x BLOCK_COMMENT_SRP_START
-%x BLOCK_COMMENT_PRC_START
+%x BLOCK_COMMENT_START
+%s MATRIX_START
 
 %%
 
-({S}|{NL})+                                     /* skip whitespace and line break */
 {CCHAR}.*$                                      /* skip comment */
-{DECIMAL_NUMBER}                                return "NUMBER";
+
+{DECIMAL_NUMBER}        {
+        previous_token = 'NUMBER';
+        return previous_token;
+}
+
 <FQIDENT_AS_STRING>{S}+                         /* skip whitespace */
 <FQIDENT_AS_STRING>{CCHAR}.*$                   this.popState(); /* skip comment */
-<FQIDENT_AS_STRING>{NL}+                        this.popState();
-<FQIDENT_AS_STRING><<EOF>>                      { this.popState(); return "END_OF_INPUT"; }
-<FQIDENT_AS_STRING>{ANY_EXCEPT_S_NL}+           return "STRING";
-{FQIDENT}       {
-    let i = keywordsTable.indexOf(this.match);
+<FQIDENT_AS_STRING>{NL}+                        this.popState(); /* skip newlines */
+<FQIDENT_AS_STRING><<EOF>>        {
+        this.popState();
+        previous_token = 'END_OF_INPUT';
+        return previous_token;
+}
+<FQIDENT_AS_STRING>{ANY_EXCEPT_S_NL}+       {
+        previous_token = 'STRING';
+        return previous_token;
+}
+
+{FQIDENT}        {
+    const ident = this.match.replace(/[ \t]/, '');
+    let i = keywordsTable.indexOf(ident);
 	if (i >= 0) {
 		if (keywordsTable[i].substring(0,3) === 'end') {
-			return "END";
+            previous_token = 'END';
+            return previous_token;
 		}
 		else if (keywordsTable[i] === 'unwind_protect') {
-			return "UNWIND";
+            previous_token = 'UNWIND';
+            return previous_token;
 		}
 		else if (keywordsTable[i] === 'unwind_protect_cleanup') {
-			return "CLEANUP";
+            previous_token = 'CLEANUP';
+            return previous_token;
 		}
 		else {
-			return keywordsTable[i].toUpperCase();
+			previous_token = keywordsTable[i].toUpperCase();
+            return previous_token;
 		}
 	}
-	i = commandsTable.indexOf(this.match);
+	i = commandsTable.indexOf(ident);
 	if (i >= 0) {
 		this.pushState('FQIDENT_AS_STRING');
 	}
-	return "NAME";
+	previous_token = 'NAME';
+    return previous_token;
 }
 
-{STRING}        return "STRING";
-
-^{S}*\#\{{S}*$  {
-        this.pushState(BLOCK_COMMENT_SRP_START);
+{STRING}        {
+        previous_token = 'STRING';
+        return previous_token;
 }
-^{S}*\#\}{S}*$  {
+
+^{S}*{CCHAR}\{{S}*{NL}        {
+        this.pushState('BLOCK_COMMENT_START');
+}
+<BLOCK_COMMENT_START>^{S}*{CCHAR}\}{S}*{NL}        {
         this.popState();
 }
-^{S}*\%\{{S}*$  {
-        this.pushState(BLOCK_COMMENT_PRC_START);
-}
-^{S}*\%\}{S}*$  {
-        this.popState();
-}
-<BLOCK_COMMENT_SRP_START,BLOCK_COMMENT_PRC_START>({S}|{NL})+ /* skip comment */
+<BLOCK_COMMENT_START>{ANY_EXCEPT_NL}*{NL}       /* skip lines */
 
-".*"                                            return ".*";
-"./"                                            return "./";
-".\\"                                           return ".\\";
-".^"                                            return ".^";
-".**"                                           return ".**";
-"**"                                            return "**";
-"'"                                             return "'";
-".'"                                            return ".'";
-"<="                                            return "<=";
-"=="                                            return "==";
-"!="                                            return "!=";
-"~="                                            return "~=";
-">="                                            return ">=";
-"&&"                                            return "&&";
-"||"                                            return "||";
-"++"                                            return "++";
-"--"                                            return "--";
-"+="                                            return "+=";
-"-="                                            return "-=";
-"*="                                            return "*=";
-"/="                                            return "/=";
-"\\="                                           return "\\=";
-".*="                                           return ".*=";
-"./="                                           return "./=";
-".\\="                                          return ".\\=";
-"^="                                            return "^=";
-"**="                                           return "**=";
-".^="                                           return ".^=";
-".**="                                          return ".**=";
-"&="                                            return "&=";
-"|="                                            return "|=";
-[\+\-\*\/\^\(\)\=\,\;\[\]\:\\\&\|\<\>\~\!]      return this.match;
-<<EOF>>                                         return "END_OF_INPUT";
-.                                               return "INVALID";
+'['      {
+        this.pushState('MATRIX_START');
+        matrix_context.push('[');
+        previous_token = '[';
+        return '[';
+}
+<MATRIX_START>']'        {
+        this.popState();
+        matrix_context.pop();
+        previous_token = ']';
+        return ']';
+}
+<MATRIX_START>{S}+        {
+    if (previous_token !== '[' && previous_token !== ',' && previous_token !== ';' && matrix_context[matrix_context.length - 1] !== '(') {
+        previous_token = ',';
+        return ',';
+    }
+}
+<MATRIX_START>{NL}        {
+    if (previous_token !== '[' && previous_token !== ',' && previous_token !== ';' && matrix_context[matrix_context.length - 1] !== '(') {
+        previous_token = ';';
+        return ';';
+    }
+}
+<MATRIX_START>','|';'        {
+        previous_token = this.match;
+        return this.match;
+}
+<MATRIX_START>'('        {
+        matrix_context.push('(');
+        previous_token = '(';
+        return '(';
+}
+<MATRIX_START>')'        {
+        matrix_context.pop();
+        previous_token = ')';
+        return ')';
+}
+
+{S}+|{NL}+       {
+        /* skip whitespace and line break */
+}
+
+'.*'|'./'|'.\\'|'.^'|'.**'|'**'|"'"|".'"|'<='|'=='|'!='|'~='|'>='|'&&'|'||'|'++'|'--'|'+='|'-='|'*='|'/='|'\\='|'.*='|'./='|'.\\='|'^='|'**='|'.^='|'.**='|'&='|'|='|[\+\-\*\/\^\(\)\=\,\;\:\\\&\|\<\>\~\!]          {
+        previous_token = this.match;
+        return this.match;
+}
+
+<<EOF>>          {
+        return 'END_OF_INPUT'
+};
+.             {
+        return 'INVALID';
+}
 
 /lex
 
@@ -161,6 +194,9 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 %{
 
 global.EvaluatorPointer = null;
+
+var previous_token;
+var matrix_context = [];
 
 /**
  * Language keywords

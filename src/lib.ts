@@ -6,4 +6,5 @@ export { CoreFunctions } from './core-functions';
 export { LinearAlgebra } from './linear-algebra';
 export { MathObject } from './math-object';
 export { Configuration } from './configuration';
+export { SymbolTable } from './symbol-table';
 export { Evaluator } from './evaluator';
