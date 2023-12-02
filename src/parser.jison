@@ -30,7 +30,7 @@ FQIDENT ({IDENT}({S}*\.{S}*{IDENT})*)
 
 DECIMAL_DIGITS ({D}{D_}*)
 EXPONENT       ([DdEe][\+\-]?{DECIMAL_DIGITS})
-REAL_DECIMAL   (({DECIMAL_DIGITS}("."{D_}*)?|"."{DECIMAL_DIGITS}){EXPONENT}?)
+REAL_DECIMAL   ((({DECIMAL_DIGITS}\.?)|({DECIMAL_DIGITS}?\.{DECIMAL_DIGITS})){EXPONENT}?)
 IMAG_DECIMAL   ({REAL_DECIMAL}[IiJj])
 DECIMAL_NUMBER ({REAL_DECIMAL}[iIjJ]?)
 
@@ -47,49 +47,90 @@ ANY_EXCEPT_S_NL [^\ \r\n]
 
 STRING (\'[^\']*\'|\"[^\"]*\")
 
-%x FQIDENT_AS_STRING
-%x BLOCK_COMMENT_START
 %s MATRIX_START
+%x BLOCK_COMMENT_START
+%x FQIDENT_AS_STRING
 
 %%
 
-{CCHAR}.*$                                      /* skip comment */
 
-{DECIMAL_NUMBER}        {
-        previous_token = 'NUMBER';
-        return previous_token;
+
+
+{CCHAR}.*$        {
+        /* Skip comment line tail. */
 }
 
-<FQIDENT_AS_STRING>{S}+                         /* skip whitespace */
-<FQIDENT_AS_STRING>{CCHAR}.*$                   this.popState(); /* skip comment */
-<FQIDENT_AS_STRING>{NL}+                        this.popState(); /* skip newlines */
+
+
+
+{DECIMAL_NUMBER}        {
+        // console.log('NUMBER', previous_token, yylineno);
+        previous_token = 'NUMBER';
+        return 'NUMBER';
+}
+
+
+
+
+<FQIDENT_AS_STRING>{S}+        {
+        /* skip whitespace */
+}
+<FQIDENT_AS_STRING>{CCHAR}.*$        {
+        /* skip comment */
+        this.popState();
+}
+<FQIDENT_AS_STRING>{NL}+        {
+        /* skip newlines */
+        this.popState();
+}
 <FQIDENT_AS_STRING><<EOF>>        {
         this.popState();
         previous_token = 'END_OF_INPUT';
-        return previous_token;
+        return 'END_OF_INPUT';
 }
 <FQIDENT_AS_STRING>{ANY_EXCEPT_S_NL}+       {
         previous_token = 'STRING';
-        return previous_token;
+        return 'STRING';
 }
+
+
+
 
 {FQIDENT}        {
     const ident = this.match.replace(/[ \t]/, '');
     let i = keywordsTable.indexOf(ident);
 	if (i >= 0) {
-		if (keywordsTable[i].substring(0,3) === 'end') {
-            previous_token = 'END';
-            return previous_token;
+		if (keywordsTable[i] === 'end') {
+            if (paren_count > 0) {
+                // console.log('ENDRANGE', previous_token);
+                previous_token = 'ENDRANGE';
+                return 'ENDRANGE';
+            } else {
+                // console.log('END', previous_token);
+                previous_token = 'END';
+                return 'END';
+            }
 		}
+        else if (keywordsTable[i].substring(0,3) === 'end') {
+            // console.log('END', previous_token);
+            previous_token = 'END';
+            return 'END';
+        }
 		else if (keywordsTable[i] === 'unwind_protect') {
             previous_token = 'UNWIND';
-            return previous_token;
+            return 'UNWIND';
 		}
 		else if (keywordsTable[i] === 'unwind_protect_cleanup') {
             previous_token = 'CLEANUP';
-            return previous_token;
+            return 'CLEANUP';
 		}
 		else {
+            switch (keywordsTable[i]) {
+                case 'if':
+                    emit_nl = true;
+                    break;
+            }
+            // console.log('IF', previous_token);
 			previous_token = keywordsTable[i].toUpperCase();
             return previous_token;
 		}
@@ -98,13 +139,18 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 	if (i >= 0) {
 		this.pushState('FQIDENT_AS_STRING');
 	}
+    // console.log('NAME', previous_token);
 	previous_token = 'NAME';
-    return previous_token;
+    return 'NAME';
 }
 
+
+
+
 {STRING}        {
+        // console.log('STRING', previous_token);
         previous_token = 'STRING';
-        return previous_token;
+        return 'STRING';
 }
 
 ^{S}*{CCHAR}\{{S}*{NL}        {
@@ -113,62 +159,121 @@ STRING (\'[^\']*\'|\"[^\"]*\")
 <BLOCK_COMMENT_START>^{S}*{CCHAR}\}{S}*{NL}        {
         this.popState();
 }
-<BLOCK_COMMENT_START>{ANY_EXCEPT_NL}*{NL}       /* skip lines */
+<BLOCK_COMMENT_START>{ANY_EXCEPT_NL}*{NL}        {
+        /* Skip block comment line. */
+}
+
+
+
 
 '['      {
+        // console.log('[', previous_token);
         this.pushState('MATRIX_START');
         matrix_context.push('[');
         previous_token = '[';
         return '[';
 }
 <MATRIX_START>']'        {
+        // console.log(']', previous_token);
         this.popState();
         matrix_context.pop();
         previous_token = ']';
         return ']';
 }
-<MATRIX_START>{S}+        {
+<MATRIX_START>{S}+|'...'{ANY_EXCEPT_NL}*{NL}        {
     if (previous_token !== '[' && previous_token !== ',' && previous_token !== ';' && matrix_context[matrix_context.length - 1] !== '(') {
+        // console.log(',S', previous_token);
         previous_token = ',';
         return ',';
     }
 }
 <MATRIX_START>{NL}        {
     if (previous_token !== '[' && previous_token !== ',' && previous_token !== ';' && matrix_context[matrix_context.length - 1] !== '(') {
+        // console.log(',NL', previous_token);
         previous_token = ';';
         return ';';
     }
 }
-<MATRIX_START>','|';'        {
-        previous_token = this.match;
-        return this.match;
+<MATRIX_START>','        {
+        // console.log(',', previous_token);
+        previous_token = ',';
+        return ',';
+}
+<MATRIX_START>';'        {
+        // console.log(';', previous_token);
+        previous_token = ';';
+        return ';';
 }
 <MATRIX_START>'('        {
+        // console.log('(', previous_token);
         matrix_context.push('(');
+        paren_count++;
         previous_token = '(';
         return '(';
 }
 <MATRIX_START>')'        {
+        // console.log(')', previous_token);
         matrix_context.pop();
+        paren_count--;
         previous_token = ')';
         return ')';
 }
 
-{S}+|{NL}+       {
-        /* skip whitespace and line break */
+
+
+
+{S}+       {
+        /* Skip whitespace. */
 }
 
-'.*'|'./'|'.\\'|'.^'|'.**'|'**'|"'"|".'"|'<='|'=='|'!='|'~='|'>='|'&&'|'||'|'++'|'--'|'+='|'-='|'*='|'/='|'\\='|'.*='|'./='|'.\\='|'^='|'**='|'.^='|'.**='|'&='|'|='|[\+\-\*\/\^\(\)\=\,\;\:\\\&\|\<\>\~\!]          {
+{NL}       {
+        /* Skip line break if emit_nl is false, otherwise return '\n'. */
+        if (emit_nl) {
+            // console.log('NL', previous_token);
+            emit_nl = false;
+            previous_token = '\n';
+            return '\n';
+        }
+}
+
+
+
+\(        {
+        paren_count++;
+        previous_token = '(';
+        return '(';
+}
+\)        {
+        paren_count--;
+        previous_token = ')';
+        return ')';
+}
+
+'.*'|'./'|'.\\'|'.^'|'.**'|'**'|"'"|".'"|'<='|'=='|'!='|'~='|'>='|'&&'|'||'|'++'|'--'|'+='|'-='|'*='|'/='|'\\='|'.*='|'./='|'.\\='|'^='|'**='|'.^='|'.**='|'&='|'|='|[\+\-\*\/\^\=\,\;\:\\\&\|\<\>\~\!]          {
+        /* Operators. */
+        // console.log(this.match, previous_token);
         previous_token = this.match;
         return this.match;
 }
 
+
+
+
 <<EOF>>          {
-        return 'END_OF_INPUT'
+        /* End of input. */
+        // console.log('END_OF_INPUT', previous_token);
+        previous_token = 'END_OF_INPUT';
+        return 'END_OF_INPUT';
 };
 .             {
+        /* Unrecognized input. */
+        // console.log('INVALID', previous_token);
+        previous_token = 'INVALID';
         return 'INVALID';
 }
+
+
+
 
 /lex
 
@@ -197,6 +302,8 @@ global.EvaluatorPointer = null;
 
 var previous_token;
 var matrix_context = [];
+var emit_nl = false;
+var paren_count = 0;
 
 /**
  * Language keywords
@@ -347,9 +454,15 @@ number
                 {$$ = EvaluatorPointer.nodeNumber($1);}
         ;
 
+magic_end
+        : ENDRANGE
+                {$$ = EvaluatorPointer.nodeReserved('ENDRANGE');}
+        ;
+
 constant
         : number
         | string
+        | magic_end
         ;
 
 matrix
@@ -390,8 +503,6 @@ primary_expr
                 {$$ = $1;}
         | '(' expression ')'
                 {$$ = EvaluatorPointer.nodeOp('()', $2);}
-        | END
-                {$$ = EvaluatorPointer.nodeReserved('ENDRANGE');}
         ;
 
 magic_colon
@@ -622,25 +733,31 @@ select_command
 // ============
 
 if_command
-        : IF stash_comment if_cmd_list END
+        : IF if_cmd_list END
+                {$$ = $2;}
         ;
 
 if_cmd_list
         : if_cmd_list1
         | if_cmd_list1 else_clause
+                {$$ = EvaluatorPointer.nodeIfAppendElse($1,$2);}
         ;
 
 if_cmd_list1
         : expression stmt_begin opt_sep opt_list
+                {$$ = EvaluatorPointer.nodeIfBegin($1,$4);}
         | if_cmd_list1 elseif_clause
+                {$$ = EvaluatorPointer.nodeIfAppendElseIf($1,$2);}
         ;
 
 elseif_clause
-        : ELSEIF stash_comment opt_sep expression stmt_begin opt_sep opt_list
+        : ELSEIF opt_sep expression stmt_begin opt_sep opt_list
+                {$$ = EvaluatorPointer.nodeElseIf($3,$6);}
         ;
 
 else_clause
-        : ELSE stash_comment opt_sep opt_list
+        : ELSE opt_sep opt_list
+                {$$ = EvaluatorPointer.nodeElse($3);}
         ;
 
 // ================
@@ -648,7 +765,7 @@ else_clause
 // ================
 
 switch_command
-        : SWITCH stash_comment expression opt_sep case_list END
+        : SWITCH expression opt_sep case_list END
         ;
 
 case_list
@@ -664,11 +781,11 @@ case_list1
         ;
 
 switch_case
-        : CASE stash_comment opt_sep expression stmt_begin opt_sep opt_list
+        : CASE opt_sep expression stmt_begin opt_sep opt_list
         ;
 
 default_case
-        : OTHERWISE stash_comment opt_sep opt_list
+        : OTHERWISE opt_sep opt_list
         ;
 
 // =======
@@ -676,12 +793,12 @@ default_case
 // =======
 
 loop_command
-        : WHILE stash_comment expression stmt_begin opt_sep opt_list END
-        | DO stash_comment opt_sep opt_list UNTIL expression
-        | FOR stash_comment assign_lhs '=' expression stmt_begin opt_sep opt_list END
-        | FOR stash_comment '(' assign_lhs '=' expression ')' opt_sep opt_list END
-        | PARFOR stash_comment assign_lhs '=' expression stmt_begin opt_sep opt_list END
-        | PARFOR stash_comment '(' assign_lhs '=' expression ',' expression ')' opt_sep opt_list END
+        : WHILE expression stmt_begin opt_sep opt_list END
+        | DO opt_sep opt_list UNTIL expression
+        | FOR simple_expr '=' expression stmt_begin opt_sep opt_list END
+        | FOR '(' simple_expr '=' expression ')' opt_sep opt_list END
+        | PARFOR simple_expr '=' expression stmt_begin opt_sep opt_list END
+        | PARFOR '(' simple_expr '=' expression ',' expression ')' opt_sep opt_list END
         ;
 
 // =======
@@ -699,11 +816,9 @@ jump_command
 // ==========
 
 except_command
-        : UNWIND stash_comment opt_sep opt_list CLEANUP
-          stash_comment opt_sep opt_list END
-        | TRY stash_comment opt_sep opt_list CATCH stash_comment
-          opt_sep opt_list END
-        | TRY stash_comment opt_sep opt_list END
+        : UNWIND opt_sep opt_list CLEANUP opt_sep opt_list END
+        | TRY opt_sep opt_list CATCH opt_sep opt_list END
+        | TRY opt_sep opt_list END
         ;
 
 // =============
@@ -718,20 +833,16 @@ anon_fcn_begin
         : // empty
         ;
 
-stash_comment
-        : // empty
-        ;
-
 parse_error
         : INVALID
                 {
                         EvaluatorPointer.exitStatus = EvaluatorPointer.response.LEX_ERROR;
-                        throw new SyntaxError('invalid syntax.')
+                        throw new SyntaxError(`Invalid syntax at line ${yylineno+1}.`);
                 }
         | error
                 {
                         EvaluatorPointer.exitStatus = EvaluatorPointer.response.PARSER_ERROR;
-                        throw new SyntaxError('parse error.')
+                        throw new SyntaxError(`Parse error at line ${yylineno+1}.`);
                 }
         ;
 

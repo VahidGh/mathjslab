@@ -220,6 +220,24 @@ export namespace Evaluator {
         type: 'RETLIST';
         selector: ReturnSelector;
     }
+
+    export interface NodeIf extends PrimaryNode {
+        type: 'IF';
+        expression: NodeExpr[];
+        then: NodeList[];
+        else: NodeList | null;
+    }
+
+    export interface NodeElseIf extends PrimaryNode {
+        type: 'ELSEIF';
+        expression: NodeExpr;
+        then: NodeList;
+    }
+
+    export interface NodeElse extends PrimaryNode {
+        type: 'ELSE';
+        else: NodeList;
+    }
 }
 
 /**
@@ -438,6 +456,7 @@ export class Evaluator {
     public readonly toTensor = MultiArray.scalarToMultiArray;
     public readonly linearLength = MultiArray.linearLength;
     public readonly getDimension = MultiArray.getDimension;
+    public readonly toLogical = MultiArray.toLogical;
 
     /**
      * Special functions MathML unparser.
@@ -853,6 +872,41 @@ export class Evaluator {
         }
     }
 
+    public nodeIfBegin(expression: any, then: Evaluator.NodeList): Evaluator.NodeIf {
+        return {
+            type: 'IF',
+            expression: [expression],
+            then: [then],
+            else: null,
+        };
+    }
+
+    public nodeIfAppendElse(nodeIf: Evaluator.NodeIf, nodeElse: Evaluator.NodeElse): Evaluator.NodeIf {
+        nodeIf.else = nodeElse.else;
+        return nodeIf;
+    }
+
+    public nodeIfAppendElseIf(nodeIf: Evaluator.NodeIf, nodeElseIf: Evaluator.NodeElseIf): Evaluator.NodeIf {
+        nodeIf.expression.push(nodeElseIf.expression);
+        nodeIf.then.push(nodeElseIf.then);
+        return nodeIf;
+    }
+
+    public nodeElseIf(expression: any, then: Evaluator.NodeList): Evaluator.NodeElseIf {
+        return {
+            type: 'ELSEIF',
+            expression,
+            then,
+        };
+    }
+
+    public nodeElse(elseStmt: Evaluator.NodeList): Evaluator.NodeElse {
+        return {
+            type: 'ELSE',
+            else: elseStmt,
+        };
+    }
+
     /**
      * Validate left side of assignment node.
      * @param tree Left side of assignment node
@@ -976,6 +1030,22 @@ export class Evaluator {
                 }
             },
         };
+    }
+
+    /**
+     *
+     * @param tree
+     * @returns
+     */
+    public toBoolean(tree: any): boolean {
+        const value = this.isTensor(tree) ? this.toLogical(tree) : tree;
+        if (this.isNumber(value)) {
+            return Boolean(value.re.toNumber() || value.im.toNumber());
+        } else if (this.isString(value)) {
+            return !!value.string;
+        } else {
+            throw new Error('Evaluator.toBoolean: argument must be evaluated.');
+        }
     }
 
     /**
@@ -1482,6 +1552,22 @@ export class Evaluator {
                     this.commandWordListTable[tree.id].func(...tree.args.map((word: { str: string }) => word.str));
                     this.exitStatus = this.response.EXTERNAL;
                     return tree;
+                case 'IF':
+                    let ifTest = 0;
+                    for (; ifTest < tree.expression.length; ifTest++) {
+                        if (this.toBoolean(this.reduceIfReturnList(this.Evaluator(tree.expression[ifTest], local, fname)))) {
+                            return this.reduceIfReturnList(this.Evaluator(tree.then[ifTest], local, fname));
+                        }
+                    }
+                    // No one then clause.
+                    if (tree.else) {
+                        return this.reduceIfReturnList(this.Evaluator(tree.else, local, fname));
+                    }
+                    // Return null NodeList.
+                    return {
+                        type: 'LIST',
+                        list: [],
+                    };
                 default:
                     throw new EvalError(`evaluating undefined type '${tree.type}'.`);
             }
@@ -1609,6 +1695,18 @@ export class Evaluator {
                         return '<RETLIST>';
                     case 'CmdWList':
                         return tree.id + ' ' + tree.args.map((arg: any) => this.Unparse(arg)).join(' ');
+                    case 'IF':
+                        let ifstr = 'IF ' + this.Unparse(tree.expression[0]) + '\n';
+                        ifstr += this.Unparse(tree.then[0]) + '\n';
+                        for (let i = 1; i < tree.expression.length; i++) {
+                            ifstr += 'ELSEIF ' + this.Unparse(tree.expression[i]) + '\n';
+                            ifstr += this.Unparse(tree.then[i]) + '\n';
+                        }
+                        if (tree.else) {
+                            ifstr += 'ELSE' + '\n' + this.Unparse(tree.else) + '\n';
+                        }
+                        ifstr += 'ENDIF';
+                        return ifstr;
                     default:
                         return '<INVALID>';
                 }
@@ -1744,6 +1842,15 @@ export class Evaluator {
                         return '<mi>RETLIST</mi>';
                     case 'CmdWList':
                         return '<mtext>' + tree.id + ' ' + tree.args.map((arg: any) => this.unparserMathML(arg)).join(' ') + '</mtext>';
+                    case 'IF':
+                        const ifThenArray = tree.expression.map(
+                            (expr: any, i: number) =>
+                                `<mtr><mtd><mo>${i === 0 ? 'IF' : 'ELSEIF'}</mo></mtd><mtd>${this.unparserMathML(
+                                    tree.expression[0],
+                                )}</mtd></mtr><mtr><mtd></mtd><mtd>${this.unparserMathML(tree.then[0])}</mtd></mtr>`,
+                        );
+                        const ifElse = tree.else ? `<mtr><mtd><mo>ELSE</mo></mtd></mtr><mtr><mtd></mtd><mtd>${this.unparserMathML(tree.else)}</mtd></mtr>` : '';
+                        return `<mtable>${ifThenArray.join('')}${ifElse}<mtr><mtd><mo>ENDIF</mo></mtd></mtr></mtable>`;
                     default:
                         return '<mi>invalid</mi>';
                 }

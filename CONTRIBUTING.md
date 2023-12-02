@@ -98,8 +98,11 @@ functions in the class. To do this, it will be necessary to deduce the
 definitions of each function in terms of the real and imaginary parts.
 * All operations over array elements are complex. Create and use real
 operations for arrays with only real elements.
-* Parser is designed to scan a line. Need to code a parser that scan multiple
-lines calling Evaluator when need.
+* Integer types and bitwise operations and functions.
+* String type and their respective functions.
+* Parser is designed to scan a line (now support spaces and newlines
+inside block comments and arrays). Need to code a parser that scan
+multiple lines calling Evaluator when need.
 The real need is a parser that supports both modes: single-line and
 multi-line.
 * More extensive tests need to be written, especially to test the parser and
@@ -110,7 +113,9 @@ evaluator.
 generated parser is not suitable for compiling together with
 [ES6](https://262.ecma-international.org/6.0/) modules written in
 [Typescript](https://www.typescriptlang.org/). This is the reason why
-MathJSLab is compiled as an ES5 module.
+MathJSLab is compiled as an ES5 module. At now we are developing a parser
+using ANTLR4 and version 1.2.5 is probably the last version of MathJSLab
+using Jison.
 
 You are welcome to contribute to this project. I will be very grateful if you
 participate in some way.

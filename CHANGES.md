@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.2.5
+- Optimizations (resulting return as number) and code cleaning by hand in file 'parser.jison'.
+
 ## 1.2.4
 - The file 'symbol-table.ts' and 'symbol-table.spec.ts' has been created.
 - Changes in the lexer to support comment blocks spaces and line breaks to separate elements within arrays. Context variables created (previous_token and matrix_context).

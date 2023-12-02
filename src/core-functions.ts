@@ -167,7 +167,7 @@ export abstract class CoreFunctions {
      * @returns
      */
     public static sub2ind(DIMS: any, ...S: any) {
-        if (arguments.length === 2) {
+        if (arguments.length > 1) {
             const dims = MultiArray.linearize(DIMS).map((value) => value.re.toNumber());
             const subscript: MultiArray[] = S.map((s: any) => MultiArray.scalarToMultiArray(s));
             for (let s = 1; s < subscript.length; s++) {
