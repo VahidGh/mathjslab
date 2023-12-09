@@ -1,4 +1,4 @@
-import { Configuration } from './configuration';
+import { Configuration } from './Configuration';
 
 describe('Configuration', () => {
     it('Configuration and its functions should be defined', () => {

@@ -1,4 +1,4 @@
-import { LinearAlgebra } from './linear-algebra';
+import { LinearAlgebra } from './LinearAlgebra';
 
 describe('LinearAlgebra', () => {
     it('LinearAlgebra should be defined', () => {

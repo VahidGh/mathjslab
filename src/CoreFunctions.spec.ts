@@ -1,4 +1,4 @@
-import { CoreFunctions } from './core-functions';
+import { CoreFunctions } from './CoreFunctions';
 
 describe('CoreFunctions', () => {
     it('CoreFunctions and its functions should be defined', () => {

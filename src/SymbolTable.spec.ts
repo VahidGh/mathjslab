@@ -1,4 +1,4 @@
-import { SymbolTable } from './symbol-table';
+import { SymbolTable } from './SymbolTable';
 
 describe('SymbolTable', () => {
     it('SymbolTable and its methods should be defined', () => {

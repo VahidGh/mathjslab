@@ -1,4 +1,4 @@
-import { ComplexDecimal } from './complex-decimal';
+import { ComplexDecimal } from './ComplexDecimal';
 
 describe('ComplexDecimal', () => {
     beforeEach(async () => {});

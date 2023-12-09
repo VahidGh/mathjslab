@@ -1,7 +1,8 @@
-import { ComplexDecimal } from './complex-decimal';
-import { MultiArray } from './multi-array';
-import { Evaluator } from './evaluator';
-import { CharString } from './char-string';
+import { ComplexDecimal } from './ComplexDecimal';
+import { MultiArray } from './MultiArray';
+import { Evaluator } from './Evaluator';
+import { CharString } from './CharString';
+import * as AST from './AST';
 
 export abstract class CoreFunctions {
     public static functions: Record<string, Function> = {
@@ -131,7 +132,7 @@ export abstract class CoreFunctions {
      */
     public static ind2sub(DIMS: any, IND: any): any {
         if (arguments.length === 2) {
-            return Evaluator.nodeReturnList((length: number, index: number): any => {
+            return AST.nodeReturnList((length: number, index: number): any => {
                 if (length === 1) {
                     return IND;
                 } else {
@@ -289,10 +290,14 @@ export abstract class CoreFunctions {
      * @returns MultiArray filled with `fillFunction` results for each element.
      */
     private static newFilledEach(fillFunction: (index: number) => any, ...dimension: (MultiArray | ComplexDecimal)[]): MultiArray | ComplexDecimal {
-        if (dimension.length === 0) {
+        let dims: number[];
+        if (dimension.length === 1) {
+            dims = MultiArray.linearize(dimension[0]).map((dim: ComplexDecimal) => dim.re.toNumber());
+        } else if (dimension.length === 0) {
             return fillFunction(0);
+        } else {
+            dims = dimension.map((dim) => MultiArray.firstElement(dim).re.toNumber());
         }
-        const dims = dimension.map((dim) => MultiArray.firstElement(dim).re.toNumber());
         const result = new MultiArray(dims);
         for (let n = 0; n < MultiArray.linearLength(result); n++) {
             const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], n);
@@ -457,7 +462,7 @@ export abstract class CoreFunctions {
      * @param args One to three arguments like user function.
      * @returns Return like user function.
      */
-    private static minMax(op: 'min' | 'max', ...args: any[]): MultiArray | Evaluator.NodeReturnList | undefined {
+    private static minMax(op: 'min' | 'max', ...args: any[]): MultiArray | AST.NodeReturnList | undefined {
         const minMaxAlogDimension = (M: MultiArray, dimension: number) => {
             const reduced = MultiArray.reduceToArray(dimension, M);
             const resultM = new MultiArray(reduced.dimension);
@@ -470,7 +475,7 @@ export abstract class CoreFunctions {
                     indexM.array[i][j] = new ComplexDecimal(n + 1);
                 }
             }
-            return Evaluator.nodeReturnList((length: number, index: number): any => {
+            return AST.nodeReturnList((length: number, index: number): any => {
                 Evaluator.throwErrorIfGreaterThanReturnList(2, length);
                 return MultiArray.MultiArrayToScalar(index === 0 ? resultM : indexM);
             });
@@ -500,7 +505,7 @@ export abstract class CoreFunctions {
      * @param M
      * @returns
      */
-    public static min(...args: any[]): MultiArray | Evaluator.NodeReturnList | undefined {
+    public static min(...args: any[]): MultiArray | AST.NodeReturnList | undefined {
         return CoreFunctions.minMax('min', ...args);
     }
 
@@ -509,7 +514,7 @@ export abstract class CoreFunctions {
      * @param M
      * @returns
      */
-    public static max(...args: any[]): MultiArray | Evaluator.NodeReturnList | undefined {
+    public static max(...args: any[]): MultiArray | AST.NodeReturnList | undefined {
         return CoreFunctions.minMax('max', ...args);
     }
 
@@ -520,7 +525,7 @@ export abstract class CoreFunctions {
      * @param DIM Dimension in which the cumulative operation occurs.
      * @returns MultiArray with cumulative values along dimension DIM.
      */
-    private static cumMinMax(op: 'min' | 'max', M: MultiArray | ComplexDecimal, DIM?: MultiArray | ComplexDecimal): Evaluator.NodeReturnList {
+    private static cumMinMax(op: 'min' | 'max', M: MultiArray | ComplexDecimal, DIM?: MultiArray | ComplexDecimal): AST.NodeReturnList {
         const dim = DIM ? MultiArray.firstElement(DIM).re.toNumber() - 1 : 1;
         M = MultiArray.scalarToMultiArray(M);
         const indexM = new MultiArray(M.dimension);
@@ -539,7 +544,7 @@ export abstract class CoreFunctions {
             indexM.array[i][j] = index;
             return compare;
         });
-        return Evaluator.nodeReturnList((length: number, index: number): any => {
+        return AST.nodeReturnList((length: number, index: number): any => {
             Evaluator.throwErrorIfGreaterThanReturnList(2, length);
             return MultiArray.MultiArrayToScalar(index === 0 ? result : indexM);
         });
@@ -551,7 +556,7 @@ export abstract class CoreFunctions {
      * @param DIM
      * @returns
      */
-    public static cummin(M: MultiArray, DIM?: MultiArray | ComplexDecimal): Evaluator.NodeReturnList {
+    public static cummin(M: MultiArray, DIM?: MultiArray | ComplexDecimal): AST.NodeReturnList {
         return CoreFunctions.cumMinMax('min', M, DIM);
     }
 
@@ -561,7 +566,7 @@ export abstract class CoreFunctions {
      * @param DIM
      * @returns
      */
-    public static cummax(M: MultiArray, DIM?: MultiArray | ComplexDecimal): Evaluator.NodeReturnList {
+    public static cummax(M: MultiArray, DIM?: MultiArray | ComplexDecimal): AST.NodeReturnList {
         return CoreFunctions.cumMinMax('max', M, DIM);
     }
 

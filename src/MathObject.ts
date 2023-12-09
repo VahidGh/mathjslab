@@ -1,6 +1,6 @@
-import { ComplexDecimal } from './complex-decimal';
-import { MultiArray } from './multi-array';
-import { LinearAlgebra } from './linear-algebra';
+import { ComplexDecimal } from './ComplexDecimal';
+import { MultiArray } from './MultiArray';
+import { LinearAlgebra } from './LinearAlgebra';
 
 export abstract class MathObject {
     public static unaryOpFunction: { [name: string]: Function } = {

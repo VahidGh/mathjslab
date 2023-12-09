@@ -15,7 +15,7 @@ It can run in browser environment and implements an arbitrary precision
 arithmetics using [decimal.js](https://www.npmjs.com/package/decimal.js)
 package.
 
-It uses the [Jison](https://gerhobbelt.github.io/jison/)
+It uses the [ANTLR](https://www.antlr.org/)
 [parser generator](https://en.wikipedia.org/wiki/Compiler-compiler) to
 generate a [parser](https://en.wikipedia.org/wiki/Parsing) that create an
 [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree)
@@ -45,7 +45,7 @@ A functional [demo](https://mathjslab.netlify.app/) use of this package in a
 
 ## Browser support
 
-MathJSLab works on any [ES5](https://www.ecma-international.org/wp-content/uploads/ECMA-262_5th_edition_december_2009.pdf) compatible
+MathJSLab works on any [ES2016](https://262.ecma-international.org/7.0/) compatible
 [JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/)
 engine, including [Node.js](https://nodejs.org/),
 [Chrome](https://www.google.com/chrome/),

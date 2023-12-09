@@ -1,6 +1,6 @@
-import { ComplexDecimal } from './complex-decimal';
-import { MultiArray } from './multi-array';
-import { Evaluator } from './evaluator';
+import { ComplexDecimal } from './ComplexDecimal';
+import { MultiArray } from './MultiArray';
+import * as AST from './AST';
 
 /**
  * # LinearAlgebra
@@ -453,7 +453,7 @@ export abstract class LinearAlgebra {
                 }
             }
         }
-        return Evaluator.nodeReturnList((length: number, index: number): any => {
+        return AST.nodeReturnList((length: number, index: number): any => {
             if (length === 1) {
                 return U;
             } else {

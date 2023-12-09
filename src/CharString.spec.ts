@@ -1,4 +1,4 @@
-import { CharString } from './char-string';
+import { CharString } from './CharString';
 
 describe('CharString', () => {
     it('CharString should be defined', () => {

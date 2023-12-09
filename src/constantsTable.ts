@@ -1,4 +1,4 @@
-import { ComplexDecimal } from './complex-decimal';
+import { ComplexDecimal } from './ComplexDecimal';
 
 export const constantsTable: Array<[string, ComplexDecimal]> = [
     // Mathematical Constants

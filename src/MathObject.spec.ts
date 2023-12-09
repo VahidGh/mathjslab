@@ -1,4 +1,4 @@
-import { MathObject } from './math-object';
+import { MathObject } from './MathObject';
 
 describe('MathObject', () => {
     it('MathObject and its generic methods should be defined', () => {

@@ -1,6 +1,6 @@
-import { ComplexDecimal } from './complex-decimal';
-import { Evaluator } from './evaluator';
-import { MultiArray } from './multi-array';
+import { ComplexDecimal } from './ComplexDecimal';
+import { Evaluator } from './Evaluator';
+import { MultiArray } from './MultiArray';
 
 let evaluator: Evaluator;
 

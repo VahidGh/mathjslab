@@ -2,8 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.3.0
+- Parser implemented using ANTLR in files MathJSLabLexer.g4 and MathJSLabParser.g4. The wrapper class for lexer and parser has been created in file Parser.ts. Need to make extensive tests.
+- File names converted to camel case.
+- The file AST.ts (Abstract Syntax Tree) has been created, and related types and interfaces defined in Evaluator.ts has been moved to AST.ts file.
+
 ## 1.2.5
-- Optimizations (resulting return as number) and code cleaning by hand in file 'parser.jison'.
+- Optimizations (resulting return as number) in multi-array.ts file and code cleaning by hand in file 'parser.jison'.
 
 ## 1.2.4
 - The file 'symbol-table.ts' and 'symbol-table.spec.ts' has been created.

@@ -1,4 +1,4 @@
-import { Evaluator } from './evaluator';
+import { Evaluator } from './Evaluator';
 
 let evaluator: Evaluator;
 

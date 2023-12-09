@@ -1,5 +1,5 @@
-import { ComplexDecimal } from './complex-decimal';
-import { Evaluator } from './evaluator';
+import { ComplexDecimal } from './ComplexDecimal';
+import { Evaluator } from './Evaluator';
 
 /**
  * # MultiArray
@@ -328,7 +328,7 @@ export class MultiArray {
         const unparseRows = (row: any[]) => `<mtr>${row.map((value) => `<mtd>${global.EvaluatorPointer.unparserMathML(value)}</mtd>`).join('')}</mtr>`;
         const buildMrow = (rows: string) => `<mrow><mo>[</mo><mtable>${rows}</mtable><mo>]</mo></mrow>`;
         if (M.dimension.reduce((p, c) => p * c, 1) === 0) {
-            return `<mrow><mo>[</mo><mtable><mspace width="0.5em"/></mtable><mo>]</mo></mrow>(</mo><mn>${M.dimension.join('</mn><mi>&times;</mi><mn>')}</mn><mo>)</mo>`;
+            return `<mrow><mo>[</mo><mtable><mspace width="0.5em"/></mtable><mo>]</mo></mrow><mo>(</mo><mn>${M.dimension.join('</mn><mi>&times;</mi><mn>')}</mn><mo>)</mo>`;
         }
         if (M.dimension.length > 2) {
             let result = '';

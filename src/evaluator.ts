@@ -2,73 +2,20 @@
  * MATLAB®/Octave like syntax parser/interpreter/compiler.
  */
 
-import { constantsTable } from './constants-table';
-import { substSymbol } from './subst-symbol';
-import { CharString } from './char-string';
-import { ComplexDecimal } from './complex-decimal';
-import { MultiArray } from './multi-array';
-import { CoreFunctions } from './core-functions';
-import { LinearAlgebra } from './linear-algebra';
-import { MathObject } from './math-object';
-import { Configuration } from './configuration';
-import Parser from './parser.js';
+import { constantsTable } from './constantsTable';
+import { substSymbol } from './substSymbol';
+import { CharString } from './CharString';
+import { ComplexDecimal } from './ComplexDecimal';
+import { MultiArray } from './MultiArray';
+import { CoreFunctions } from './CoreFunctions';
+import { LinearAlgebra } from './LinearAlgebra';
+import { MathObject } from './MathObject';
+import { Configuration } from './Configuration';
+import * as AST from './AST';
+import { Parser } from './Parser';
 
 /* eslint-disable-next-line  @typescript-eslint/no-namespace */
-export namespace Evaluator {
-    /**
-     * Operator type.
-     */
-    export type TOperator =
-        | '+'
-        | '-'
-        | '.*'
-        | '*'
-        | './'
-        | '/'
-        | '.\\'
-        | '\\'
-        | '.^'
-        | '^'
-        | '.**'
-        | '**'
-        | '<'
-        | '<='
-        | '=='
-        | '>='
-        | '>'
-        | '!='
-        | '~='
-        | '&'
-        | '|'
-        | '&&'
-        | '||'
-        | '='
-        | '+='
-        | '-='
-        | '*='
-        | '/='
-        | '\\='
-        | '^='
-        | '**='
-        | '.*='
-        | './='
-        | '.\\='
-        | '.^='
-        | '.**='
-        | '&='
-        | '|='
-        | '()'
-        | '!'
-        | '~'
-        | '+_'
-        | '-_'
-        | '++_'
-        | '--_'
-        | ".'"
-        | "'"
-        | '_++'
-        | '_--';
-
+export module Evaluator {
     /**
      * aliasNameTable type.
      */
@@ -111,133 +58,6 @@ export namespace Evaluator {
         externalFunctionTable?: TBaseFunctionTable;
         externalCmdWListTable?: TCommandWordListTable;
     };
-
-    /**
-     * AST (Abstract Syntax Tree) nodes.
-     */
-
-    /**
-     * Common primary node.
-     */
-    export interface PrimaryNode {
-        type: string | number;
-        parent?: any;
-        index?: number;
-    }
-
-    /**
-     * Expression node.
-     */
-    export type NodeExpr = NodeName | NodeArgExpr | NodeOperation | NodeList | NodeRange | NodeReturnList | MultiArray | ComplexDecimal;
-
-    /**
-     * Reserved node.
-     */
-    export interface NodeReserved extends PrimaryNode {}
-
-    /**
-     * Name node.
-     */
-    export interface NodeName extends PrimaryNode {
-        type: 'NAME';
-        id: string;
-    }
-
-    /**
-     * Command word list node.
-     */
-    export interface NodeCmdWList extends PrimaryNode {
-        type: 'CmdWList';
-        id: string;
-        args: Array<CharString>;
-    }
-
-    /**
-     * Expression and arguments node.
-     */
-    export interface NodeArgExpr extends PrimaryNode {
-        type: 'ARG';
-        expr: NodeExpr;
-        args: Array<NodeExpr>;
-    }
-
-    /**
-     * Range node.
-     */
-    export interface NodeRange extends PrimaryNode {
-        type: 'RANGE';
-        start: NodeExpr | null;
-        stop: NodeExpr | null;
-        stride: NodeExpr | null;
-    }
-
-    /**
-     * Operation node.
-     */
-    export type NodeOperation = UnaryOperation | BinaryOperation;
-
-    /**
-     * Unary operation node.
-     */
-    export type UnaryOperation = UnaryOperationL | UnaryOperationR;
-
-    /**
-     * Right unary operation node.
-     */
-    export interface UnaryOperationR extends PrimaryNode {
-        right: NodeExpr;
-    }
-
-    /**
-     * Left unary operation node.
-     */
-    export interface UnaryOperationL extends PrimaryNode {
-        left: NodeExpr;
-    }
-
-    /**
-     * Binary operation.
-     */
-    export interface BinaryOperation extends PrimaryNode {
-        left: NodeExpr;
-        right: NodeExpr;
-    }
-
-    /**
-     * List node
-     */
-    export interface NodeList extends PrimaryNode {
-        type: 'LIST';
-        list: Array<NodeExpr>;
-    }
-
-    export type ReturnSelector = (length: number, index: number) => any;
-
-    /**
-     * Return list node
-     */
-    export interface NodeReturnList extends PrimaryNode {
-        type: 'RETLIST';
-        selector: ReturnSelector;
-    }
-
-    export interface NodeIf extends PrimaryNode {
-        type: 'IF';
-        expression: NodeExpr[];
-        then: NodeList[];
-        else: NodeList | null;
-    }
-
-    export interface NodeElseIf extends PrimaryNode {
-        type: 'ELSEIF';
-        expression: NodeExpr;
-        then: NodeList;
-    }
-
-    export interface NodeElse extends PrimaryNode {
-        type: 'ELSE';
-        else: NodeList;
-    }
 }
 
 /**
@@ -246,8 +66,6 @@ export namespace Evaluator {
 declare global {
     /* eslint-disable-next-line  no-var */
     var EvaluatorPointer: Evaluator;
-    /* eslint-disable-next-line  no-var */
-    var commandsTable: string[];
 }
 
 /**
@@ -337,11 +155,6 @@ export class Evaluator {
     public commandWordListTable: Evaluator.TCommandWordListTable = {};
 
     /**
-     * Parser (generated by Jison).
-     */
-    private readonly parser: { parse: (input: string) => any } = Parser;
-
-    /**
      * Evaluator exit status.
      */
     public exitStatus: number;
@@ -428,12 +241,10 @@ export class Evaluator {
     /**
      * Parser AST (Abstract Syntax Tree) constructor methods.
      */
-    public readonly nodeString = CharString.parse;
     public readonly isString = CharString.isThis;
     public readonly unparseString = CharString.unparse;
     public readonly unparseStringMathML = CharString.unparseMathML;
     public readonly removeQuotes = CharString.removeQuotes;
-    public readonly nodeNumber = ComplexDecimal.parse;
     public readonly newNumber = ComplexDecimal.newThis;
     public readonly isNumber = ComplexDecimal.isThis;
     public readonly unparseNumber = ComplexDecimal.unparse;
@@ -449,14 +260,15 @@ export class Evaluator {
     public readonly setElements = MultiArray.setElements;
     public readonly setElementsLogical = MultiArray.setElementsLogical;
     public readonly expandRange = MultiArray.expandRange;
-    public readonly firstRow = MultiArray.firstRow;
-    public readonly appendRow = MultiArray.appendRow;
     public readonly tensor0x0 = MultiArray.emptyArray;
     public readonly linearize = MultiArray.linearize;
     public readonly toTensor = MultiArray.scalarToMultiArray;
     public readonly linearLength = MultiArray.linearLength;
     public readonly getDimension = MultiArray.getDimension;
     public readonly toLogical = MultiArray.toLogical;
+
+    public readonly parser = new Parser();
+    public readonly Parse = this.parser.parse;
 
     /**
      * Special functions MathML unparser.
@@ -563,7 +375,7 @@ export class Evaluator {
                 Object.assign(evaluator.commandWordListTable, config.externalCmdWListTable);
             }
             for (const cmd in evaluator.commandWordListTable) {
-                global.commandsTable.push(cmd);
+                evaluator.parser.commandNames.push(cmd);
             }
         } else {
             evaluator.aliasName = (name: string): string => name;
@@ -622,229 +434,6 @@ export class Evaluator {
     }
 
     /**
-     * Parse input.
-     * @param input Input string
-     * @returns Parsed input.
-     */
-    public Parse(input: string): any {
-        return this.parser.parse(input);
-    }
-
-    /**
-     * Create reserved node.
-     * @param nodeid
-     * @returns
-     */
-    public nodeReserved(nodeid: string): Evaluator.NodeReserved {
-        return { type: nodeid };
-    }
-
-    /**
-     * Create name node.
-     * @param nodeid
-     * @returns
-     */
-    public nodeName(nodeid: string): Evaluator.NodeName {
-        return {
-            type: 'NAME',
-            id: nodeid.replace(/(\r\n|[\n\r])|[\ ]/gm, ''),
-        };
-    }
-
-    /**
-     * Create command word list node.
-     * @param nodename
-     * @param nodelist
-     * @returns
-     */
-    public nodeCmdWList(nodename: Evaluator.NodeName, nodelist: Evaluator.NodeList): Evaluator.NodeCmdWList {
-        return {
-            type: 'CmdWList',
-            id: nodename.id,
-            args: nodelist ? (nodelist.list as any) : [],
-        };
-    }
-
-    /**
-     * Create expression and arguments node.
-     * @param nodeexpr
-     * @param nodelist
-     * @returns
-     */
-    public nodeArgExpr(nodeexpr: any, nodelist?: any): Evaluator.NodeArgExpr {
-        return {
-            type: 'ARG',
-            expr: nodeexpr,
-            args: nodelist ? nodelist.list : [],
-        };
-    }
-
-    /**
-     * Create range node. If two arguments are passed then it is 'start' and
-     * 'stop' of range. If three arguments are passed then it is 'start',
-     * 'stride' and 'stop'.
-     * @param args 'start' and 'stop' or 'start', 'stride' and 'stop'.
-     * @returns NodeRange.
-     */
-    public nodeRange(...args: any): Evaluator.NodeRange {
-        if (args.length === 2) {
-            return {
-                type: 'RANGE',
-                start: args[0],
-                stop: args[1],
-                stride: null,
-            };
-        } else if (args.length === 3) {
-            return {
-                type: 'RANGE',
-                start: args[0],
-                stop: args[2],
-                stride: args[1],
-            };
-        } else {
-            throw new SyntaxError('invalid range.');
-        }
-    }
-
-    /**
-     * Create operator node.
-     * @param op
-     * @param data1
-     * @param data2
-     * @returns
-     */
-    public nodeOp(op: Evaluator.TOperator, data1: any, data2?: any): Evaluator.NodeOperation {
-        switch (op) {
-            case '+':
-            case '-':
-            case '.*':
-            case '*':
-            case './':
-            case '/':
-            case '.\\':
-            case '\\':
-            case '.^':
-            case '^':
-            case '.**':
-            case '**':
-            case '<':
-            case '<=':
-            case '==':
-            case '>=':
-            case '>':
-            case '!=':
-            case '~=':
-            case '&':
-            case '|':
-            case '&&':
-            case '||':
-            case '=':
-            case '+=':
-            case '-=':
-            case '*=':
-            case '/=':
-            case '\\=':
-            case '^=':
-            case '**=':
-            case '.*=':
-            case './=':
-            case '.\\=':
-            case '.^=':
-            case '.**=':
-            case '&=':
-            case '|=':
-                return { type: op, left: data1, right: data2 };
-            case '()':
-            case '!':
-            case '~':
-            case '+_':
-            case '-_':
-            case '++_':
-            case '--_':
-                return { type: op, right: data1 };
-            case ".'":
-            case "'":
-            case '_++':
-            case '_--':
-                return { type: op, left: data1 };
-            default:
-                return { type: 'INVALID' } as Evaluator.NodeOperation;
-        }
-    }
-
-    /**
-     * Create first element of list node.
-     * @param node First element of list node.
-     * @returns A NodeList.
-     */
-    public nodeListFirst(node?: any): Evaluator.NodeList {
-        if (node) {
-            const result = {
-                type: 'LIST',
-                list: [node],
-            };
-            node.parent = result;
-            return result as Evaluator.NodeList;
-        } else {
-            return {
-                type: 'LIST',
-                list: [],
-            };
-        }
-    }
-
-    /**
-     * Append node to list node.
-     * @param lnode NodeList.
-     * @param node Element to append to list.
-     * @returns NodeList with element appended.
-     */
-    public nodeList(lnode: Evaluator.NodeList, node: any): Evaluator.NodeList {
-        node.parent = lnode;
-        lnode.list.push(node);
-        return lnode;
-    }
-
-    /**
-     * Create first row of a MultiArray.
-     * @param row
-     * @returns
-     */
-    public nodeFirstRow(row: Evaluator.NodeList): MultiArray {
-        if (row) {
-            return this.firstRow(row.list);
-        } else {
-            return this.tensor0x0();
-        }
-    }
-
-    /**
-     * Append row to MultiArray.
-     * @param M
-     * @param row
-     * @returns
-     */
-    public nodeAppendRow(M: MultiArray, row: Evaluator.NodeList): MultiArray {
-        if (row) {
-            return this.appendRow(M, row.list);
-        } else {
-            return M;
-        }
-    }
-
-    /**
-     * Creates NodeReturnList (multiple assignment)
-     * @param selector Left side selector function.
-     * @returns Return list node.
-     */
-    public static nodeReturnList(selector: Evaluator.ReturnSelector): Evaluator.NodeReturnList {
-        return {
-            type: 'RETLIST',
-            selector,
-        };
-    }
-
-    /**
      * Throws error if left hand side length of multiple assignment greater
      * than maximum length (to be used in ReturnSelector functions).
      * @param maxLength Maximum length of return list.
@@ -870,41 +459,6 @@ export class Evaluator {
         } else {
             return tree;
         }
-    }
-
-    public nodeIfBegin(expression: any, then: Evaluator.NodeList): Evaluator.NodeIf {
-        return {
-            type: 'IF',
-            expression: [expression],
-            then: [then],
-            else: null,
-        };
-    }
-
-    public nodeIfAppendElse(nodeIf: Evaluator.NodeIf, nodeElse: Evaluator.NodeElse): Evaluator.NodeIf {
-        nodeIf.else = nodeElse.else;
-        return nodeIf;
-    }
-
-    public nodeIfAppendElseIf(nodeIf: Evaluator.NodeIf, nodeElseIf: Evaluator.NodeElseIf): Evaluator.NodeIf {
-        nodeIf.expression.push(nodeElseIf.expression);
-        nodeIf.then.push(nodeElseIf.then);
-        return nodeIf;
-    }
-
-    public nodeElseIf(expression: any, then: Evaluator.NodeList): Evaluator.NodeElseIf {
-        return {
-            type: 'ELSEIF',
-            expression,
-            then,
-        };
-    }
-
-    public nodeElse(elseStmt: Evaluator.NodeList): Evaluator.NodeElse {
-        return {
-            type: 'ELSE',
-            else: elseStmt,
-        };
     }
 
     /**
@@ -1139,7 +693,7 @@ export class Evaluator {
                     tree.left.parent = tree;
                     tree.right.parent = tree;
                     const assignment = this.validateAssignment(tree.left);
-                    const op: Evaluator.TOperator = tree.type.substring(0, tree.type.length - 1);
+                    const op: AST.TOperator = tree.type.substring(0, tree.type.length - 1);
                     if (assignment.length > 1 && op.length > 0) {
                         throw new EvalError('computed multiple assignment not allowed.');
                     }
@@ -1150,7 +704,7 @@ export class Evaluator {
                         right = tree.right;
                     }
                     if (right.type !== 'RETLIST') {
-                        right = Evaluator.nodeReturnList((length: number, index: number) => {
+                        right = AST.nodeReturnList((length: number, index: number) => {
                             if (index === 0) {
                                 return tree.right;
                             } else {
@@ -1158,7 +712,7 @@ export class Evaluator {
                             }
                         });
                     }
-                    const resultList = this.nodeListFirst();
+                    const resultList = AST.nodeListFirst();
                     for (let n = 0; n < assignment.length; n++) {
                         const { left, id, args } = assignment[n];
                         if (left) {
@@ -1169,10 +723,10 @@ export class Evaluator {
                                 }
                                 const rightN = right.selector(assignment.length, n);
                                 rightN.parent = tree.right;
-                                const expr = op.length ? this.nodeOp(op, left, rightN) : rightN;
+                                const expr = op.length ? AST.nodeOp(op, left, rightN) : rightN;
                                 try {
                                     this.nameTable[id] = { args: [], expr: this.reduceIfReturnList(this.Evaluator(expr)) };
-                                    this.nodeList(resultList, this.nodeOp('=', left, this.nameTable[id].expr));
+                                    AST.appendNodeList(resultList, AST.nodeOp('=', left, this.nameTable[id].expr));
                                     continue;
                                 } catch (error) {
                                     this.nameTable[id] = { args: [], expr: expr };
@@ -1196,7 +750,7 @@ export class Evaluator {
                                                         this.toTensor(
                                                             this.reduceIfReturnList(
                                                                 this.Evaluator(
-                                                                    this.nodeOp(
+                                                                    AST.nodeOp(
                                                                         op,
                                                                         this.getElementsLogical(this.nameTable[id].expr, id, arg0),
                                                                         this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
@@ -1216,7 +770,7 @@ export class Evaluator {
                                                         this.toTensor(
                                                             this.reduceIfReturnList(
                                                                 this.Evaluator(
-                                                                    this.nodeOp(
+                                                                    AST.nodeOp(
                                                                         op,
                                                                         this.getElements(this.nameTable[id].expr, id, [arg0]),
                                                                         this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
@@ -1236,7 +790,7 @@ export class Evaluator {
                                                     this.toTensor(
                                                         this.reduceIfReturnList(
                                                             this.Evaluator(
-                                                                this.nodeOp(
+                                                                AST.nodeOp(
                                                                     op,
                                                                     this.getElements(this.nameTable[id].expr, id, args),
                                                                     this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
@@ -1248,7 +802,7 @@ export class Evaluator {
                                                     ),
                                                 );
                                             }
-                                            this.nodeList(resultList, this.nodeOp('=', this.nodeName(id), this.nameTable[id].expr));
+                                            AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id].expr));
                                             continue;
                                         } else {
                                             throw new EvalError(`in computed assignment ${id}(index) OP= X, ${id} cannot be a function.`);
@@ -1270,7 +824,7 @@ export class Evaluator {
                                     }
                                     if (isFunction) {
                                         this.nameTable[id] = { args: args, expr: right.selector(assignment.length, n) };
-                                        this.nodeList(resultList, tree);
+                                        AST.appendNodeList(resultList, tree);
                                         continue;
                                     } else {
                                         /* Indexed matrix reference on left hand side. */
@@ -1308,7 +862,7 @@ export class Evaluator {
                                                 this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                             );
                                         }
-                                        this.nodeList(resultList, this.nodeOp('=', this.nodeName(id), this.nameTable[id].expr));
+                                        AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id].expr));
                                         continue;
                                     }
                                 }
@@ -1359,7 +913,7 @@ export class Evaluator {
                             tree.list[i].type === 'NAME' &&
                             !(local && this.localTable[fname] && this.localTable[fname][tree.list[i].id]) &&
                             !(tree.list[i].id in this.nameTable) &&
-                            commandsTable.indexOf(tree.list[i].id) >= 0
+                            this.parser.commandNames.indexOf(tree.list[i].id) >= 0
                         ) {
                             tree.list[i].type = 'CmdWList';
                             tree.list[i]['args'] = [];
@@ -1707,6 +1261,8 @@ export class Evaluator {
                         }
                         ifstr += 'ENDIF';
                         return ifstr;
+                    case 'NULL':
+                        return '';
                     default:
                         return '<INVALID>';
                 }
@@ -1851,6 +1407,8 @@ export class Evaluator {
                         );
                         const ifElse = tree.else ? `<mtr><mtd><mo>ELSE</mo></mtd></mtr><mtr><mtd></mtd><mtd>${this.unparserMathML(tree.else)}</mtd></mtr>` : '';
                         return `<mtable>${ifThenArray.join('')}${ifElse}<mtr><mtd><mo>ENDIF</mo></mtd></mtr></mtable>`;
+                    case 'NULL':
+                        return '';
                     default:
                         return '<mi>invalid</mi>';
                 }
@@ -1871,8 +1429,12 @@ export class Evaluator {
      */
     public UnparseMathML(tree: any, display: 'inline' | 'block' = 'block'): string {
         let result: string = this.unparserMathML(tree);
-        result = result.replace(/\<mo\>\(\<\/mo\>\<mi\>error\<\/mi\><\mi\>error\<\/mi\>\<mi\>i\<\/mi\>\<mo\>\)\<\/mo\>/gi, '<mi>error</mi>');
-        return `<math xmlns = "http://www.w3.org/1998/Math/MathML" display="${display}">${result}</math>`;
+        if (result) {
+            result = result.replace(/\<mo\>\(\<\/mo\>\<mi\>error\<\/mi\><\mi\>error\<\/mi\>\<mi\>i\<\/mi\>\<mo\>\)\<\/mo\>/gi, '<mi>error</mi>');
+            return `<math xmlns = "http://www.w3.org/1998/Math/MathML" display="${display}">${result}</math>`;
+        } else {
+            return '';
+        }
     }
 
     /**

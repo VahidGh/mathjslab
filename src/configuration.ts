@@ -1,7 +1,7 @@
-import { CharString } from './char-string';
-import { ComplexDecimal } from './complex-decimal';
-import { CoreFunctions } from './core-functions';
-import { MultiArray } from './multi-array';
+import { CharString } from './CharString';
+import { ComplexDecimal } from './ComplexDecimal';
+import { CoreFunctions } from './CoreFunctions';
+import { MultiArray } from './MultiArray';
 
 const roundingStrings = ['up', 'down', 'ceil', 'floor', 'half_up', 'half_down', 'half_even', 'half_ceil', 'half_floor'];
 
