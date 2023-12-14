@@ -1,5 +1,8 @@
+import { CharString } from './CharString';
 import { ComplexDecimal } from './ComplexDecimal';
 import { Evaluator } from './Evaluator';
+
+export type Element = ComplexDecimal;
 
 /**
  * # MultiArray
@@ -20,14 +23,19 @@ export class MultiArray {
     }
 
     /**
-     * Array property.
+     * Array content.
      */
-    public array: ComplexDecimal[][];
+    public array: Element[][];
 
     /**
-     * Type property.
+     * Type attribute.
      */
     public type: number;
+
+    /**
+     * True if cell array.
+     */
+    public isCell: boolean;
 
     /**
      * Parent node property.
@@ -55,11 +63,13 @@ export class MultiArray {
                     this.array[i] = new Array(this.dimension[1]).fill({ type: -1 });
                 }
                 this.type = -1;
+                this.isCell = false;
             }
         } else {
             this.dimension = [0, 0];
             this.array = [];
             this.type = -1;
+            this.isCell = false;
         }
     }
 
@@ -259,9 +269,10 @@ export class MultiArray {
      * @param row Array of objects.
      * @returns MultiArray with `row` parameter as first line.
      */
-    public static firstRow(row: any[]): MultiArray {
+    public static firstRow(row: any[], iscell?: boolean): MultiArray {
         const result = new MultiArray([1, row.length]);
         result.array[0] = row;
+        result.isCell = iscell ?? false;
         return result;
     }
 
@@ -299,7 +310,7 @@ export class MultiArray {
         const unparseRows = (row: any[]) => row.map((value) => global.EvaluatorPointer.Unparse(value)).join() + ';\n';
         let arraystr: string = '';
         if (M.dimension.reduce((p, c) => p * c, 1) === 0) {
-            return `[](${M.dimension.join('x')})`;
+            return `${M.isCell ? '{ }' : '[ ]'}(${M.dimension.join('x')})`;
         }
         if (M.dimension.length > 2) {
             let result = '';
@@ -309,13 +320,13 @@ export class MultiArray {
                     .map(unparseRows)
                     .join('');
                 arraystr = arraystr.substring(0, arraystr.length - 2);
-                result += `[\n${arraystr}\n] (:,:,${MultiArray.linearIndexToSubscript(M.dimensionR, p).slice(1).join()})\n`;
+                result += `${M.isCell ? '{' : '['}\n${arraystr}\n${M.isCell ? '}' : ']'} (:,:,${MultiArray.linearIndexToSubscript(M.dimensionR, p).slice(1).join()})\n`;
             }
             return result;
         } else {
             arraystr = M.array.map(unparseRows).join('');
             arraystr = arraystr.substring(0, arraystr.length - 2);
-            return `[\n${arraystr}\n]`;
+            return `${M.isCell ? '{' : '['}\n${arraystr}\n${M.isCell ? '}' : ']'}`;
         }
     }
 
@@ -326,9 +337,9 @@ export class MultiArray {
      */
     public static unparseMathML(M: MultiArray): string {
         const unparseRows = (row: any[]) => `<mtr>${row.map((value) => `<mtd>${global.EvaluatorPointer.unparserMathML(value)}</mtd>`).join('')}</mtr>`;
-        const buildMrow = (rows: string) => `<mrow><mo>[</mo><mtable>${rows}</mtable><mo>]</mo></mrow>`;
+        const buildMrow = (rows: string) => `<mrow><mo>${M.isCell ? '{' : '['}</mo><mtable>${rows}</mtable><mo>${M.isCell ? '}' : ']'}</mo></mrow>`;
         if (M.dimension.reduce((p, c) => p * c, 1) === 0) {
-            return `<mrow><mo>[</mo><mtable><mspace width="0.5em"/></mtable><mo>]</mo></mrow><mo>(</mo><mn>${M.dimension.join('</mn><mi>&times;</mi><mn>')}</mn><mo>)</mo>`;
+            return `${buildMrow('<mspace width="0.5em"/>')}<mo>(</mo><mn>${M.dimension.join('</mn><mi>&times;</mi><mn>')}</mn><mo>)</mo>`;
         }
         if (M.dimension.length > 2) {
             let result = '';
@@ -359,7 +370,7 @@ export class MultiArray {
      * @param parent Parent node of items in page.
      * @returns Evaluated matrix.
      */
-    private static evaluatePage(array: any[][], local: boolean = false, fname: string = '', parent: any): any[][] {
+    private static evaluatePage(array: any[][], local: boolean = false, fname: string = '', iscell: boolean = false, parent: any): any[][] {
         const result: any[][] = [];
         for (let i = 0, k = 0; i < array.length; i++, k++) {
             result.push([]);
@@ -367,7 +378,7 @@ export class MultiArray {
             for (let j = 0; j < array[i].length; j++) {
                 array[i][j].parent = parent;
                 const element = global.EvaluatorPointer.Evaluator(array[i][j], local, fname);
-                if ('array' in element) {
+                if ('array' in element && !iscell) {
                     if (j === 0) {
                         h = element.array.length;
                         result.splice(k, 1, element.array[0]);
@@ -403,8 +414,9 @@ export class MultiArray {
      */
     public static evaluate(M: MultiArray, local: boolean = false, fname: string = ''): MultiArray {
         const result: MultiArray = new MultiArray();
+        result.isCell = M.isCell;
         for (let p = 0; p < M.array.length; p += M.dimension[0]) {
-            const page = MultiArray.evaluatePage(M.array.slice(p, p + M.dimension[0]), local, fname, result);
+            const page = MultiArray.evaluatePage(M.array.slice(p, p + M.dimension[0]), local, fname, M.isCell, result);
             if (p === 0) {
                 result.dimension = [page.length, page[0].length, ...M.dimension.slice(2)];
             } else {
@@ -444,8 +456,10 @@ export class MultiArray {
      * Returns a empty array (0x0 matrix).
      * @returns Empty array (0x0 matrix).
      */
-    public static emptyArray(): MultiArray {
-        return new MultiArray([0, 0]);
+    public static emptyArray(iscell?: boolean): MultiArray {
+        const result = new MultiArray([0, 0]);
+        result.isCell = iscell ?? false;
+        return result;
     }
 
     /**

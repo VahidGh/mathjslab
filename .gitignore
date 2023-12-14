@@ -42,3 +42,6 @@ package-lock.json
 
 # Output of 'npm pack'
 *.tgz
+
+# vscode settings
+.vscode

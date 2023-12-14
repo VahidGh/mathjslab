@@ -12,10 +12,7 @@ export default class ParserErrorListener extends ErrorListener<Token> {
         if (msg === "missing ';' at ''") {
             return;
         }
-        if (
-            msg ===
-            "mismatched input '' expecting {':', CYPHER, EXPLAIN, PROFILE, USING, CREATE, DROP, LOAD, WITH, OPTIONAL, MATCH, UNWIND, MERGE, SET, DETACH, DELETE, REMOVE, FOREACH, RETURN, START, CALL}"
-        ) {
+        if (msg === "mismatched input '' expecting") {
             return;
         }
         this.errors.push({ line, column, msg });

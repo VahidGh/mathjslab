@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.3.1
+- Improvements and some bug fixes in lexer and parser. Support for cell arrays in parser and MultiArray class. Error messages in existing functions and cell array functions no yet implemented.
+- Start and stop positions (line and column) of statements in global scope stored in AST nodes.
+- Some improvements in CharString class, removing 'removeQuotes' method an creating 'quote' property to store type of quote (single or double).
+
 ## 1.3.0
 - Parser implemented using ANTLR in files MathJSLabLexer.g4 and MathJSLabParser.g4. The wrapper class for lexer and parser has been created in file Parser.ts. Need to make extensive tests.
 - File names converted to camel case.

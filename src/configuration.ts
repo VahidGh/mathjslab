@@ -42,11 +42,11 @@ export abstract class Configuration {
         },
         rounding: {
             set: (rounding: CharString) => {
-                const roundingMode = roundingStrings.indexOf(rounding.string);
+                const roundingMode = roundingStrings.indexOf(rounding.str);
                 if (roundingMode > 0) {
                     ComplexDecimal.set({ rounding: roundingMode as ComplexDecimal.Rounding });
                 } else {
-                    throw new Error(`configure: invalid rounding mode: ${rounding.string}`);
+                    throw new Error(`configure: invalid rounding mode: ${rounding.str}`);
                 }
             },
             setDefault: () => ComplexDecimal.set({ rounding: ComplexDecimal.defaultConfiguration.rounding }),
@@ -74,11 +74,11 @@ export abstract class Configuration {
         },
         modulo: {
             set: (modulo: CharString) => {
-                const moduloMode = moduloStrings.indexOf(modulo.string);
+                const moduloMode = moduloStrings.indexOf(modulo.str);
                 if (moduloMode > 0) {
                     ComplexDecimal.set({ modulo: moduloMode as ComplexDecimal.Modulo });
                 } else {
-                    throw new Error(`configure: invalid modulo mode: ${modulo.string}`);
+                    throw new Error(`configure: invalid modulo mode: ${modulo.str}`);
                 }
             },
             setDefault: () => ComplexDecimal.set({ modulo: ComplexDecimal.defaultConfiguration.modulo }),
@@ -97,10 +97,10 @@ export abstract class Configuration {
     public static configure(...args: any[]): CharString | undefined {
         const setConfig = (config: [CharString, any]): void => {
             if ('str' in config[0]) {
-                if (config[0].string in Configuration.configuration) {
-                    Configuration.configuration[config[0].string].set(config[1]);
+                if (config[0].str in Configuration.configuration) {
+                    Configuration.configuration[config[0].str].set(config[1]);
                 } else {
-                    throw new ReferenceError(`configure: invalid configuration: '${config[0].string}'.`);
+                    throw new ReferenceError(`configure: invalid configuration: '${config[0].str}'.`);
                 }
             } else {
                 CoreFunctions.throwInvalidCallError('configure');
@@ -125,7 +125,7 @@ export abstract class Configuration {
         } else if (args.length === 2 && 'str' in args[0]) {
             // Configuration key and value.
             setConfig(args as [CharString, any]);
-            return new CharString(`Configuration parameter '${args[0].string}' set to ${Configuration.configuration[args[0].string].get().unparse()}`);
+            return new CharString(`Configuration parameter '${args[0].str}' set to ${Configuration.configuration[args[0].str].get().unparse()}`);
         } else {
             CoreFunctions.throwInvalidCallError('configure');
         }
@@ -151,8 +151,8 @@ export abstract class Configuration {
         } else if (args.length === 1) {
             // Get selected configurations.
             const C = MultiArray.linearize(MultiArray.scalarToMultiArray(args[0])).map((c) => {
-                if ('str' in c && c.string in Configuration.configuration) {
-                    return c.string;
+                if ('str' in c && c.str in Configuration.configuration) {
+                    return c.str;
                 } else {
                     throw new Error('getconfig: invalid configuration parameter.');
                 }

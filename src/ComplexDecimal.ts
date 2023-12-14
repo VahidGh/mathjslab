@@ -552,14 +552,13 @@ export class ComplexDecimal {
     }
 
     public static minMaxArrayRealWithIndex(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): [ComplexDecimal, number] {
-        // TODO: check if reverse can be removed and reducedRight used.
         let index: number = 0;
-        const result = args.reverse().reduce(
+        const result = args.reduceRight(
             (previous: ComplexDecimal, current: ComplexDecimal, i: number): ComplexDecimal => {
                 if (previous.re[cmp](current.re)) {
                     return previous;
                 } else {
-                    index = args.length - 1 - i;
+                    index = i;
                     return current;
                 }
             },
@@ -590,9 +589,8 @@ export class ComplexDecimal {
     }
 
     public static minMaxArrayComplexWithIndex(cmp: 'lt' | 'gt', ...args: ComplexDecimal[]): [ComplexDecimal, number] {
-        // TODO: check if reverse can be removed and reducedRight used.
         let index: number = 0;
-        const result = args.reverse().reduce(
+        const result = args.reduceRight(
             (previous: ComplexDecimal, current: ComplexDecimal, i: number): ComplexDecimal => {
                 const previous_abs = ComplexDecimal.abs(previous).re;
                 const current_abs = ComplexDecimal.abs(current).re;
@@ -600,14 +598,14 @@ export class ComplexDecimal {
                     if (ComplexDecimal.arg(previous).re[cmp](ComplexDecimal.arg(current).re)) {
                         return previous;
                     } else {
-                        index = args.length - 1 - i;
+                        index = i;
                         return current;
                     }
                 } else {
                     if (previous_abs[cmp](current_abs)) {
                         return previous;
                     } else {
-                        index = args.length - 1 - i;
+                        index = i;
                         return current;
                     }
                 }

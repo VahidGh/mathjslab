@@ -60,8 +60,6 @@ export type TOperator =
     | '_++'
     | '_--';
 
-export type NodeInput = NodeExpr;
-
 /**
  * Common primary node.
  */
@@ -69,7 +67,12 @@ export interface PrimaryNode {
     type: string | number;
     parent?: any;
     index?: number;
+    omitOut?: boolean;
+    start?: { line: number; column: number };
+    stop?: { line: number; column: number };
 }
+
+export type NodeInput = NodeExpr;
 
 export interface NodeNull {
     type: 'NULL';
@@ -89,7 +92,7 @@ export interface NodeReserved extends PrimaryNode {}
  * Name node.
  */
 export interface NodeIdentifier extends PrimaryNode {
-    type: 'NAME';
+    type: 'IDENT';
     id: string;
 }
 
@@ -97,9 +100,10 @@ export interface NodeIdentifier extends PrimaryNode {
  * Command word list node.
  */
 export interface NodeCmdWList extends PrimaryNode {
-    type: 'CmdWList';
+    type: 'CMDWLIST';
     id: string;
     args: Array<CharString>;
+    omitAns?: boolean;
 }
 
 /**
@@ -143,6 +147,7 @@ export interface UnaryOperationR extends PrimaryNode {
  */
 export interface UnaryOperationL extends PrimaryNode {
     left: NodeExpr;
+    omitAns?: boolean; // To omit result to be stored in 'ans' variable.
 }
 
 /**
@@ -151,6 +156,7 @@ export interface UnaryOperationL extends PrimaryNode {
 export interface BinaryOperation extends PrimaryNode {
     left: NodeExpr;
     right: NodeExpr;
+    omitAns?: boolean; // To omit result to be stored in 'ans' variable.
 }
 
 /**
@@ -176,6 +182,7 @@ export interface NodeIf extends PrimaryNode {
     expression: NodeExpr[];
     then: NodeList[];
     else: NodeList | null;
+    omitAns?: boolean;
 }
 
 export interface NodeElseIf extends PrimaryNode {
@@ -201,12 +208,11 @@ export const nodeNull = (): NodeNull => {
     return { type: 'NULL' };
 };
 
-export const nodeString = CharString.parse;
+export const nodeString = CharString.create;
 export const nodeNumber = ComplexDecimal.parse;
 export const firstRow = MultiArray.firstRow;
 export const appendRow = MultiArray.appendRow;
 export const emptyArray = MultiArray.emptyArray;
-export const removeQuotes = CharString.removeQuotes;
 
 /**
  * Create literal node.
@@ -224,7 +230,7 @@ export const nodeLiteral = (nodeid: string): NodeReserved => {
  */
 export const nodeIdentifier = (nodeid: string): NodeIdentifier => {
     return {
-        type: 'NAME',
+        type: 'IDENT',
         id: nodeid.replace(/(\r\n|[\n\r])|[\ ]/gm, ''),
     };
 };
@@ -237,9 +243,10 @@ export const nodeIdentifier = (nodeid: string): NodeIdentifier => {
  */
 export const nodeCmdWList = (nodename: NodeIdentifier, nodelist: NodeList): NodeCmdWList => {
     return {
-        type: 'CmdWList',
+        type: 'CMDWLIST',
         id: nodename.id,
         args: nodelist ? (nodelist.list as any) : [],
+        omitAns: true,
     };
 };
 
@@ -316,6 +323,7 @@ export const nodeOp = (op: TOperator, data1: any, data2?: any): NodeOperation =>
         case '|':
         case '&&':
         case '||':
+            return { type: op, left: data1, right: data2 };
         case '=':
         case '+=':
         case '-=':
@@ -331,22 +339,24 @@ export const nodeOp = (op: TOperator, data1: any, data2?: any): NodeOperation =>
         case '.**=':
         case '&=':
         case '|=':
-            return { type: op, left: data1, right: data2 };
+            return { type: op, left: data1, right: data2, omitAns: true };
         case '()':
         case '!':
         case '~':
         case '+_':
         case '-_':
+            return { type: op, right: data1 };
         case '++_':
         case '--_':
-            return { type: op, right: data1 };
+            return { type: op, right: data1, omitAns: true };
         case ".'":
         case "'":
+            return { type: op, left: data1 };
         case '_++':
         case '_--':
-            return { type: op, left: data1 };
+            return { type: op, left: data1, omitAns: true };
         default:
-            return { type: 'INVALID' } as NodeOperation;
+            return { type: `INVALID:${op}` } as NodeOperation;
     }
 };
 
@@ -396,11 +406,11 @@ export const nodeList = (list: any[]): NodeList => {
  * @param row
  * @returns
  */
-export const nodeFirstRow = (row: NodeList): MultiArray => {
+export const nodeFirstRow = (row: NodeList, iscell?: boolean): MultiArray => {
     if (row) {
-        return firstRow(row.list);
+        return firstRow(row.list, iscell);
     } else {
-        return emptyArray();
+        return emptyArray(iscell);
     }
 };
 
@@ -436,6 +446,7 @@ export const nodeIfBegin = (expression: any, then: NodeList): NodeIf => {
         expression: [expression],
         then: [then],
         else: null,
+        omitAns: true,
     };
 };
 

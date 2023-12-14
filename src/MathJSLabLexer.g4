@@ -1,9 +1,8 @@
 lexer grammar MathJSLabLexer;
 
-// Reserved keywords.
 tokens { GLOBAL, PERSISTENT, IF, ENDIF, END, ENDRANGE, ELSEIF, ELSE, SWITCH, ENDSWITCH, CASE, OTHERWISE, WHILE, ENDWHILE, DO, UNTIL, FOR, ENDFOR, PARFOR, ENDPARFOR,
 BREAK, CONTINUE, RETURN, FUNCTION, ENDFUNCTION, TRY, CATCH, END_TRY_CATCH, UNWIND_PROTECT, UNWIND_PROTECT_CLEANUP, END_UNWIND_PROTECT, CLASSDEF, ENDCLASSDEF,
-ENUMERATION, ENDENUMERATION, PROPERTIES, ENDPROPERTIES, EVENTS, ENDEVENTS, METHODS, ENDMETHODS }
+ENUMERATION, ENDENUMERATION, PROPERTIES, ENDPROPERTIES, EVENTS, ENDEVENTS, METHODS, ENDMETHODS, WSPACE, STRING }
 
 @members {
     /**
@@ -108,7 +107,7 @@ ENUMERATION, ENDENUMERATION, PROPERTIES, ENDPROPERTIES, EVENTS, ENDEVENTS, METHO
     public previousTokenType: number = Token.EOF;
     public parenthesisCount: number = 0;
     public matrixContext: number[] = [];
-    public emitNewline: boolean = false;
+    public quotedString: string = '';
 }
 
 /**
@@ -124,6 +123,7 @@ SEMICOLON: ';' { this.previousTokenType = MathJSLabLexer.SEMICOLON; };
 COMMA: ',' { this.previousTokenType = MathJSLabLexer.COMMA; };
 TILDE: '~' { this.previousTokenType = MathJSLabLexer.TILDE; };
 EXCLAMATION: '!' { this.previousTokenType = MathJSLabLexer.EXCLAMATION; };
+COMMAT: '@' { this.previousTokenType = MathJSLabLexer.COMMAT; };
 LPAREN: '(' {
     if (this.matrixContext.length > 0) {
         this.matrixContext.push(MathJSLabLexer.LPAREN);
@@ -145,6 +145,14 @@ LBRACKET: '[' {
 RBRACKET: ']' {
     this.matrixContext.pop();
     this.previousTokenType = MathJSLabLexer.RBRACKET;
+};
+LCURLYBR: '{' {
+    this.matrixContext.push(MathJSLabLexer.LCURLYBR);
+    this.previousTokenType = MathJSLabLexer.LCURLYBR;
+};
+RCURLYBR: '}' {
+    this.matrixContext.pop();
+    this.previousTokenType = MathJSLabLexer.RCURLYBR;
 };
 LEFTDIV: '\\' { this.previousTokenType = MathJSLabLexer.LEFTDIV; };
 ADD_EQ: '+=' { this.previousTokenType = MathJSLabLexer.ADD_EQ; };
@@ -172,12 +180,34 @@ EXPR_GT: '>' { this.previousTokenType = MathJSLabLexer.EXPR_GT; };
 EMUL: '.*' { this.previousTokenType = MathJSLabLexer.EMUL; };
 EDIV: './' { this.previousTokenType = MathJSLabLexer.EDIV; };
 ELEFTDIV: '.\\' { this.previousTokenType = MathJSLabLexer.ELEFTDIV; };
-HERMITIAN: '.\'' { this.previousTokenType = MathJSLabLexer.HERMITIAN; };
-TRANSPOSE: '\'' { this.previousTokenType = MathJSLabLexer.TRANSPOSE; };
 PLUS_PLUS: '++' { this.previousTokenType = MathJSLabLexer.PLUS_PLUS; };
 MINUS_MINUS: '--' { this.previousTokenType = MathJSLabLexer.MINUS_MINUS; };
 POW: ('^' | '**') { this.previousTokenType = MathJSLabLexer.POW; };
 EPOW: ('.^' | '.**') { this.previousTokenType = MathJSLabLexer.EPOW; };
+TRANSPOSE: '.\'' { this.previousTokenType = MathJSLabLexer.TRANSPOSE; };
+HERMITIAN: '\'' {
+    if (
+        this.previousTokenType === MathJSLabLexer.RPAREN ||
+        this.previousTokenType === MathJSLabLexer.RBRACKET ||
+        this.previousTokenType === MathJSLabLexer.RCURLYBR ||
+        this.previousTokenType === MathJSLabLexer.IDENTIFIER ||
+        this.previousTokenType === MathJSLabLexer.DECIMAL_NUMBER
+    ) {
+        this.previousTokenType = MathJSLabLexer.HERMITIAN;
+    } else {
+        this.pushMode(MathJSLabLexer.SQ_STRING);
+        this.quotedString = '';
+        this.skip();
+    }
+};
+
+DQSTRING
+    : '"'{
+        this.pushMode(MathJSLabLexer.DQ_STRING);
+        this.quotedString = '';
+        this.skip();
+    }
+    ;
 
 IDENTIFIER
     : IDENT (SPACE? '.' SPACE? IDENT)* {
@@ -186,17 +216,7 @@ IDENTIFIER
         if (i >= 0) {
             switch (MathJSLabLexer.keywordTypes[i]) {
                 case MathJSLabLexer.END:
-                    if (this.parenthesisCount > 0) {
-                        this._type = MathJSLabLexer.ENDRANGE;
-                        this.previousTokenType = MathJSLabLexer.ENDRANGE;
-                    } else {
-                        this._type = MathJSLabLexer.END;
-                        this.previousTokenType = MathJSLabLexer.END;
-                    }
-                    break;
-                case MathJSLabLexer.IF:
-                    this.emitNewline = true;
-                    this._type = this.previousTokenType = MathJSLabLexer.IF;
+                    this._type = this.previousTokenType = this.parenthesisCount > 0 ? MathJSLabLexer.ENDRANGE : MathJSLabLexer.END;
                     break;
                 default:
                     this._type = this.previousTokenType = MathJSLabLexer.keywordTypes[i];
@@ -206,6 +226,7 @@ IDENTIFIER
             if (i >= 0) {
                 this.pushMode(MathJSLabLexer.ANY_AS_STRING_UNTIL_END_OF_LINE);
             }
+            this.previousTokenType = MathJSLabLexer.IDENTIFIER;
         }
     }
     ;
@@ -214,19 +235,15 @@ DECIMAL_NUMBER
     :  REAL_DECIMAL [IiJj]?  { this.previousTokenType = MathJSLabLexer.DECIMAL_NUMBER; }
     ;
 
-STRING
-    : '\'' ~[']* '\'' | '"' ~["]* '"'  { this.previousTokenType = MathJSLabLexer.STRING; }
-    ;
-
 SPACE_OR_CONTINUATION
-    : SPACE ( '...' ~[\r\n]* NEWLINE )? {
+    : SPACE ( '...' ~[\r\n]* NL )? {
         if (this.matrixContext.length > 0 &&
             this.previousTokenType !== MathJSLabLexer.LBRACKET &&
             this.previousTokenType !== MathJSLabLexer.COMMA &&
             this.previousTokenType !== MathJSLabLexer.SEMICOLON &&
             this.matrixContext[this.matrixContext.length-1] !== MathJSLabLexer.LPAREN
         ) {
-            this._type = this.previousTokenType = MathJSLabLexer.COMMA;
+            this._type = this.previousTokenType = MathJSLabLexer.WSPACE;
         } else {
             this.skip();
         }
@@ -235,32 +252,130 @@ SPACE_OR_CONTINUATION
 
 NEWLINE
     : NL {
-        if (this.emitNewline) {
-            this.emitNewline = false;
-            this.previousTokenType = MathJSLabLexer.NEWLINE;
-        } else if (this.matrixContext.length > 0 &&
-            this.previousTokenType !== MathJSLabLexer.LBRACKET &&
-            this.previousTokenType !== MathJSLabLexer.COMMA &&
-            this.previousTokenType !== MathJSLabLexer.SEMICOLON &&
-            this.matrixContext[this.matrixContext.length-1] !== MathJSLabLexer.LPAREN
+        if (this.matrixContext.length > 0 &&
+            (this.previousTokenType === MathJSLabLexer.LBRACKET ||
+            this.previousTokenType === MathJSLabLexer.COMMA ||
+            this.previousTokenType === MathJSLabLexer.SEMICOLON)
         ) {
-            this._type = this.previousTokenType = MathJSLabLexer.SEMICOLON;
-        } else {
             this.skip();
+        } else {
+            this.previousTokenType = MathJSLabLexer.NEWLINE;
         }
     }
     ;
 
-COMMENT_LINE
-    : CCHAR .*? (NL | EOF) -> skip
+BLOCK_COMMENT_START
+    : SPACE? CCHAR '{' SPACE? NL {
+        this.pushMode(MathJSLabLexer.BLOCK_COMMENT);
+        this._type = this.previousTokenType = MathJSLabLexer.NEWLINE;
+    }
     ;
 
-BLOCK_COMMENT_START
-    : SPACE? CCHAR '{' SPACE? NL { this.pushMode(MathJSLabLexer.BLOCK_COMMENT); this.skip(); }
+COMMENT_LINE
+    : CCHAR ~[\r\n]* (NL {
+        this._type = this.previousTokenType = MathJSLabLexer.NEWLINE;
+    } | EOF {
+        this._type = this.previousTokenType = MathJSLabLexer.EOF;
+    })
     ;
 
 INVALID
     : .
+    ;
+
+mode SQ_STRING;
+
+SINGLEQ_STRING
+    : ~['\r\n]+ {
+        this.quotedString += this.text;
+        this.skip();
+    }
+    ;
+
+SINGLEQ_NL
+    : NL {
+        this._type = this.previousTokenType = MathJSLabLexer.INVALID;
+    }
+    ;
+
+SINGLEQ_SINGLEQ
+    : '\'\'' {
+        this.quotedString += '\'';
+        this.skip();
+    }
+    ;
+
+SINGLEQ_END
+    : '\'' {
+        this.text = `'${this.quotedString}'`;
+        this.popMode();
+        this._type = this.previousTokenType = MathJSLabLexer.STRING;
+    }
+    ;
+
+mode DQ_STRING;
+
+DOUBLEQ_STRING
+    : ~[\\"\r\n]+ {
+        this.quotedString += this.text;
+        this.skip();
+    }
+    ;
+
+DOUBLEQ_NL
+    : NL {
+        this._type = this.previousTokenType = MathJSLabLexer.INVALID;
+    }
+    ;
+
+DOUBLEQ_DOUBLEQ
+    : '""' {
+        this.quotedString += '"';
+        this.skip();
+    }
+    ;
+
+DOUBLEQ_ESCAPE
+    : '\\' [\\"'bfnrt] {
+        this.quotedString += JSON.parse(`"\${ this.text }"`);
+        this.skip();
+    }
+    ;
+
+DOUBLEQ_ESCAPE_OTHER
+    : '\\' . {
+        this.quotedString += this.text.substring(1);
+        this.skip();
+    }
+    ;
+
+DOUBLEQ_ESCAPE_OCT
+    : '\\' [0-7] [0-7]? [0-7]? {
+        this.quotedString += JSON.parse(`"\\u${ parseInt(this.text.substring(1), 8).toString(16).padStart(4,'0') }"`);
+        this.skip();
+    }
+    ;
+
+DOUBLEQ_ESCAPE_HEX
+    : '\\' 'x' [0-9A-Fa-f] [0-9A-Fa-f]? {
+        this.quotedString += eval(`"\\x${ this.text.substring(2) }"`);
+        this.skip();
+    }
+    ;
+
+DOUBLEQ_ESCAPE_UNICODE
+    : '\\' 'u' [0-9A-Fa-f] [0-9A-Fa-f]? [0-9A-Fa-f]? [0-9A-Fa-f]? {
+        this.quotedString += JSON.parse(`"\\u${ this.text.substring(2).padStart(4,'0') }"`);
+        this.skip();
+    }
+    ;
+
+DOUBLEQ_END
+    : '"' {
+        this.text = `"${this.quotedString}"`;
+        this.popMode();
+        this._type = this.previousTokenType = MathJSLabLexer.STRING;
+    }
     ;
 
 mode BLOCK_COMMENT;
@@ -288,11 +403,17 @@ SKIP_SPACE
     ;
 
 SKIP_COMMENT_LINE
-    : CCHAR .*? NL? { this.popMode(); this.skip(); }
+    : CCHAR ~[\r\n]* {
+        this.popMode();
+        this.skip();
+    }
     ;
 
 EXIT_AT_NEWLINE
-    : NL { this.popMode(); this.skip(); }
+    : NL {
+        this.popMode();
+        this._type = this.previousTokenType = MathJSLabLexer.NEWLINE;
+    }
     ;
 
 EXIT_AT_EOF
@@ -302,9 +423,9 @@ EXIT_AT_EOF
     }
     ;
 
-ANY_AS_STRING
+UNQUOTED_STRING
     : ~[ \t\r\n]+ {
-        this._type = this.previousTokenType = MathJSLabLexer.STRING;
+        this._type = this.previousTokenType = MathJSLabLexer.UNQUOTED_STRING;
     }
     ;
 

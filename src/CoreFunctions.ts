@@ -40,7 +40,18 @@ export abstract class CoreFunctions {
      * @param name
      */
     public static throwInvalidCallError(name: string): void {
-        throw new Error(`Invalid call to ${name}.  Type 'help ${name}' to see correct usage.`);
+        throw new Error(`Invalid call to ${name}. Type 'help ${name}' to see correct usage.`);
+    }
+
+    /**
+     *
+     * @param name
+     * @param M
+     */
+    public static throwErrorIfCellArray(name: string, M: MultiArray | ComplexDecimal): void {
+        if ('array' in M && M.isCell) {
+            throw new Error(`${name}: wrong type argument 'cell'`);
+        }
     }
 
     /**
@@ -114,7 +125,7 @@ export abstract class CoreFunctions {
             const index = IDX.map((idx, i) => {
                 if ('array' in idx) {
                     return MultiArray.linearLength(idx);
-                } else if ('str' in idx && idx.string === ':') {
+                } else if ('str' in idx && idx.str === ':') {
                     return i < m.dimension.length ? m.dimension[i] : 1;
                 } else {
                     return 1;
