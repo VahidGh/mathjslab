@@ -74,17 +74,6 @@ export class MultiArray {
     }
 
     /**
-     * Check if object is a MultiArray. For efficiency reasons, this method
-     * should not be used internally in this class. Use the test
-     * `'array' in obj` instead.
-     * @param obj Any object.
-     * @returns true if object is a MultiArray. false otherwise.
-     */
-    public static isThis(obj: any): boolean {
-        return 'array' in obj;
-    }
-
-    /**
      * Check if object is a MultiArray and it is a row vector. To be used
      * only in Evaluator to test multiple assignment. The restrictions
      * imposed by parser can restrict the check only to `obj.dimension[0] === 1`.
@@ -360,6 +349,17 @@ export class MultiArray {
         }
     }
 
+    public static fromCharString(text: CharString): MultiArray {
+        if (text.str.length > 0) {
+            const result = new MultiArray([1, text.str.length]);
+            result.array = [text.str.split('').map((char) => new ComplexDecimal(char.charCodeAt(0)))];
+            result.type = ComplexDecimal.numberClass.real;
+            return MultiArray.MultiArrayToScalar(result);
+        } else {
+            return MultiArray.emptyArray();
+        }
+    }
+
     /**
      * Evaluate array. Calls `global.EvaluatorPointer.Evaluator` for each
      * element of page (matrix row-ordered). Performs horizontal or vertical
@@ -520,8 +520,15 @@ export class MultiArray {
      */
     public static copy(M: MultiArray): MultiArray {
         const result = new MultiArray(M.dimension);
-        result.array = M.array.map((row) => row.map((value) => (ComplexDecimal.isThis(value) ? ComplexDecimal.copy(value) : Object.assign({}, value))));
+        result.array = M.array.map((row) => row.map((value) => value.copy()));
         result.type = M.type;
+        return result;
+    }
+
+    public copy(): MultiArray {
+        const result = new MultiArray(this.dimension);
+        result.array = this.array.map((row) => row.map((value) => value.copy()));
+        result.type = this.type;
         return result;
     }
 
@@ -535,8 +542,21 @@ export class MultiArray {
         for (let i = 0; i < M.array.length; i++) {
             const row = M.array[i];
             for (let j = 0; j < M.dimension[1]; j++) {
-                const value = ComplexDecimal.toMaxPrecision(row[j]);
-                if (value.re.eq(0) && value.im.eq(0)) {
+                const value = row[j].toLogical();
+                if (value.re.eq(0)) {
+                    return ComplexDecimal.false();
+                }
+            }
+        }
+        return ComplexDecimal.true();
+    }
+
+    public toLogical(): ComplexDecimal {
+        for (let i = 0; i < this.array.length; i++) {
+            const row = this.array[i];
+            for (let j = 0; j < this.dimension[1]; j++) {
+                const value = row[j].toLogical();
+                if (value.re.eq(0)) {
                     return ComplexDecimal.false();
                 }
             }
@@ -957,9 +977,9 @@ export class MultiArray {
                     const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(M.dimension[0], M.dimension[1], linearM);
                     const [p, q] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], n);
                     if (d === 1) {
-                        result.array[p][q] = [M.array[i][j]] as unknown as ComplexDecimal;
+                        result.array[p][q] = [M.array[i][j]] as unknown as Element;
                     } else {
-                        (result.array[p][q] as unknown as ComplexDecimal[]).push(M.array[i][j]);
+                        (result.array[p][q] as unknown as Element[]).push(M.array[i][j]);
                     }
                 }
             }

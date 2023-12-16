@@ -241,14 +241,11 @@ export class Evaluator {
     /**
      * Parser AST (Abstract Syntax Tree) constructor methods.
      */
-    public readonly isString = CharString.isThis;
     public readonly unparseString = CharString.unparse;
     public readonly unparseStringMathML = CharString.unparseMathML;
     public readonly newNumber = ComplexDecimal.newThis;
-    public readonly isNumber = ComplexDecimal.isThis;
     public readonly unparseNumber = ComplexDecimal.unparse;
     public readonly unparseNumberMathML = ComplexDecimal.unparseMathML;
-    public readonly isTensor = MultiArray.isThis;
     public readonly isRowVector = MultiArray.isRowVector;
     public readonly unparseTensor = MultiArray.unparse;
     public readonly unparseTensorMathML = MultiArray.unparseMathML;
@@ -591,11 +588,11 @@ export class Evaluator {
      * @returns
      */
     public toBoolean(tree: any): boolean {
-        const value = this.isTensor(tree) ? this.toLogical(tree) : tree;
-        if (this.isNumber(value)) {
+        const value = tree instanceof MultiArray ? this.toLogical(tree) : tree;
+        if (value instanceof ComplexDecimal) {
             return Boolean(value.re.toNumber() || value.im.toNumber());
-        } else if (this.isString(value)) {
-            return !!value.string;
+        } else if (value instanceof CharString) {
+            return !!value.str;
         } else {
             throw new Error('Evaluator.toBoolean: argument must be evaluated.');
         }
@@ -619,10 +616,10 @@ export class Evaluator {
             );
         }
         if (tree) {
-            if (this.isNumber(tree) || this.isString(tree)) {
+            if (tree instanceof ComplexDecimal || tree instanceof CharString) {
                 /* NUMBER or STRING */
                 return tree;
-            } else if (this.isTensor(tree)) {
+            } else if (tree instanceof MultiArray) {
                 /* MATRIX */
                 return this.evaluateTensor(tree, local, fname);
             } else {
@@ -659,6 +656,8 @@ export class Evaluator {
                     case '()':
                         tree.right.parent = tree;
                         return this.reduceIfReturnList(this.Evaluator(tree.right, local, fname));
+                    case '!':
+                    case '~':
                     case '+_':
                     case '-_':
                         tree.right.parent = tree;
@@ -741,7 +740,7 @@ export class Evaluator {
                                                 if (args.length === 1) {
                                                     /* Test logical indexing. */
                                                     const arg0 = this.reduceIfReturnList(this.Evaluator(args[0], local, fname));
-                                                    if (this.isTensor(arg0) && arg0.type === ComplexDecimal.numberClass.logical) {
+                                                    if (arg0 instanceof MultiArray && arg0.type === ComplexDecimal.numberClass.logical) {
                                                         /* Logical indexing. */
                                                         this.setElementsLogical(
                                                             this.nameTable,
@@ -833,7 +832,7 @@ export class Evaluator {
                                                 args[0].parent = tree.left;
                                                 args[0].index = 0;
                                                 const arg0 = this.reduceIfReturnList(this.Evaluator(args[0], local, fname));
-                                                if (this.isTensor(arg0) && arg0.type === ComplexDecimal.numberClass.logical) {
+                                                if (arg0 instanceof MultiArray && arg0.type === ComplexDecimal.numberClass.logical) {
                                                     /* Logical indexing. */
                                                     this.setElementsLogical(
                                                         this.nameTable,
@@ -949,7 +948,7 @@ export class Evaluator {
                             parent.type === 'ARG' &&
                             parent.expr.id in this.nameTable &&
                             this.nameTable[parent.expr.id].args.length === 0 &&
-                            this.isTensor(this.nameTable[parent.expr.id].expr)
+                            this.nameTable[parent.expr.id].expr instanceof MultiArray
                         ) {
                             return parent.args.length === 1
                                 ? this.newNumber(this.linearLength(this.nameTable[parent.expr.id].expr))
@@ -964,7 +963,7 @@ export class Evaluator {
                             parent.type === 'ARG' &&
                             parent.expr.id in this.nameTable &&
                             this.nameTable[parent.expr.id].args.length === 0 &&
-                            this.isTensor(this.nameTable[parent.expr.id].expr)
+                            this.nameTable[parent.expr.id].expr instanceof MultiArray
                         ) {
                             return parent.args.length === 1
                                 ? this.expandRange(ComplexDecimal.one(), this.newNumber(this.linearLength(this.nameTable[parent.expr.id].expr)))
@@ -993,7 +992,7 @@ export class Evaluator {
                                         /* Error if mapper and #arguments!==1 (Invalid call). */
                                         throw new EvalError(`Invalid call to ${aliasTreeName}. Type 'help ${tree.expr.id}' to see correct usage.`);
                                     }
-                                    if (argumentsList.length === 1 && this.isTensor(argumentsList[0]) && this.baseFunctionTable[aliasTreeName].mapper) {
+                                    if (argumentsList.length === 1 && argumentsList[0] instanceof MultiArray && this.baseFunctionTable[aliasTreeName].mapper) {
                                         /* Test if is mapper. */
                                         return this.mapTensor(argumentsList[0], this.baseFunctionTable[aliasTreeName].func);
                                     } else {
@@ -1022,7 +1021,7 @@ export class Evaluator {
                                         /* Defined name. */
                                         temp.parent = tree;
                                         return temp;
-                                    } else if (this.isTensor(temp)) {
+                                    } else if (temp instanceof MultiArray) {
                                         /* Defined indexed matrix reference. */
                                         let result: ComplexDecimal | MultiArray;
                                         if (tree.args.length === 1) {
@@ -1030,7 +1029,7 @@ export class Evaluator {
                                             tree.args[0].parent = tree;
                                             tree.args[0].index = 0;
                                             const arg0 = this.reduceIfReturnList(this.Evaluator(tree.args[0], local, fname));
-                                            if (this.isTensor(arg0) && arg0.type === ComplexDecimal.numberClass.logical) {
+                                            if (arg0 instanceof MultiArray && arg0.type === ComplexDecimal.numberClass.logical) {
                                                 /* Logical indexing. */
                                                 result = this.getElementsLogical(temp, tree.expr.id, arg0);
                                             } else {
@@ -1082,7 +1081,7 @@ export class Evaluator {
                                 tree.args[0].parent = tree;
                                 tree.args[0].index = 0;
                                 const arg0 = this.reduceIfReturnList(this.Evaluator(tree.args[0], local, fname));
-                                if (this.isTensor(arg0) && arg0.type === ComplexDecimal.numberClass.logical) {
+                                if (arg0 instanceof MultiArray && arg0.type === ComplexDecimal.numberClass.logical) {
                                     /* Logical indexing. */
                                     result = this.getElementsLogical(tree.expr, this.Unparse(tree.expr), arg0);
                                 } else {
@@ -1161,13 +1160,13 @@ export class Evaluator {
             if (tree) {
                 if (tree === undefined) {
                     return '<UNDEFINED>';
-                } else if (this.isNumber(tree)) {
+                } else if (tree instanceof ComplexDecimal) {
                     /* NUMBER */
                     return this.unparseNumber(tree);
-                } else if (this.isString(tree)) {
+                } else if (tree instanceof CharString) {
                     /* STRING */
                     return this.unparseString(tree);
-                } else if (this.isTensor(tree)) {
+                } else if (tree instanceof MultiArray) {
                     /* MATRIX */
                     return this.unparseTensor(tree);
                 } else {
@@ -1293,13 +1292,13 @@ export class Evaluator {
             if (tree) {
                 if (tree === undefined) {
                     return '<mi>undefined</mi>';
-                } else if (this.isNumber(tree)) {
+                } else if (tree instanceof ComplexDecimal) {
                     /* NUMBER */
                     return this.unparseNumberMathML(tree);
-                } else if (this.isString(tree)) {
+                } else if (tree instanceof CharString) {
                     /* STRING */
                     return this.unparseStringMathML(tree);
-                } else if (this.isTensor(tree)) {
+                } else if (tree instanceof MultiArray) {
                     /* MATRIX */
                     return this.unparseTensorMathML(tree);
                 } else {

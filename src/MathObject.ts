@@ -1,6 +1,7 @@
 import { ComplexDecimal } from './ComplexDecimal';
 import { MultiArray } from './MultiArray';
 import { LinearAlgebra } from './LinearAlgebra';
+import { CharString } from './CharString';
 
 export abstract class MathObject {
     public static unaryOpFunction: { [name: string]: Function } = {
@@ -38,29 +39,40 @@ export abstract class MathObject {
     };
 
     public static copy(right: any): any {
-        if ('re' in right) {
+        if (right instanceof ComplexDecimal) {
             return ComplexDecimal.copy(right);
-        } else if ('array' in right) {
+        } else if (right instanceof MultiArray) {
             return MultiArray.copy(right);
+        } else if (right instanceof CharString) {
+            return CharString.copy(right);
         }
     }
 
     public static elementWiseOperation(op: ComplexDecimal.TBinaryOperationName, left: any, right: any): any {
-        if ('re' in left && 're' in right) {
+        if (left instanceof CharString) {
+            left = MultiArray.fromCharString(left);
+        }
+        if (right instanceof CharString) {
+            right = MultiArray.fromCharString(right);
+        }
+        if (left instanceof ComplexDecimal && right instanceof ComplexDecimal) {
             return ComplexDecimal[op](left, right);
-        } else if ('re' in left && 'array' in right) {
+        } else if (left instanceof ComplexDecimal && right instanceof MultiArray) {
             return MultiArray.scalarOpMultiArray(op, left, right);
-        } else if ('array' in left && 're' in right) {
+        } else if (left instanceof MultiArray && right instanceof ComplexDecimal) {
             return MultiArray.MultiArrayOpScalar(op, left, right);
-        } else if ('array' in left && 'array' in right) {
+        } else if (left instanceof MultiArray && right instanceof MultiArray) {
             return MultiArray.elementWiseOperation(op, left, right);
         }
     }
 
     public static leftOperation(op: ComplexDecimal.TUnaryOperationLeftName, right: any): any {
-        if ('re' in right) {
+        if (right instanceof CharString) {
+            right = MultiArray.fromCharString(right);
+        }
+        if (right instanceof ComplexDecimal) {
             return ComplexDecimal[op](right);
-        } else if ('array' in right) {
+        } else if (right instanceof MultiArray) {
             return MultiArray.leftOperation(op, right);
         }
     }
@@ -86,13 +98,19 @@ export abstract class MathObject {
     }
 
     public static mtimes(left: any, right: any): any {
-        if ('re' in left && 're' in right) {
+        if (left instanceof CharString) {
+            left = MultiArray.fromCharString(left);
+        }
+        if (right instanceof CharString) {
+            right = MultiArray.fromCharString(right);
+        }
+        if (left instanceof ComplexDecimal && right instanceof ComplexDecimal) {
             return ComplexDecimal.mul(left, right);
-        } else if ('re' in left && 'array' in right) {
+        } else if (left instanceof ComplexDecimal && right instanceof MultiArray) {
             return MultiArray.scalarOpMultiArray('mul', left, right);
-        } else if ('array' in left && 're' in right) {
+        } else if (left instanceof MultiArray && right instanceof ComplexDecimal) {
             return MultiArray.MultiArrayOpScalar('mul', left, right);
-        } else if ('array' in left && 'array' in right) {
+        } else if (left instanceof MultiArray && right instanceof MultiArray) {
             return LinearAlgebra.mul(left, right);
         }
     }
@@ -102,13 +120,19 @@ export abstract class MathObject {
     }
 
     public static mrdivide(left: any, right: any): any {
-        if ('re' in left && 're' in right) {
+        if (left instanceof CharString) {
+            left = MultiArray.fromCharString(left);
+        }
+        if (right instanceof CharString) {
+            right = MultiArray.fromCharString(right);
+        }
+        if (left instanceof ComplexDecimal && right instanceof ComplexDecimal) {
             return ComplexDecimal.rdiv(left, right);
-        } else if ('re' in left && 'array' in right) {
+        } else if (left instanceof ComplexDecimal && right instanceof MultiArray) {
             return MultiArray.scalarOpMultiArray('mul', left, LinearAlgebra.inv(right));
-        } else if ('array' in left && 're' in right) {
+        } else if (left instanceof MultiArray && right instanceof ComplexDecimal) {
             return MultiArray.scalarOpMultiArray('mul', ComplexDecimal.inv(right), left);
-        } else if ('array' in left && 'array' in right) {
+        } else if (left instanceof MultiArray && right instanceof MultiArray) {
             return LinearAlgebra.mul(left, LinearAlgebra.inv(right));
         }
     }
@@ -124,9 +148,15 @@ export abstract class MathObject {
     }
 
     public static mpower(left: any, right: any): any {
-        if ('re' in left && 're' in right) {
+        if (left instanceof CharString) {
+            left = MultiArray.fromCharString(left);
+        }
+        if (right instanceof CharString) {
+            right = MultiArray.fromCharString(right);
+        }
+        if (left instanceof ComplexDecimal && right instanceof ComplexDecimal) {
             return ComplexDecimal.power(left, right);
-        } else if ('array' in left && 're' in right) {
+        } else if (left instanceof MultiArray && right instanceof ComplexDecimal) {
             return LinearAlgebra.power(left, right);
         } else {
             throw new Error("invalid exponent in '^'.");
@@ -142,17 +172,17 @@ export abstract class MathObject {
     }
 
     public static transpose(left: any): any {
-        if ('re' in left) {
-            return Object.assign({}, left);
-        } else if ('array' in left) {
+        if (left instanceof MultiArray) {
             return LinearAlgebra.transpose(left);
+        } else {
+            return left.copy();
         }
     }
 
     public static ctranspose(left: any): any {
-        if ('re' in left) {
+        if (left instanceof ComplexDecimal) {
             return ComplexDecimal.conj(left);
-        } else if ('array' in left) {
+        } else if (left instanceof MultiArray) {
             return LinearAlgebra.ctranspose(left);
         }
     }
@@ -182,33 +212,33 @@ export abstract class MathObject {
     }
 
     public static mand(left: any, right: any): any {
-        if ('re' in left && 're' in right) {
+        if (left instanceof ComplexDecimal && right instanceof ComplexDecimal) {
             return ComplexDecimal.and(left, right);
-        } else if ('re' in left && 'array' in right) {
+        } else if (left instanceof ComplexDecimal && right instanceof MultiArray) {
             return ComplexDecimal.and(left, MultiArray.toLogical(right));
-        } else if ('array' in left && 're' in right) {
+        } else if (left instanceof MultiArray && right instanceof ComplexDecimal) {
             return ComplexDecimal.and(MultiArray.toLogical(left), right);
-        } else if ('array' in left && 'array' in right) {
+        } else if (left instanceof MultiArray && right instanceof MultiArray) {
             return ComplexDecimal.and(MultiArray.toLogical(left), MultiArray.toLogical(right));
         }
     }
 
     public static mor(left: any, right: any): any {
-        if ('re' in left && 're' in right) {
+        if (left instanceof ComplexDecimal && right instanceof ComplexDecimal) {
             return ComplexDecimal.or(left, right);
-        } else if ('re' in left && 'array' in right) {
+        } else if (left instanceof ComplexDecimal && right instanceof MultiArray) {
             return ComplexDecimal.or(left, MultiArray.toLogical(right));
-        } else if ('array' in left && 're' in right) {
+        } else if (left instanceof MultiArray && right instanceof ComplexDecimal) {
             return ComplexDecimal.or(MultiArray.toLogical(left), right);
-        } else if ('array' in left && 'array' in right) {
+        } else if (left instanceof MultiArray && right instanceof MultiArray) {
             return ComplexDecimal.or(MultiArray.toLogical(left), MultiArray.toLogical(right));
         }
     }
 
     public static not(right: any): any {
-        if ('re' in right) {
+        if (right instanceof ComplexDecimal) {
             return ComplexDecimal.not(right);
-        } else if ('array' in right) {
+        } else if (right instanceof MultiArray) {
             return ComplexDecimal.not(MultiArray.toLogical(right));
         }
     }

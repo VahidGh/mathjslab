@@ -40,7 +40,7 @@ export abstract class LinearAlgebra {
         if (args.length === 0) {
             return ComplexDecimal.one();
         } else if (args.length === 1) {
-            if (MultiArray.isThis(args[0])) {
+            if (args[0] instanceof MultiArray) {
                 const linear = MultiArray.linearize(args[0]);
                 if (linear.length === 0) {
                     throw new SyntaxError('eye (A): use eye (size (A)) instead');
@@ -58,7 +58,7 @@ export abstract class LinearAlgebra {
                 columns = rows;
             }
         } else if (args.length === 2) {
-            if (ComplexDecimal.isThis(args[0]) && ComplexDecimal.isThis(args[1])) {
+            if (args[0] instanceof ComplexDecimal && args[1] instanceof ComplexDecimal) {
                 rows = MultiArray.testIndex(args[0]);
                 columns = MultiArray.testIndex(args[1]);
             } else {
@@ -99,7 +99,7 @@ export abstract class LinearAlgebra {
             for (let i = 0; i < M.dimension[1]; i++) {
                 result.array[i] = new Array(M.dimension[0]);
                 for (let j = 0; j < M.dimension[0]; j++) {
-                    result.array[i][j] = Object.assign({}, func(M.array[j][i]));
+                    result.array[i][j] = func(M.array[j][i]).copy();
                 }
             }
             MultiArray.setType(result);
@@ -135,7 +135,7 @@ export abstract class LinearAlgebra {
      */
     public static mul(left: MultiArray, right: MultiArray): MultiArray {
         if (left.dimension[1] !== right.dimension[0] && left.dimension.length === 2 && right.dimension.length === 2) {
-            throw new Error(`operator *: nonconformant arguments (op1 is ${left.dimension[0]}x${left.dimension[1]}, op2 is ${right.dimension[0]}x${right.dimension[1]}).`);
+            throw new EvalError(`operator *: nonconformant arguments (op1 is ${left.dimension[0]}x${left.dimension[1]}, op2 is ${right.dimension[0]}x${right.dimension[1]}).`);
         } else {
             const result = new MultiArray([left.dimension[0], right.dimension[1]]);
             for (let i = 0; i < left.dimension[0]; i++) {

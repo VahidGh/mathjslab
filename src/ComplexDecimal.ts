@@ -288,15 +288,6 @@ export class ComplexDecimal {
     }
 
     /**
-     * Check if object is a ComplexDecimal compatible.
-     * @param obj Any object to check if is CompleDecimal compatible.
-     * @returns boolean result.
-     */
-    public static isThis(obj: any): boolean {
-        return 're' in obj;
-    }
-
-    /**
      * Create new ComplexDecimal.
      * @param re Real part (optional).
      * @param im Imaginary part (optional).
@@ -444,6 +435,10 @@ export class ComplexDecimal {
      */
     public static copy(value: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(value.re, value.im, value.type);
+    }
+
+    public copy(): ComplexDecimal {
+        return new ComplexDecimal(this.re, this.im, this.type);
     }
 
     /**
@@ -741,6 +736,16 @@ export class ComplexDecimal {
      */
     public static true(): ComplexDecimal {
         return new ComplexDecimal(1, 0, ComplexDecimal.numberClass.logical);
+    }
+
+    public static toLogical(value: ComplexDecimal): ComplexDecimal {
+        const prec = ComplexDecimal.toMaxPrecision(value);
+        return prec.re.eq(0) && prec.im.eq(0) ? new ComplexDecimal(0, 0, ComplexDecimal.numberClass.logical) : new ComplexDecimal(1, 0, ComplexDecimal.numberClass.logical);
+    }
+
+    public toLogical(): ComplexDecimal {
+        const prec = ComplexDecimal.toMaxPrecision(this);
+        return prec.re.eq(0) && prec.im.eq(0) ? new ComplexDecimal(0, 0, ComplexDecimal.numberClass.logical) : new ComplexDecimal(1, 0, ComplexDecimal.numberClass.logical);
     }
 
     /**

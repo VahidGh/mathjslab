@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.3.2
+- Tests for types implemented as 'instanceof' in MathObject.ts and Evaluator.ts. Method 'isThis' removed from classes.
+- Some bug fix ins evaluator (not operation).
+
 ## 1.3.1
 - Improvements and some bug fixes in lexer and parser. Support for cell arrays in parser and MultiArray class. Error messages in existing functions and cell array functions no yet implemented.
 - Start and stop positions (line and column) of statements in global scope stored in AST nodes.

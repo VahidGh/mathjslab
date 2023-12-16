@@ -69,7 +69,6 @@ Start reading our code and you'll get the hang of it. In summary, we adopted:
 
 * We indent using four spaces for code files and two spaces for json files, set by EditorConfig.
 * We ALWAYS put spaces after list items and method parameters (`[1, 2, 3]`, not `[1,2,3]`), around operators (`x += 1`, not `x+=1`), and around hash arrows.
-* Prefer the `Object.assign()` to object spread operator (`{...anotherObj}`).
 * Inline exports with expressions whenever possible:
 ```typescript
 // Use this:

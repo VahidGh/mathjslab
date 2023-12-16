@@ -1,3 +1,5 @@
+import { ComplexDecimal } from './ComplexDecimal';
+
 export type StringQuote = '"' | "'";
 
 export class CharString {
@@ -8,11 +10,14 @@ export class CharString {
         this.str = str;
         this.quote = quote;
     }
-    public static isThis(obj: any): boolean {
-        return 'str' in obj;
-    }
     public static create(str: string, quote: string = '"'): CharString {
         return new CharString(str, quote as StringQuote);
+    }
+    public static copy(str: CharString): CharString {
+        return new CharString(str.str, str.quote);
+    }
+    public copy(): CharString {
+        return new CharString(this.str, this.quote);
     }
     public static parse(str: string): CharString {
         return new CharString(str);
@@ -25,5 +30,11 @@ export class CharString {
     }
     public unparse(): string {
         return this.str;
+    }
+    public static toLogical(value: CharString): ComplexDecimal {
+        return value.str ? ComplexDecimal.true() : ComplexDecimal.false();
+    }
+    public toLogical(): ComplexDecimal {
+        return this.str ? ComplexDecimal.true() : ComplexDecimal.false();
     }
 }
