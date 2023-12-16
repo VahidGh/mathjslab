@@ -9,7 +9,7 @@ import { ComplexDecimal } from './ComplexDecimal';
 import { MultiArray } from './MultiArray';
 import { CoreFunctions } from './CoreFunctions';
 import { LinearAlgebra } from './LinearAlgebra';
-import { MathObject } from './MathObject';
+import { MathOperation } from './MathOperation';
 import { Configuration } from './Configuration';
 import * as AST from './AST';
 import { Parser } from './Parser';
@@ -170,7 +170,7 @@ export class Evaluator {
             return (tree: any): any => {
                 if (tree.type === 'IDENT') {
                     if (this.nameTable[tree.id].expr) {
-                        this.nameTable[tree.id].expr = MathObject[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
+                        this.nameTable[tree.id].expr = MathOperation[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
                         return this.nameTable[tree.id].expr;
                     } else {
                         throw new EvalError('in x++ or ++x, x must be defined first.');
@@ -183,8 +183,8 @@ export class Evaluator {
             return (tree: any): any => {
                 if (tree.type === 'IDENT') {
                     if (this.nameTable[tree.id].expr) {
-                        const value = MathObject.copy(this.nameTable[tree.id].expr);
-                        this.nameTable[tree.id].expr = MathObject[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
+                        const value = MathOperation.copy(this.nameTable[tree.id].expr);
+                        this.nameTable[tree.id].expr = MathOperation[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
                         return value;
                     } else {
                         throw new EvalError('in x++ or ++x, x must be defined first.');
@@ -200,31 +200,31 @@ export class Evaluator {
      * Operator table.
      */
     private readonly opTable: Record<string, Function> = {
-        '+': MathObject.plus,
-        '-': MathObject.minus,
-        '.*': MathObject.times,
-        '*': MathObject.mtimes,
-        './': MathObject.rdivide,
-        '/': MathObject.mrdivide,
-        '.\\': MathObject.ldivide,
-        '\\': MathObject.mldivide,
-        '.^': MathObject.power,
-        '^': MathObject.mpower,
-        '+_': MathObject.uplus,
-        '-_': MathObject.uminus,
-        ".'": MathObject.transpose,
-        "'": MathObject.ctranspose,
-        '<': MathObject.lt,
-        '<=': MathObject.le,
-        '==': MathObject.eq,
-        '>=': MathObject.ge,
-        '>': MathObject.gt,
-        '!=': MathObject.ne,
-        '&': MathObject.and,
-        '|': MathObject.or,
-        '!': MathObject.not,
-        '&&': MathObject.mand,
-        '||': MathObject.mor,
+        '+': MathOperation.plus,
+        '-': MathOperation.minus,
+        '.*': MathOperation.times,
+        '*': MathOperation.mtimes,
+        './': MathOperation.rdivide,
+        '/': MathOperation.mrdivide,
+        '.\\': MathOperation.ldivide,
+        '\\': MathOperation.mldivide,
+        '.^': MathOperation.power,
+        '^': MathOperation.mpower,
+        '+_': MathOperation.uplus,
+        '-_': MathOperation.uminus,
+        ".'": MathOperation.transpose,
+        "'": MathOperation.ctranspose,
+        '<': MathOperation.lt,
+        '<=': MathOperation.le,
+        '==': MathOperation.eq,
+        '>=': MathOperation.ge,
+        '>': MathOperation.gt,
+        '!=': MathOperation.ne,
+        '&': MathOperation.and,
+        '|': MathOperation.or,
+        '!': MathOperation.not,
+        '&&': MathOperation.mand,
+        '||': MathOperation.mor,
         '++_': this.incDecOp(true, 'plus'),
         '--_': this.incDecOp(true, 'minus'),
         '_++': this.incDecOp(false, 'plus'),
@@ -300,14 +300,14 @@ export class Evaluator {
             this.defineFunction(func, this.functions[func]);
         }
         /* Define function operators */
-        for (const func in MathObject.twoMoreOpFunction) {
-            this.defineTwoOrMoreOperandFunction(func, MathObject.twoMoreOpFunction[func]);
+        for (const func in MathOperation.twoMoreOpFunction) {
+            this.defineTwoOrMoreOperandFunction(func, MathOperation.twoMoreOpFunction[func]);
         }
-        for (const func in MathObject.binaryOpFunction) {
-            this.defineBinaryOperatorFunction(func, MathObject.binaryOpFunction[func]);
+        for (const func in MathOperation.binaryOpFunction) {
+            this.defineBinaryOperatorFunction(func, MathOperation.binaryOpFunction[func]);
         }
-        for (const func in MathObject.unaryOpFunction) {
-            this.defineUnaryOperatorFunction(func, MathObject.unaryOpFunction[func]);
+        for (const func in MathOperation.unaryOpFunction) {
+            this.defineUnaryOperatorFunction(func, MathOperation.unaryOpFunction[func]);
         }
         /* Define function mappers */
         for (const func in ComplexDecimal.mapFunction) {

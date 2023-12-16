@@ -2,8 +2,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.3.3
+- File 'MathObject.ts' and (their respective class and test file) renamed to MathOperation.ts.
+- CharString conversion to MultiArray implemented as previous to any operation in MathOperation.ts.
+
 ## 1.3.2
-- Tests for types implemented as 'instanceof' in MathObject.ts and Evaluator.ts. Method 'isThis' removed from classes.
+- Tests for types implemented as 'instanceof' in 'MathObject.ts' and 'Evaluator.ts'. Method 'isThis' removed from classes.
 - Some bug fix ins evaluator (not operation).
 
 ## 1.3.1

@@ -1,41 +1,41 @@
+import { CharString } from './CharString';
 import { ComplexDecimal } from './ComplexDecimal';
 import { MultiArray } from './MultiArray';
 import { LinearAlgebra } from './LinearAlgebra';
-import { CharString } from './CharString';
 
-export abstract class MathObject {
+export abstract class MathOperation {
     public static unaryOpFunction: { [name: string]: Function } = {
-        uplus: MathObject.uplus,
-        uminus: MathObject.uminus,
-        not: MathObject.not,
-        transpose: MathObject.transpose,
-        ctranspose: MathObject.ctranspose,
+        uplus: MathOperation.uplus,
+        uminus: MathOperation.uminus,
+        not: MathOperation.not,
+        transpose: MathOperation.transpose,
+        ctranspose: MathOperation.ctranspose,
     };
 
     public static binaryOpFunction: { [name: string]: Function } = {
-        minus: MathObject.minus,
-        mod: MathObject.mod,
-        rem: MathObject.rem,
-        rdivide: MathObject.rdivide,
-        mrdivide: MathObject.mrdivide,
-        ldivide: MathObject.ldivide,
-        mldivide: MathObject.mldivide,
-        power: MathObject.power,
-        mpower: MathObject.mpower,
-        le: MathObject.le,
-        ge: MathObject.ge,
-        gt: MathObject.gt,
-        eq: MathObject.eq,
-        ne: MathObject.ne,
+        minus: MathOperation.minus,
+        mod: MathOperation.mod,
+        rem: MathOperation.rem,
+        rdivide: MathOperation.rdivide,
+        mrdivide: MathOperation.mrdivide,
+        ldivide: MathOperation.ldivide,
+        mldivide: MathOperation.mldivide,
+        power: MathOperation.power,
+        mpower: MathOperation.mpower,
+        le: MathOperation.le,
+        ge: MathOperation.ge,
+        gt: MathOperation.gt,
+        eq: MathOperation.eq,
+        ne: MathOperation.ne,
     };
 
     public static twoMoreOpFunction: { [name: string]: Function } = {
-        plus: MathObject.plus,
-        times: MathObject.times,
-        mtimes: MathObject.mtimes,
-        and: MathObject.and,
-        or: MathObject.or,
-        xor: MathObject.xor,
+        plus: MathOperation.plus,
+        times: MathOperation.times,
+        mtimes: MathOperation.mtimes,
+        and: MathOperation.and,
+        or: MathOperation.or,
+        xor: MathOperation.xor,
     };
 
     public static copy(right: any): any {
@@ -78,23 +78,23 @@ export abstract class MathObject {
     }
 
     public static plus(left: any, right: any): any {
-        return MathObject.elementWiseOperation('add', left, right);
+        return MathOperation.elementWiseOperation('add', left, right);
     }
 
     public static minus(left: any, right: any): any {
-        return MathObject.elementWiseOperation('sub', left, right);
+        return MathOperation.elementWiseOperation('sub', left, right);
     }
 
     public static mod(left: any, right: any): any {
-        return MathObject.elementWiseOperation('mod', left, right);
+        return MathOperation.elementWiseOperation('mod', left, right);
     }
 
     public static rem(left: any, right: any): any {
-        return MathObject.elementWiseOperation('rem', left, right);
+        return MathOperation.elementWiseOperation('rem', left, right);
     }
 
     public static times(left: any, right: any): any {
-        return MathObject.elementWiseOperation('mul', left, right);
+        return MathOperation.elementWiseOperation('mul', left, right);
     }
 
     public static mtimes(left: any, right: any): any {
@@ -116,7 +116,7 @@ export abstract class MathObject {
     }
 
     public static rdivide(left: any, right: any): any {
-        return MathObject.elementWiseOperation('rdiv', left, right);
+        return MathOperation.elementWiseOperation('rdiv', left, right);
     }
 
     public static mrdivide(left: any, right: any): any {
@@ -138,13 +138,13 @@ export abstract class MathObject {
     }
 
     public static ldivide(left: any, right: any): any {
-        return MathObject.elementWiseOperation('ldiv', left, right);
+        return MathOperation.elementWiseOperation('ldiv', left, right);
     }
 
     public static mldivide(left: any, right: any): any {}
 
     public static power(left: any, right: any): any {
-        return MathObject.elementWiseOperation('power', left, right);
+        return MathOperation.elementWiseOperation('power', left, right);
     }
 
     public static mpower(left: any, right: any): any {
@@ -164,14 +164,17 @@ export abstract class MathObject {
     }
 
     public static uplus(right: any): any {
-        return MathObject.leftOperation('copy', right);
+        return MathOperation.leftOperation('copy', right);
     }
 
     public static uminus(right: any): any {
-        return MathObject.leftOperation('neg', right);
+        return MathOperation.leftOperation('neg', right);
     }
 
     public static transpose(left: any): any {
+        if (left instanceof CharString) {
+            left = MultiArray.fromCharString(left);
+        }
         if (left instanceof MultiArray) {
             return LinearAlgebra.transpose(left);
         } else {
@@ -180,6 +183,9 @@ export abstract class MathObject {
     }
 
     public static ctranspose(left: any): any {
+        if (left instanceof CharString) {
+            left = MultiArray.fromCharString(left);
+        }
         if (left instanceof ComplexDecimal) {
             return ComplexDecimal.conj(left);
         } else if (left instanceof MultiArray) {
@@ -188,30 +194,36 @@ export abstract class MathObject {
     }
 
     public static lt(left: any, right: any): any {
-        return MathObject.elementWiseOperation('lt', left, right);
+        return MathOperation.elementWiseOperation('lt', left, right);
     }
 
     public static le(left: any, right: any): any {
-        return MathObject.elementWiseOperation('le', left, right);
+        return MathOperation.elementWiseOperation('le', left, right);
     }
 
     public static eq(left: any, right: any): any {
-        return MathObject.elementWiseOperation('eq', left, right);
+        return MathOperation.elementWiseOperation('eq', left, right);
     }
 
     public static ge(left: any, right: any): any {
-        return MathObject.elementWiseOperation('ge', left, right);
+        return MathOperation.elementWiseOperation('ge', left, right);
     }
 
     public static gt(left: any, right: any): any {
-        return MathObject.elementWiseOperation('gt', left, right);
+        return MathOperation.elementWiseOperation('gt', left, right);
     }
 
     public static ne(left: any, right: any): any {
-        return MathObject.elementWiseOperation('ne', left, right);
+        return MathOperation.elementWiseOperation('ne', left, right);
     }
 
     public static mand(left: any, right: any): any {
+        if (left instanceof CharString) {
+            left = MultiArray.fromCharString(left);
+        }
+        if (right instanceof CharString) {
+            right = MultiArray.fromCharString(right);
+        }
         if (left instanceof ComplexDecimal && right instanceof ComplexDecimal) {
             return ComplexDecimal.and(left, right);
         } else if (left instanceof ComplexDecimal && right instanceof MultiArray) {
@@ -224,6 +236,12 @@ export abstract class MathObject {
     }
 
     public static mor(left: any, right: any): any {
+        if (left instanceof CharString) {
+            left = MultiArray.fromCharString(left);
+        }
+        if (right instanceof CharString) {
+            right = MultiArray.fromCharString(right);
+        }
         if (left instanceof ComplexDecimal && right instanceof ComplexDecimal) {
             return ComplexDecimal.or(left, right);
         } else if (left instanceof ComplexDecimal && right instanceof MultiArray) {
@@ -236,6 +254,9 @@ export abstract class MathObject {
     }
 
     public static not(right: any): any {
+        if (right instanceof CharString) {
+            right = MultiArray.fromCharString(right);
+        }
         if (right instanceof ComplexDecimal) {
             return ComplexDecimal.not(right);
         } else if (right instanceof MultiArray) {
@@ -244,14 +265,14 @@ export abstract class MathObject {
     }
 
     public static and(left: any, right: any): any {
-        return MathObject.elementWiseOperation('and', left, right);
+        return MathOperation.elementWiseOperation('and', left, right);
     }
 
     public static or(left: any, right: any): any {
-        return MathObject.elementWiseOperation('or', left, right);
+        return MathOperation.elementWiseOperation('or', left, right);
     }
 
     public static xor(left: any, right: any): any {
-        return MathObject.elementWiseOperation('xor', left, right);
+        return MathOperation.elementWiseOperation('xor', left, right);
     }
 }
