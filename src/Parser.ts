@@ -11,10 +11,6 @@ import * as AST from './AST';
 export class Parser {
     public commandNames: string[] = [];
 
-    public getCommandNames() {
-        return this.commandNames;
-    }
-
     /**
      * Parse input string.
      * @param input String to parse.
@@ -25,7 +21,7 @@ export class Parser {
         const inputStream = CharStreams.fromString(input);
         const lexer = new MathJSLabLexer(inputStream);
 
-        // Set word-list commands.
+        // Set word-list commands in lexer.
         // lexer.commandNames = this.commandNames; // TODO: Why it doesn't work?!!
         lexer.commandNames = EvaluatorPointer.parser.commandNames;
 

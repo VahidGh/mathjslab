@@ -1,7 +1,7 @@
 import { CharString } from './CharString';
 import { ComplexDecimal } from './ComplexDecimal';
 import { CoreFunctions } from './CoreFunctions';
-import { MultiArray } from './MultiArray';
+import { ElementType, MultiArray } from './MultiArray';
 
 const roundingStrings = ['up', 'down', 'ceil', 'floor', 'half_up', 'half_down', 'half_even', 'half_ceil', 'half_floor'];
 
@@ -92,7 +92,7 @@ export abstract class Configuration {
     };
 
     public static configure(): CharString;
-    public static configure(config: CharString, value: any): CharString;
+    public static configure(config: CharString, value: ElementType): CharString;
     public static configure(CONFIG: MultiArray): CharString;
     public static configure(...args: any[]): CharString | undefined {
         const setConfig = (config: [CharString, any]): void => {
@@ -134,7 +134,7 @@ export abstract class Configuration {
     public static getconfig(): MultiArray;
     public static getconfig(config: CharString): MultiArray;
     public static getconfig(CONFIG: MultiArray): MultiArray;
-    public static getconfig(...args: any[]): MultiArray | undefined {
+    public static getconfig(...args: ElementType[]): MultiArray | undefined {
         let result: MultiArray;
         const keys = Object.keys(Configuration.configuration);
         const loadResult = (list: string[]): void => {

@@ -5,10 +5,12 @@ export interface PrimarySymbolTableEntry {
 }
 
 export interface ValueSymbolTableEntry extends PrimarySymbolTableEntry {
+    type: 'name';
     expr?: any;
 }
 
 export interface FunctionSymbolTableEntry extends PrimarySymbolTableEntry {
+    type: 'function';
     args?: any[];
     expr?: any;
 }
@@ -25,7 +27,7 @@ export type SymbolTableType = {
 export class SymbolTable {
     Table: SymbolTableType;
 
-    constructor(parent?: SymbolTable, scope?: string, node?: any) {
+    constructor(parent?: SymbolTable | null, scope?: string, node?: any) {
         const thisParent = typeof parent !== 'undefined' ? parent : null;
         if (thisParent) {
             thisParent.Table.child.push(this);

@@ -9,4 +9,4 @@ export { Configuration } from './Configuration';
 export { SymbolTable } from './SymbolTable';
 export * as AST from './AST';
 export { Parser } from './Parser';
-export { Evaluator } from './Evaluator';
+export * from './Evaluator';

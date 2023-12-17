@@ -1,5 +1,5 @@
 import { ComplexDecimal } from './ComplexDecimal';
-import { MultiArray } from './MultiArray';
+import { ElementType, MultiArray } from './MultiArray';
 import * as AST from './AST';
 
 /**
@@ -34,14 +34,14 @@ export abstract class LinearAlgebra {
      * * `eye([N,M])` - create identity N x M
      * @returns Identity matrix
      */
-    public static eye(...args: any): MultiArray | ComplexDecimal {
+    public static eye(...args: MultiArray[] | ComplexDecimal[]): MultiArray | ComplexDecimal {
         let rows: number = 0;
         let columns: number = 0;
         if (args.length === 0) {
             return ComplexDecimal.one();
         } else if (args.length === 1) {
             if (args[0] instanceof MultiArray) {
-                const linear = MultiArray.linearize(args[0]);
+                const linear = MultiArray.linearize(args[0]) as ComplexDecimal[];
                 if (linear.length === 0) {
                     throw new SyntaxError('eye (A): use eye (size (A)) instead');
                 } else if (linear.length === 1) {
@@ -82,7 +82,9 @@ export abstract class LinearAlgebra {
      */
     public static trace(M: MultiArray): ComplexDecimal {
         if (M.dimension.length === 2) {
-            return M.array.map((row, i) => (row[i] ? row[i] : ComplexDecimal.zero())).reduce((p, c) => ComplexDecimal.add(p, c), ComplexDecimal.zero());
+            return M.array
+                .map((row, i) => (row[i] ? row[i] : ComplexDecimal.zero()))
+                .reduce((p, c) => ComplexDecimal.add(p as ComplexDecimal, c as ComplexDecimal), ComplexDecimal.zero()) as ComplexDecimal;
         } else {
             throw new Error('trace: only valid on 2-D objects');
         }
@@ -93,7 +95,7 @@ export abstract class LinearAlgebra {
      * @param M Matrix.
      * @returns Transpose matrix with `func` applied to each element.
      */
-    private static applyTranspose(M: MultiArray, func: Function = (value: any) => value): MultiArray {
+    private static applyTranspose(M: MultiArray, func: Function = (value: ElementType) => value): MultiArray {
         if (M.dimension.length === 2) {
             const result = new MultiArray([M.dimension[1], M.dimension[0]]);
             for (let i = 0; i < M.dimension[1]; i++) {
@@ -124,7 +126,7 @@ export abstract class LinearAlgebra {
      * @returns Complex conjugate transpose matrix.
      */
     public static ctranspose(M: MultiArray): MultiArray {
-        return LinearAlgebra.applyTranspose(M, (value: any) => ComplexDecimal.conj(value));
+        return LinearAlgebra.applyTranspose(M, (value: ComplexDecimal) => ComplexDecimal.conj(value));
     }
 
     /**
@@ -142,7 +144,10 @@ export abstract class LinearAlgebra {
                 result.array[i] = new Array(right.dimension[1]).fill(ComplexDecimal.zero());
                 for (let j = 0; j < right.dimension[1]; j++) {
                     for (let n = 0; n < left.dimension[1]; n++) {
-                        result.array[i][j] = ComplexDecimal.add(result.array[i][j], ComplexDecimal.mul(left.array[i][n], right.array[n][j]));
+                        result.array[i][j] = ComplexDecimal.add(
+                            result.array[i][j] as ComplexDecimal,
+                            ComplexDecimal.mul(left.array[i][n] as ComplexDecimal, right.array[n][j] as ComplexDecimal),
+                        );
                     }
                 }
             }
@@ -189,8 +194,12 @@ export abstract class LinearAlgebra {
         if (M.dimension.length === 2 && M.dimension[0] === M.dimension[1]) {
             const n = M.dimension[1];
             let det = ComplexDecimal.zero();
-            if (n === 1) det = M.array[0][0];
-            else if (n === 2) det = ComplexDecimal.sub(ComplexDecimal.mul(M.array[0][0], M.array[1][1]), ComplexDecimal.mul(M.array[0][1], M.array[1][0]));
+            if (n === 1) det = M.array[0][0] as ComplexDecimal;
+            else if (n === 2)
+                det = ComplexDecimal.sub(
+                    ComplexDecimal.mul(M.array[0][0] as ComplexDecimal, M.array[1][1] as ComplexDecimal),
+                    ComplexDecimal.mul(M.array[0][1] as ComplexDecimal, M.array[1][0] as ComplexDecimal),
+                );
             else {
                 det = ComplexDecimal.zero();
                 for (let j1 = 0; j1 < n; j1++) {
@@ -203,7 +212,10 @@ export abstract class LinearAlgebra {
                             j2++;
                         }
                     }
-                    det = ComplexDecimal.add(det, ComplexDecimal.mul(new ComplexDecimal(Math.pow(-1, 2.0 + j1), 0), ComplexDecimal.mul(M.array[0][j1], LinearAlgebra.det(m))));
+                    det = ComplexDecimal.add(
+                        det,
+                        ComplexDecimal.mul(new ComplexDecimal(Math.pow(-1, 2.0 + j1), 0), ComplexDecimal.mul(M.array[0][j1] as ComplexDecimal, LinearAlgebra.det(m))),
+                    );
                 }
             }
             return det;
@@ -236,7 +248,7 @@ export abstract class LinearAlgebra {
                 e = ComplexDecimal.zero();
             const numRows = M.dimension[0];
             const I: ComplexDecimal[][] = [],
-                C: any[][] = [];
+                C: ComplexDecimal[][] = [];
             for (i = 0; i < numRows; i += 1) {
                 // Create the row
                 I[I.length] = [];
@@ -249,7 +261,7 @@ export abstract class LinearAlgebra {
                         I[i][j] = ComplexDecimal.zero();
                     }
                     // Also, make the copy of the original
-                    C[i][j] = M.array[i][j];
+                    C[i][j] = M.array[i][j] as ComplexDecimal;
                 }
             }
 
@@ -353,11 +365,11 @@ export abstract class LinearAlgebra {
 
         for (i = 0; i < n; i++) {
             // Search for maximum in this column
-            let maxEl = ComplexDecimal.abs(A.array[i][i]),
+            let maxEl = ComplexDecimal.abs(A.array[i][i] as ComplexDecimal),
                 maxRow = i;
             for (k = i + 1; k < n; k++) {
-                if (ComplexDecimal.abs(A.array[k][i]).re.gt(maxEl.re)) {
-                    maxEl = ComplexDecimal.abs(A.array[k][i]);
+                if (ComplexDecimal.abs(A.array[k][i] as ComplexDecimal).re.gt(maxEl.re)) {
+                    maxEl = ComplexDecimal.abs(A.array[k][i] as ComplexDecimal);
                     maxRow = k;
                 }
             }
@@ -371,12 +383,12 @@ export abstract class LinearAlgebra {
 
             // Make all rows below this one 0 in current column
             for (k = i + 1; k < n; k++) {
-                const c = ComplexDecimal.rdiv(ComplexDecimal.neg(A.array[k][i]), A.array[i][i]);
+                const c = ComplexDecimal.rdiv(ComplexDecimal.neg(A.array[k][i] as ComplexDecimal), A.array[i][i] as ComplexDecimal);
                 for (j = i; j < n + 1; j++) {
                     if (i === j) {
                         A.array[k][j] = ComplexDecimal.zero();
                     } else {
-                        A.array[k][j] = ComplexDecimal.add(A.array[k][j], ComplexDecimal.mul(c, A.array[i][j]));
+                        A.array[k][j] = ComplexDecimal.add(A.array[k][j] as ComplexDecimal, ComplexDecimal.mul(c, A.array[i][j] as ComplexDecimal));
                     }
                 }
             }
@@ -385,9 +397,9 @@ export abstract class LinearAlgebra {
         // Solve equation Mx=m for an upper triangular matrix M
         const X = new MultiArray([1, n], ComplexDecimal.zero());
         for (i = n - 1; i > -1; i--) {
-            X.array[0][i] = ComplexDecimal.rdiv(A.array[i][n], A.array[i][i]);
+            X.array[0][i] = ComplexDecimal.rdiv(A.array[i][n] as ComplexDecimal, A.array[i][i] as ComplexDecimal);
             for (k = i - 1; k > -1; k--) {
-                A.array[k][n] = ComplexDecimal.sub(A.array[k][n], ComplexDecimal.mul(A.array[k][i], X.array[0][i]));
+                A.array[k][n] = ComplexDecimal.sub(A.array[k][n] as ComplexDecimal, ComplexDecimal.mul(A.array[k][i] as ComplexDecimal, X.array[0][i] as ComplexDecimal));
             }
         }
         MultiArray.setType(X);
@@ -402,7 +414,7 @@ export abstract class LinearAlgebra {
      * * https://www.codeproject.com/Articles/1203224/A-Note-on-PA-equals-LU-in-Javascript
      * * https://rosettacode.org/wiki/LU_decomposition#JavaScript
      */
-    public static lu(M: MultiArray): any {
+    public static lu(M: MultiArray): AST.NodeReturnList {
         if (M.dimension[0] !== M.dimension[1]) {
             throw new Error(`PLU decomposition can only be applied to square matrices.`);
         }
@@ -420,11 +432,11 @@ export abstract class LinearAlgebra {
 
         for (let k = 0; k < n; k++) {
             // Find the pivot element (maximum absolute value) in the current column
-            let maxVal = ComplexDecimal.abs(U.array[k][k]);
+            let maxVal = ComplexDecimal.abs(U.array[k][k] as ComplexDecimal);
             let maxIdx = k;
 
             for (let i = k + 1; i < n; i++) {
-                const absVal = ComplexDecimal.abs(U.array[i][k]);
+                const absVal = ComplexDecimal.abs(U.array[i][k] as ComplexDecimal);
                 if (ComplexDecimal.gt(absVal, maxVal)) {
                     maxVal = absVal;
                     maxIdx = i;
@@ -444,16 +456,16 @@ export abstract class LinearAlgebra {
 
             for (let i = k + 1; i < n; i++) {
                 // Compute the multiplier
-                const multiplier = ComplexDecimal.rdiv(U.array[i][k], U.array[k][k]);
+                const multiplier = ComplexDecimal.rdiv(U.array[i][k] as ComplexDecimal, U.array[k][k] as ComplexDecimal);
 
                 // Update L and U
                 (L as MultiArray).array[i][k] = multiplier;
                 for (let j = k; j < n; j++) {
-                    U.array[i][j] = ComplexDecimal.sub(U.array[i][j], ComplexDecimal.mul(multiplier, U.array[k][j]));
+                    U.array[i][j] = ComplexDecimal.sub(U.array[i][j] as ComplexDecimal, ComplexDecimal.mul(multiplier, U.array[k][j] as ComplexDecimal));
                 }
             }
         }
-        return AST.nodeReturnList((length: number, index: number): any => {
+        return AST.nodeReturnList((length: number, index: number): AST.NodeExpr => {
             if (length === 1) {
                 return U;
             } else {

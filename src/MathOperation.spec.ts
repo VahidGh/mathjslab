@@ -10,8 +10,8 @@ describe('MathOperation', () => {
         expect(MathOperation.mor).toBeDefined();
     });
 
-    it('MathOperation.unaryOpFunction and its methods should be defined', () => {
-        expect(MathOperation.unaryOpFunction).toBeDefined();
+    it('MathOperation.unaryOperations and its methods should be defined', () => {
+        expect(MathOperation.unaryOperations).toBeDefined();
         expect(MathOperation.uplus).toBeDefined();
         expect(MathOperation.uminus).toBeDefined();
         expect(MathOperation.not).toBeDefined();
@@ -19,8 +19,8 @@ describe('MathOperation', () => {
         expect(MathOperation.ctranspose).toBeDefined();
     });
 
-    it('MathOperation.binaryOpFunction and its methods should be defined', () => {
-        expect(MathOperation.binaryOpFunction).toBeDefined();
+    it('MathOperation.binaryOperations and its methods should be defined', () => {
+        expect(MathOperation.binaryOperations).toBeDefined();
         expect(MathOperation.minus).toBeDefined();
         expect(MathOperation.mod).toBeDefined();
         expect(MathOperation.rem).toBeDefined();
@@ -37,8 +37,8 @@ describe('MathOperation', () => {
         expect(MathOperation.ne).toBeDefined();
     });
 
-    it('MathOperation.twoMoreOpFunction and its methods should be defined', () => {
-        expect(MathOperation.twoMoreOpFunction).toBeDefined();
+    it('MathOperation.leftAssociativeMultipleOperations and its methods should be defined', () => {
+        expect(MathOperation.leftAssociativeMultipleOperations).toBeDefined();
         expect(MathOperation.plus).toBeDefined();
         expect(MathOperation.times).toBeDefined();
         expect(MathOperation.mtimes).toBeDefined();

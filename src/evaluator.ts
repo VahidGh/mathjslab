@@ -9,56 +9,55 @@ import { ComplexDecimal } from './ComplexDecimal';
 import { MultiArray } from './MultiArray';
 import { CoreFunctions } from './CoreFunctions';
 import { LinearAlgebra } from './LinearAlgebra';
-import { MathOperation } from './MathOperation';
+import { MathObject, MathOperationType, UnaryMathOperation, BinaryMathOperation, MathOperation } from './MathOperation';
 import { Configuration } from './Configuration';
 import * as AST from './AST';
 import { Parser } from './Parser';
 
-/* eslint-disable-next-line  @typescript-eslint/no-namespace */
-export module Evaluator {
-    /**
-     * aliasNameTable type.
-     */
-    export type TAliasNameTable = Record<string, RegExp>;
+/**
+ * aliasNameTable type.
+ */
+export type TAliasNameTable = Record<string, RegExp>;
 
-    /**
-     * baseFunctionTable type.
-     */
-    export type TBaseFunctionTableEntry = {
-        mapper?: boolean;
-        ev: boolean[];
-        func: Function;
-        unparserMathML?: (tree: any) => string;
-    };
-    export type TBaseFunctionTable = Record<string, TBaseFunctionTableEntry>;
+/**
+ * baseFunctionTable type.
+ */
+export type TBaseFunctionTableEntry = {
+    mapper?: boolean;
+    ev: boolean[];
+    func: Function;
+    unparserMathML?: (tree: AST.NodeInput) => string;
+};
+export type TBaseFunctionTable = Record<string, TBaseFunctionTableEntry>;
 
-    /**
-     * nameTable type.
-     */
-    export type TNameTableEntry = {
-        args: Array<any>;
-        expr: any;
-    };
-    export type TNameTable = Record<string, TNameTableEntry>;
+/**
+ * nameTable type.
+ */
+export type TNameTableEntry = {
+    args: Array<AST.NodeIdentifier>;
+    expr: AST.NodeExpr;
+};
+export type TNameTable = Record<string, TNameTableEntry>;
 
-    /**
-     * commandWordListTable type.
-     */
-    export type TCommandWordListFunction = (...args: string[]) => void;
-    export type TCommandWordListTableEntry = {
-        func: TCommandWordListFunction;
-    };
-    export type TCommandWordListTable = Record<string, TCommandWordListTableEntry>;
+/**
+ * commandWordListTable type.
+ */
+export type TCommandWordListFunction = (...args: string[]) => void;
+export type TCommandWordListTableEntry = {
+    func: TCommandWordListFunction;
+};
+export type TCommandWordListTable = Record<string, TCommandWordListTableEntry>;
 
-    /**
-     * TEvaluatorConfig type.
-     */
-    export type TEvaluatorConfig = {
-        aliasTable?: TAliasNameTable;
-        externalFunctionTable?: TBaseFunctionTable;
-        externalCmdWListTable?: TCommandWordListTable;
-    };
-}
+/**
+ * TEvaluatorConfig type.
+ */
+export type TEvaluatorConfig = {
+    aliasTable?: TAliasNameTable;
+    externalFunctionTable?: TBaseFunctionTable;
+    externalCmdWListTable?: TCommandWordListTable;
+};
+
+export type IncDecOperator = (tree: AST.NodeIdentifier) => MathObject;
 
 /**
  * External parser declarations (defined in parser body)
@@ -123,19 +122,19 @@ export class Evaluator {
     /**
      * Name table.
      */
-    public nameTable: Evaluator.TNameTable = {};
+    public nameTable: TNameTable = {};
 
     public readonlyNameTable: string[] = [];
 
     /**
      * Alias table.
      */
-    private aliasTable: Evaluator.TAliasNameTable;
+    private aliasTable: TAliasNameTable;
 
     /**
      * Base function table.
      */
-    public baseFunctionTable: Evaluator.TBaseFunctionTable = {};
+    public baseFunctionTable: TBaseFunctionTable = {};
 
     /**
      * Get a list of names of defined functions in baseFunctionTable.
@@ -147,12 +146,12 @@ export class Evaluator {
     /**
      * Local table.
      */
-    public localTable: Record<string, any> = {};
+    public localTable: Record<string, AST.NodeInput> = {};
 
     /**
      * Command word list table.
      */
-    public commandWordListTable: Evaluator.TCommandWordListTable = {};
+    public commandWordListTable: TCommandWordListTable = {};
 
     /**
      * Evaluator exit status.
@@ -163,11 +162,11 @@ export class Evaluator {
      * Increment and decrement operator
      * @param pre `true` if prefixed. `false` if postfixed.
      * @param operation Operation (`'plus'` or `'minus'`).
-     * @returns Operator function with signature `(tree: any) => any`.
+     * @returns Operator function with signature `(tree: AST.NodeIdentifier) => MathObject`.
      */
-    private incDecOp(pre: boolean, operation: 'plus' | 'minus'): (tree: any) => any {
+    private incDecOp(pre: boolean, operation: 'plus' | 'minus'): IncDecOperator {
         if (pre) {
-            return (tree: any): any => {
+            return (tree: AST.NodeIdentifier): MathObject => {
                 if (tree.type === 'IDENT') {
                     if (this.nameTable[tree.id].expr) {
                         this.nameTable[tree.id].expr = MathOperation[operation](this.nameTable[tree.id].expr, ComplexDecimal.one());
@@ -180,7 +179,7 @@ export class Evaluator {
                 }
             };
         } else {
-            return (tree: any): any => {
+            return (tree: AST.NodeIdentifier): MathObject => {
                 if (tree.type === 'IDENT') {
                     if (this.nameTable[tree.id].expr) {
                         const value = MathOperation.copy(this.nameTable[tree.id].expr);
@@ -199,7 +198,7 @@ export class Evaluator {
     /**
      * Operator table.
      */
-    private readonly opTable: Record<string, Function> = {
+    private readonly opTable: Record<string, MathOperationType | IncDecOperator> = {
         '+': MathOperation.plus,
         '-': MathOperation.minus,
         '.*': MathOperation.times,
@@ -235,11 +234,11 @@ export class Evaluator {
      * User functions.
      */
     private readonly functions: Record<string, Function> = {
-        unparse: (tree: any): CharString => new CharString(EvaluatorPointer.Unparse(tree)),
+        unparse: (tree: AST.NodeInput): CharString => new CharString(EvaluatorPointer.Unparse(tree)),
     };
 
     /**
-     * Parser AST (Abstract Syntax Tree) constructor methods.
+     * Local methods.
      */
     public readonly unparseString = CharString.unparse;
     public readonly unparseStringMathML = CharString.unparseMathML;
@@ -247,18 +246,18 @@ export class Evaluator {
     public readonly unparseNumber = ComplexDecimal.unparse;
     public readonly unparseNumberMathML = ComplexDecimal.unparseMathML;
     public readonly isRowVector = MultiArray.isRowVector;
-    public readonly unparseTensor = MultiArray.unparse;
-    public readonly unparseTensorMathML = MultiArray.unparseMathML;
-    public readonly evaluateTensor = MultiArray.evaluate;
-    public readonly mapTensor = MultiArray.rawMap;
+    public readonly unparseArray = MultiArray.unparse;
+    public readonly unparseArrayMathML = MultiArray.unparseMathML;
+    public readonly evaluateArray = MultiArray.evaluate;
+    public readonly mapArray = MultiArray.rawMap;
     public readonly getElements = MultiArray.getElements;
     public readonly getElementsLogical = MultiArray.getElementsLogical;
     public readonly setElements = MultiArray.setElements;
     public readonly setElementsLogical = MultiArray.setElementsLogical;
     public readonly expandRange = MultiArray.expandRange;
-    public readonly tensor0x0 = MultiArray.emptyArray;
+    public readonly array0x0 = MultiArray.emptyArray;
     public readonly linearize = MultiArray.linearize;
-    public readonly toTensor = MultiArray.scalarToMultiArray;
+    public readonly scalarToArray = MultiArray.scalarToMultiArray;
     public readonly linearLength = MultiArray.linearLength;
     public readonly getDimension = MultiArray.getDimension;
     public readonly toLogical = MultiArray.toLogical;
@@ -269,17 +268,17 @@ export class Evaluator {
     /**
      * Special functions MathML unparser.
      */
-    private readonly unparseMathMLFunctions: Record<string, (tree: any) => string> = {
-        abs: (tree: any) => '<mrow><mo>|</mo>' + this.unparserMathML(tree.args[0]) + '<mo>|</mo></mrow>',
-        conj: (tree: any) => '<mover><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow><mo>&OverBar;</mo></mover>',
-        sqrt: (tree: any) => '<msqrt><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow></msqrt>',
-        root: (tree: any) => '<mroot><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow><mrow>' + this.unparserMathML(tree.args[1]) + '</mrow></mroot>',
-        exp: (tree: any) => '<msup><mi>e</mi><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow></msup>',
-        logb: (tree: any) => '<msub><mi>log</mi><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow></msub><mrow>' + this.unparserMathML(tree.args[1]) + '</mrow>',
-        log2: (tree: any) => '<msub><mi>log</mi><mrow>' + '<mn>2</mn>' + '</mrow></msub><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow>',
-        log10: (tree: any) => '<msub><mi>log</mi><mrow>' + '<mn>10</mn>' + '</mrow></msub><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow>',
-        gamma: (tree: any) => '<mi>&Gamma;</mi><mrow><mo>(</mo>' + this.unparserMathML(tree.args[0]) + '<mo>)</mo></mrow>',
-        factorial: (tree: any) => '<mrow><mo>(</mo>' + this.unparserMathML(tree.args[0]) + '<mo>)</mo></mrow><mo>!</mo>',
+    private readonly unparseMathMLFunctions: Record<string, (tree: AST.NodeInput) => string> = {
+        abs: (tree: AST.NodeInput) => '<mrow><mo>|</mo>' + this.unparserMathML(tree.args[0]) + '<mo>|</mo></mrow>',
+        conj: (tree: AST.NodeInput) => '<mover><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow><mo>&OverBar;</mo></mover>',
+        sqrt: (tree: AST.NodeInput) => '<msqrt><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow></msqrt>',
+        root: (tree: AST.NodeInput) => '<mroot><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow><mrow>' + this.unparserMathML(tree.args[1]) + '</mrow></mroot>',
+        exp: (tree: AST.NodeInput) => '<msup><mi>e</mi><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow></msup>',
+        logb: (tree: AST.NodeInput) => '<msub><mi>log</mi><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow></msub><mrow>' + this.unparserMathML(tree.args[1]) + '</mrow>',
+        log2: (tree: AST.NodeInput) => '<msub><mi>log</mi><mrow>' + '<mn>2</mn>' + '</mrow></msub><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow>',
+        log10: (tree: AST.NodeInput) => '<msub><mi>log</mi><mrow>' + '<mn>10</mn>' + '</mrow></msub><mrow>' + this.unparserMathML(tree.args[0]) + '</mrow>',
+        gamma: (tree: AST.NodeInput) => '<mi>&Gamma;</mi><mrow><mo>(</mo>' + this.unparserMathML(tree.args[0]) + '<mo>)</mo></mrow>',
+        factorial: (tree: AST.NodeInput) => '<mrow><mo>(</mo>' + this.unparserMathML(tree.args[0]) + '<mo>)</mo></mrow><mo>!</mo>',
     };
 
     /**
@@ -300,14 +299,14 @@ export class Evaluator {
             this.defineFunction(func, this.functions[func]);
         }
         /* Define function operators */
-        for (const func in MathOperation.twoMoreOpFunction) {
-            this.defineTwoOrMoreOperandFunction(func, MathOperation.twoMoreOpFunction[func]);
+        for (const func in MathOperation.leftAssociativeMultipleOperations) {
+            this.defineLeftAssociativeMultipleOperationFunction(func, MathOperation.leftAssociativeMultipleOperations[func]);
         }
-        for (const func in MathOperation.binaryOpFunction) {
-            this.defineBinaryOperatorFunction(func, MathOperation.binaryOpFunction[func]);
+        for (const func in MathOperation.binaryOperations) {
+            this.defineBinaryOperatorFunction(func, MathOperation.binaryOperations[func]);
         }
-        for (const func in MathOperation.unaryOpFunction) {
-            this.defineUnaryOperatorFunction(func, MathOperation.unaryOpFunction[func]);
+        for (const func in MathOperation.unaryOperations) {
+            this.defineUnaryOperatorFunction(func, MathOperation.unaryOperations[func]);
         }
         /* Define function mappers */
         for (const func in ComplexDecimal.mapFunction) {
@@ -340,7 +339,7 @@ export class Evaluator {
      * @param config Evaluator configuration.
      * @returns Evaluator instance.
      */
-    public static initialize(config?: Evaluator.TEvaluatorConfig): Evaluator {
+    public static initialize(config?: TEvaluatorConfig): Evaluator {
         const evaluator = new Evaluator();
         if (config) {
             if (config.aliasTable) {
@@ -414,7 +413,7 @@ export class Evaluator {
 
     /**
      * Clear variables. If names is 0 lenght restart evaluator.
-     * @param names Variable names to clear in nameTable and basFunctionTable.
+     * @param names Variable names to clear in nameTable and baseFunctionTable.
      */
     public Clear(...names: string[]): void {
         if (names.length === 0) {
@@ -447,7 +446,7 @@ export class Evaluator {
      * @param value A node.
      * @returns Reduced node if `tree` is a NodeReturnList.
      */
-    public reduceIfReturnList(tree: any): any {
+    public reduceIfReturnList(tree: AST.NodeInput): AST.NodeInput {
         if (tree.type === 'RETLIST') {
             const result = tree.selector(1, 0);
             result.parent = tree.parent;
@@ -463,7 +462,7 @@ export class Evaluator {
      * @param shallow True if tree is a left root of assignment.
      * @returns An object with three properties: `left`, `id` and `args`.
      */
-    public validateAssignment(tree: any, shallow: boolean = true): { left: any; id: string; args: any[] }[] {
+    public validateAssignment(tree: AST.NodeExpr, shallow: boolean = true): { left: AST.NodeExpr; id: string; args: AST.NodeExpr[] }[] {
         const invalidMessageBase = 'invalid left hand side of assignment';
         const invalidMessage = `${invalidMessageBase}: cannot assign to a read only value:`;
         if (tree.type === 'IDENT') {
@@ -497,7 +496,7 @@ export class Evaluator {
                 },
             ];
         } else if (shallow && this.isRowVector(tree)) {
-            return tree.array[0].map((left: any) => this.validateAssignment(left, false)[0]);
+            return tree.array[0].map((left: AST.NodeExpr) => this.validateAssignment(left, false)[0]);
         } else {
             throw new EvalError(`${invalidMessageBase}.`);
         }
@@ -524,11 +523,11 @@ export class Evaluator {
      * @param name Name of function.
      * @param func Function body.
      */
-    private defineUnaryOperatorFunction(name: string, func: Function): void {
+    private defineUnaryOperatorFunction(name: string, func: UnaryMathOperation): void {
         this.baseFunctionTable[name] = {
             mapper: false,
             ev: [],
-            func: (...operand: any) => {
+            func: (...operand: AST.NodeExpr) => {
                 if (operand.length === 1) {
                     return func(operand[0]);
                 } else {
@@ -543,11 +542,11 @@ export class Evaluator {
      * @param name Name of function.
      * @param func Function body.
      */
-    private defineBinaryOperatorFunction(name: string, func: Function): void {
+    private defineBinaryOperatorFunction(name: string, func: BinaryMathOperation): void {
         this.baseFunctionTable[name] = {
             mapper: false,
             ev: [],
-            func: (left: any, ...right: any) => {
+            func: (left: AST.NodeExpr, ...right: AST.NodeExpr) => {
                 if (right.length === 1) {
                     return func(left, right[0]);
                 } else {
@@ -562,11 +561,11 @@ export class Evaluator {
      * @param name
      * @param func
      */
-    private defineTwoOrMoreOperandFunction(name: string, func: Function): void {
+    private defineLeftAssociativeMultipleOperationFunction(name: string, func: BinaryMathOperation): void {
         this.baseFunctionTable[name] = {
             mapper: false,
             ev: [],
-            func: (left: any, ...right: any) => {
+            func: (left: AST.NodeExpr, ...right: AST.NodeExpr) => {
                 if (right.length === 1) {
                     return func(left, right[0]);
                 } else if (right.length > 1) {
@@ -587,14 +586,12 @@ export class Evaluator {
      * @param tree
      * @returns
      */
-    public toBoolean(tree: any): boolean {
+    public toBoolean(tree: AST.NodeExpr): boolean {
         const value = tree instanceof MultiArray ? this.toLogical(tree) : tree;
         if (value instanceof ComplexDecimal) {
             return Boolean(value.re.toNumber() || value.im.toNumber());
-        } else if (value instanceof CharString) {
-            return !!value.str;
         } else {
-            throw new Error('Evaluator.toBoolean: argument must be evaluated.');
+            return !!value.str;
         }
     }
 
@@ -605,12 +602,12 @@ export class Evaluator {
      * @param fname Function name if evaluating function.
      * @returns Expression `tree` evaluated.
      */
-    public Evaluator(tree: any, local: boolean = false, fname: string = ''): any {
+    public Evaluator(tree: AST.NodeInput, local: boolean = false, fname: string = ''): AST.NodeInput {
         if (this._debug) {
             console.log(
                 `Evaluator(\ntree:${JSON.stringify(
                     tree,
-                    (key: string, value: any) => (key !== 'parent' ? value : value === null ? 'root' : true),
+                    (key: string, value: AST.NodeInput) => (key !== 'parent' ? value : value === null ? 'root' : true),
                     2,
                 )},\nlocal:${local},\nfname:${fname});`,
             );
@@ -621,7 +618,7 @@ export class Evaluator {
                 return tree;
             } else if (tree instanceof MultiArray) {
                 /* MATRIX */
-                return this.evaluateTensor(tree, local, fname);
+                return this.evaluateArray(tree, local, fname);
             } else {
                 switch (tree.type) {
                     case '+':
@@ -649,7 +646,7 @@ export class Evaluator {
                     case '||':
                         tree.left.parent = tree;
                         tree.right.parent = tree;
-                        return this.opTable[tree.type](
+                        return (this.opTable[tree.type] as BinaryMathOperation)(
                             this.reduceIfReturnList(this.Evaluator(tree.left, local, fname)),
                             this.reduceIfReturnList(this.Evaluator(tree.right, local, fname)),
                         );
@@ -661,19 +658,19 @@ export class Evaluator {
                     case '+_':
                     case '-_':
                         tree.right.parent = tree;
-                        return this.opTable[tree.type](this.reduceIfReturnList(this.Evaluator(tree.right, local, fname)));
+                        return (this.opTable[tree.type] as UnaryMathOperation)(this.reduceIfReturnList(this.Evaluator(tree.right, local, fname)));
                     case '++_':
                     case '--_':
                         tree.right.parent = tree;
-                        return this.opTable[tree.type](tree.right);
+                        return (this.opTable[tree.type] as IncDecOperator)(tree.right);
                     case ".'":
                     case "'":
                         tree.left.parent = tree;
-                        return this.opTable[tree.type](this.reduceIfReturnList(this.Evaluator(tree.left, local, fname)));
+                        return (this.opTable[tree.type] as UnaryMathOperation)(this.reduceIfReturnList(this.Evaluator(tree.left, local, fname)));
                     case '_++':
                     case '_--':
                         tree.left.parent = tree;
-                        return this.opTable[tree.type](tree.left);
+                        return (this.opTable[tree.type] as IncDecOperator)(tree.left);
                     case '=':
                     case '+=':
                     case '-=':
@@ -696,7 +693,7 @@ export class Evaluator {
                         if (assignment.length > 1 && op.length > 0) {
                             throw new EvalError('computed multiple assignment not allowed.');
                         }
-                        let right: any;
+                        let right: AST.NodeExpr;
                         try {
                             right = this.Evaluator(tree.right, false, fname);
                         } catch {
@@ -745,14 +742,14 @@ export class Evaluator {
                                                         this.setElementsLogical(
                                                             this.nameTable,
                                                             id,
-                                                            this.linearize(arg0),
-                                                            this.toTensor(
+                                                            this.linearize(arg0) as ComplexDecimal[],
+                                                            this.scalarToArray(
                                                                 this.reduceIfReturnList(
                                                                     this.Evaluator(
                                                                         AST.nodeOp(
                                                                             op,
                                                                             this.getElementsLogical(this.nameTable[id].expr, id, arg0),
-                                                                            this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                                                            this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                                                         ),
                                                                         false,
                                                                         fname,
@@ -766,13 +763,13 @@ export class Evaluator {
                                                             this.nameTable,
                                                             id,
                                                             [arg0],
-                                                            this.toTensor(
+                                                            this.scalarToArray(
                                                                 this.reduceIfReturnList(
                                                                     this.Evaluator(
                                                                         AST.nodeOp(
                                                                             op,
                                                                             this.getElements(this.nameTable[id].expr, id, [arg0]),
-                                                                            this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                                                            this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                                                         ),
                                                                         false,
                                                                         fname,
@@ -785,14 +782,14 @@ export class Evaluator {
                                                     this.setElements(
                                                         this.nameTable,
                                                         id,
-                                                        args.map((arg: any) => this.reduceIfReturnList(this.Evaluator(arg))),
-                                                        this.toTensor(
+                                                        args.map((arg: AST.NodeExpr) => this.reduceIfReturnList(this.Evaluator(arg))),
+                                                        this.scalarToArray(
                                                             this.reduceIfReturnList(
                                                                 this.Evaluator(
                                                                     AST.nodeOp(
                                                                         op,
                                                                         this.getElements(this.nameTable[id].expr, id, args),
-                                                                        this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                                                        this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                                                     ),
                                                                     false,
                                                                     fname,
@@ -837,8 +834,8 @@ export class Evaluator {
                                                     this.setElementsLogical(
                                                         this.nameTable,
                                                         id,
-                                                        this.linearize(arg0),
-                                                        this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                                        this.linearize(arg0) as ComplexDecimal[],
+                                                        this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                                     );
                                                 } else {
                                                     /* Not logical indexing. */
@@ -846,19 +843,19 @@ export class Evaluator {
                                                         this.nameTable,
                                                         id,
                                                         [arg0],
-                                                        this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                                        this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                                     );
                                                 }
                                             } else {
                                                 this.setElements(
                                                     this.nameTable,
                                                     id,
-                                                    args.map((arg: any, i: number) => {
+                                                    args.map((arg: AST.NodeExpr, i: number) => {
                                                         arg.parent = tree.left;
                                                         arg.index = i;
                                                         return this.reduceIfReturnList(this.Evaluator(arg));
                                                     }),
-                                                    this.toTensor(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                                    this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                                 );
                                             }
                                             AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id].expr));
@@ -879,7 +876,7 @@ export class Evaluator {
                             }
                         } else {
                             /* assignment at right side */
-                            return (resultList.list[0] as any).right;
+                            return (resultList.list[0] as AST.NodeExpr).right;
                         }
                     case 'IDENT':
                         if (local && this.localTable[fname] && this.localTable[fname][tree.id]) {
@@ -983,7 +980,7 @@ export class Evaluator {
                                 /* Is base function. */
                                 if (typeof this.baseFunctionTable[aliasTreeName]['mapper'] !== 'undefined') {
                                     /* Arguments evaluated. */
-                                    const argumentsList = tree.args.map((arg: any, i: number) => {
+                                    const argumentsList = tree.args.map((arg: AST.NodeExpr, i: number) => {
                                         arg.parent = tree;
                                         arg.index = i;
                                         return this.reduceIfReturnList(this.Evaluator(arg, local, fname));
@@ -994,14 +991,14 @@ export class Evaluator {
                                     }
                                     if (argumentsList.length === 1 && argumentsList[0] instanceof MultiArray && this.baseFunctionTable[aliasTreeName].mapper) {
                                         /* Test if is mapper. */
-                                        return this.mapTensor(argumentsList[0], this.baseFunctionTable[aliasTreeName].func);
+                                        return this.mapArray(argumentsList[0], this.baseFunctionTable[aliasTreeName].func);
                                     } else {
                                         return this.baseFunctionTable[aliasTreeName].func(...argumentsList);
                                     }
                                 } else {
                                     /* Arguments selectively evaluated. */
                                     return this.baseFunctionTable[aliasTreeName].func(
-                                        ...tree.args.map((arg: any, i: number) => {
+                                        ...tree.args.map((arg: AST.NodeExpr, i: number) => {
                                             arg.parent = tree;
                                             arg.index = i;
                                             return this.baseFunctionTable[aliasTreeName].ev[i] ? this.reduceIfReturnList(this.Evaluator(arg, local, fname)) : arg;
@@ -1023,7 +1020,7 @@ export class Evaluator {
                                         return temp;
                                     } else if (temp instanceof MultiArray) {
                                         /* Defined indexed matrix reference. */
-                                        let result: ComplexDecimal | MultiArray;
+                                        let result: MathObject;
                                         if (tree.args.length === 1) {
                                             /* Test logical indexing. */
                                             tree.args[0].parent = tree;
@@ -1040,7 +1037,7 @@ export class Evaluator {
                                             result = this.getElements(
                                                 temp,
                                                 tree.expr.id,
-                                                tree.args.map((arg: any, i: number) => {
+                                                tree.args.map((arg: AST.NodeExpr, i: number) => {
                                                     arg.parent = tree;
                                                     arg.index = i;
                                                     return this.reduceIfReturnList(this.Evaluator(arg, local, fname));
@@ -1075,7 +1072,7 @@ export class Evaluator {
                             }
                         } else {
                             /* literal indexing, ex: [1,2;3,4](1,2). */
-                            let result: ComplexDecimal | MultiArray;
+                            let result: MathObject;
                             if (tree.args.length === 1) {
                                 /* Test logical indexing. */
                                 tree.args[0].parent = tree;
@@ -1092,7 +1089,7 @@ export class Evaluator {
                                 result = this.getElements(
                                     tree.expr,
                                     this.Unparse(tree.expr),
-                                    tree.args.map((arg: any, i: number) => {
+                                    tree.args.map((arg: AST.NodeExpr, i: number) => {
                                         arg.parent = tree;
                                         arg.index = i;
                                         return this.reduceIfReturnList(this.Evaluator(arg, local, fname));
@@ -1139,7 +1136,7 @@ export class Evaluator {
      * @param tree Expression to evaluate.
      * @returns Expression `tree` evaluated.
      */
-    public Evaluate(tree: any): any {
+    public Evaluate(tree: AST.NodeInput): AST.NodeInput {
         try {
             this.exitStatus = this.response.OK;
             tree.parent = null;
@@ -1155,7 +1152,7 @@ export class Evaluator {
      * @param tree Expression to unparse.
      * @returns Expression `tree` unparsed.
      */
-    public Unparse(tree: any): string {
+    public Unparse(tree: AST.NodeInput): string {
         try {
             if (tree) {
                 if (tree === undefined) {
@@ -1168,7 +1165,7 @@ export class Evaluator {
                     return this.unparseString(tree);
                 } else if (tree instanceof MultiArray) {
                     /* MATRIX */
-                    return this.unparseTensor(tree);
+                    return this.unparseArray(tree);
                 } else {
                     switch (tree.type) {
                         case '+':
@@ -1233,7 +1230,7 @@ export class Evaluator {
                         case 'IDENT':
                             return tree.id.replace(/^[Ii]nf$/, '&infin;');
                         case 'LIST':
-                            return tree.list.map((value: any) => this.Unparse(value)).join('\n') + '\n';
+                            return tree.list.map((value: AST.NodeExpr) => this.Unparse(value)).join('\n') + '\n';
                         case 'RANGE':
                             if (tree.start && tree.stop) {
                                 if (tree.stride) {
@@ -1251,11 +1248,11 @@ export class Evaluator {
                         case '<~>':
                             return '~';
                         case 'ARG':
-                            return this.Unparse(tree.expr) + '(' + tree.args.map((value: any) => this.Unparse(value)).join(',') + ')';
+                            return this.Unparse(tree.expr) + '(' + tree.args.map((value: AST.NodeExpr) => this.Unparse(value)).join(',') + ')';
                         case 'RETLIST':
                             return '<RETLIST>';
                         case 'CMDWLIST':
-                            return tree.id + ' ' + tree.args.map((arg: any) => this.Unparse(arg)).join(' ');
+                            return tree.id + ' ' + tree.args.map((arg: CharString) => this.Unparse(arg)).join(' ');
                         case 'IF':
                             let ifstr = 'IF ' + this.Unparse(tree.expression[0]) + '\n';
                             ifstr += this.Unparse(tree.then[0]) + '\n';
@@ -1287,7 +1284,7 @@ export class Evaluator {
      * @param tree Expression tree.
      * @returns String of expression `tree` unparsed as MathML language.
      */
-    public unparserMathML(tree: any): string {
+    public unparserMathML(tree: AST.NodeInput): string {
         try {
             if (tree) {
                 if (tree === undefined) {
@@ -1300,7 +1297,7 @@ export class Evaluator {
                     return this.unparseStringMathML(tree);
                 } else if (tree instanceof MultiArray) {
                     /* MATRIX */
-                    return this.unparseTensorMathML(tree);
+                    return this.unparseArrayMathML(tree);
                 } else {
                     switch (tree.type) {
                         case '+':
@@ -1372,7 +1369,7 @@ export class Evaluator {
                         case 'IDENT':
                             return '<mi>' + substSymbol(tree.id) + '</mi>';
                         case 'LIST':
-                            return `<mtable>${tree.list.map((value: any) => `<mtr><mtd>${this.unparserMathML(value)}</mtd></mtr>`).join('')}</mtable>`;
+                            return `<mtable>${tree.list.map((value: AST.NodeInput) => `<mtr><mtd>${this.unparserMathML(value)}</mtd></mtr>`).join('')}</mtable>`;
                         case 'RANGE':
                             if (tree.start && tree.stop) {
                                 if (tree.stride) {
@@ -1393,7 +1390,7 @@ export class Evaluator {
                             if (tree.args.length === 0) {
                                 return this.unparserMathML(tree.expr) + '<mrow><mo>(</mo><mo>)</mo></mrow>';
                             } else {
-                                const arglist = tree.args.map((arg: any) => this.unparserMathML(arg)).join('<mo>,</mo>');
+                                const arglist = tree.args.map((arg: AST.NodeExpr) => this.unparserMathML(arg)).join('<mo>,</mo>');
                                 if (tree.expr.type === 'IDENT') {
                                     const aliasTreeName = this.aliasName(tree.expr.id);
                                     if (aliasTreeName in this.baseFunctionTable && this.baseFunctionTable[aliasTreeName].unparserMathML) {
@@ -1408,10 +1405,10 @@ export class Evaluator {
                         case 'RETLIST':
                             return '<mi>RETLIST</mi>';
                         case 'CMDWLIST':
-                            return '<mtext>' + tree.id + ' ' + tree.args.map((arg: any) => this.unparserMathML(arg)).join(' ') + '</mtext>';
+                            return '<mtext>' + tree.id + ' ' + tree.args.map((arg: CharString) => this.unparserMathML(arg)).join(' ') + '</mtext>';
                         case 'IF':
                             const ifThenArray = tree.expression.map(
-                                (expr: any, i: number) =>
+                                (expr: AST.NodeInput, i: number) =>
                                     `<mtr><mtd><mo>${i === 0 ? '<b>if</b>' : '<b>elseif</b>'}</mo></mtd><mtd>${this.unparserMathML(
                                         tree.expression[0],
                                     )}</mtd></mtr><mtr><mtd></mtd><mtd>${this.unparserMathML(tree.then[0])}</mtd></mtr>`,
@@ -1441,7 +1438,7 @@ export class Evaluator {
      * @param tree Expression tree.
      * @returns String of expression unparsed as MathML language.
      */
-    public UnparseMathML(tree: any, display: 'inline' | 'block' = 'block'): string {
+    public UnparseMathML(tree: AST.NodeInput, display: 'inline' | 'block' = 'block'): string {
         let result: string = this.unparserMathML(tree);
         if (result) {
             result = result.replace(/\<mo\>\(\<\/mo\>\<mi\>error\<\/mi\><\mi\>error\<\/mi\>\<mi\>i\<\/mi\>\<mo\>\)\<\/mo\>/gi, '<mi>error</mi>');

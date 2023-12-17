@@ -1,7 +1,7 @@
 import { Decimal } from 'decimal.js';
 
 /* eslint-disable-next-line  @typescript-eslint/no-namespace */
-export namespace ComplexDecimal {
+export module ComplexDecimal {
     export type Rounding = Decimal.Rounding;
 
     export type Modulo = Decimal.Modulo;

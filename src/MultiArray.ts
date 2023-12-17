@@ -1,8 +1,11 @@
 import { CharString } from './CharString';
 import { ComplexDecimal } from './ComplexDecimal';
-import { Evaluator } from './Evaluator';
+import { Evaluator, TNameTable } from './Evaluator';
 
-export type Element = ComplexDecimal;
+/**
+ * MultiArray Element type.
+ */
+export type ElementType = ComplexDecimal | CharString | MultiArray;
 
 /**
  * # MultiArray
@@ -25,7 +28,7 @@ export class MultiArray {
     /**
      * Array content.
      */
-    public array: Element[][];
+    public array: ElementType[][];
 
     /**
      * Type attribute.
@@ -47,7 +50,7 @@ export class MultiArray {
      * @param shape Array<number> of dimensions ([rows, columns, pages, blocks, ...]).
      * @param fill Data to fill MultiArray. The same object will be put in all elements of MultiArray.
      */
-    public constructor(shape?: number[], fill?: any) {
+    public constructor(shape?: number[], fill?: ElementType) {
         if (shape) {
             this.dimension = shape.slice();
             MultiArray.appendSingletonTail(this.dimension, 2);
@@ -81,7 +84,7 @@ export class MultiArray {
      * @returns `true` if object is a row vector. false otherwise.
      */
     public static isRowVector(obj: any): boolean {
-        return 'array' in obj && obj.dimension[0] === 1;
+        return obj instanceof MultiArray && obj.dimension[0] === 1;
     }
 
     /**
@@ -91,7 +94,7 @@ export class MultiArray {
      * @returns `true` if object is an empty array.
      */
     public static isEmpty(obj: any): boolean {
-        return 'array' in obj && (obj as MultiArray).dimension.reduce((p, c) => p * c, 1) === 0;
+        return obj instanceof MultiArray && (obj as MultiArray).dimension.reduce((p, c) => p * c, 1) === 0;
     }
 
     /**
@@ -258,7 +261,7 @@ export class MultiArray {
      * @param row Array of objects.
      * @returns MultiArray with `row` parameter as first line.
      */
-    public static firstRow(row: any[], iscell?: boolean): MultiArray {
+    public static firstRow(row: ElementType[], iscell?: boolean): MultiArray {
         const result = new MultiArray([1, row.length]);
         result.array[0] = row;
         result.isCell = iscell ?? false;
@@ -272,7 +275,7 @@ export class MultiArray {
      * @param row Array of objects to append as row of MultiArray.
      * @returns MultiArray with row appended.
      */
-    public static appendRow(M: MultiArray, row: any[]): MultiArray {
+    public static appendRow(M: MultiArray, row: ElementType[]): MultiArray {
         M.array.push(row);
         M.dimension[0]++;
         return M;
@@ -296,7 +299,7 @@ export class MultiArray {
      * @returns String of unparsed MultiArray.
      */
     public static unparse(M: MultiArray): string {
-        const unparseRows = (row: any[]) => row.map((value) => global.EvaluatorPointer.Unparse(value)).join() + ';\n';
+        const unparseRows = (row: ElementType[]) => row.map((value) => global.EvaluatorPointer.Unparse(value)).join() + ';\n';
         let arraystr: string = '';
         if (M.dimension.reduce((p, c) => p * c, 1) === 0) {
             return `${M.isCell ? '{ }' : '[ ]'}(${M.dimension.join('x')})`;
@@ -325,7 +328,7 @@ export class MultiArray {
      * @returns String of unparsed MultiArray in MathML language.
      */
     public static unparseMathML(M: MultiArray): string {
-        const unparseRows = (row: any[]) => `<mtr>${row.map((value) => `<mtd>${global.EvaluatorPointer.unparserMathML(value)}</mtd>`).join('')}</mtr>`;
+        const unparseRows = (row: ElementType[]) => `<mtr>${row.map((value) => `<mtd>${global.EvaluatorPointer.unparserMathML(value)}</mtd>`).join('')}</mtr>`;
         const buildMrow = (rows: string) => `<mrow><mo>${M.isCell ? '{' : '['}</mo><mtable>${rows}</mtable><mo>${M.isCell ? '}' : ']'}</mo></mrow>`;
         if (M.dimension.reduce((p, c) => p * c, 1) === 0) {
             return `${buildMrow('<mspace width="0.5em"/>')}<mo>(</mo><mn>${M.dimension.join('</mn><mi>&times;</mi><mn>')}</mn><mo>)</mo>`;
@@ -349,12 +352,17 @@ export class MultiArray {
         }
     }
 
+    /**
+     * Converts CharString to MultiArray.
+     * @param text CharString.
+     * @returns MultiArray with character codes as integer.
+     */
     public static fromCharString(text: CharString): MultiArray {
         if (text.str.length > 0) {
             const result = new MultiArray([1, text.str.length]);
             result.array = [text.str.split('').map((char) => new ComplexDecimal(char.charCodeAt(0)))];
             result.type = ComplexDecimal.numberClass.real;
-            return MultiArray.MultiArrayToScalar(result);
+            return MultiArray.MultiArrayToScalar(result) as MultiArray;
         } else {
             return MultiArray.emptyArray();
         }
@@ -370,15 +378,15 @@ export class MultiArray {
      * @param parent Parent node of items in page.
      * @returns Evaluated matrix.
      */
-    private static evaluatePage(array: any[][], local: boolean = false, fname: string = '', iscell: boolean = false, parent: any): any[][] {
-        const result: any[][] = [];
+    private static evaluatePage(array: ElementType[][], local: boolean = false, fname: string = '', iscell: boolean = false, parent: any): ElementType[][] {
+        const result: ElementType[][] = [];
         for (let i = 0, k = 0; i < array.length; i++, k++) {
             result.push([]);
             let h = 1;
             for (let j = 0; j < array[i].length; j++) {
                 array[i][j].parent = parent;
                 const element = global.EvaluatorPointer.Evaluator(array[i][j], local, fname);
-                if ('array' in element && !iscell) {
+                if (element instanceof MultiArray && !iscell) {
                     if (j === 0) {
                         h = element.array.length;
                         result.splice(k, 1, element.array[0]);
@@ -433,17 +441,17 @@ export class MultiArray {
     }
 
     /**
-     * Linearize MultiArray in an array of any using column-major
+     * Linearize MultiArray in an array of ElementType using column-major
      * order.
      * @param M Multidimensional array.
-     * @returns `any[]` of multidimensional array `M` linearized.
+     * @returns `ElementType[]` of multidimensional array `M` linearized.
      */
-    public static linearize(M: MultiArray | any): any[] {
-        if ('array' in M) {
-            const result: any[] = [];
+    public static linearize(M: ElementType): ElementType[] {
+        if (M instanceof MultiArray) {
+            const result: ElementType[] = [];
             for (let p = 0; p < M.array.length; p += M.dimension[0]) {
                 for (let j = 0; j < M.dimension[1]; j++) {
-                    result.push(...M.array.slice(p, p + M.dimension[0]).map((row: any[]) => row[j]));
+                    result.push(...M.array.slice(p, p + M.dimension[0]).map((row: ElementType[]) => row[j]));
                 }
             }
             return result;
@@ -467,8 +475,8 @@ export class MultiArray {
      * @param value MultiArray or scalar.
      * @returns MultiArray 1x1 if value is scalar.
      */
-    public static scalarToMultiArray(value: MultiArray | any): MultiArray {
-        if ('array' in value) {
+    public static scalarToMultiArray(value: ElementType): MultiArray {
+        if (value instanceof MultiArray) {
             return value;
         } else {
             const result = new MultiArray([1, 1]);
@@ -483,8 +491,8 @@ export class MultiArray {
      * @param value MultiArray or scalar.
      * @returns Scalar value if `value` parameter has all dimensions as singular.
      */
-    public static MultiArrayToScalar(value: MultiArray | any): MultiArray | any {
-        if ('array' in value && value.dimension.length === 2 && value.dimension[0] === 1 && value.dimension[1] === 1) {
+    public static MultiArrayToScalar(value: ElementType): ElementType {
+        if (value instanceof MultiArray && value.dimension.length === 2 && value.dimension[0] === 1 && value.dimension[1] === 1) {
             return value.array[0][0];
         } else {
             return value;
@@ -497,8 +505,8 @@ export class MultiArray {
      * @param value
      * @returns
      */
-    public static firstElement(value: MultiArray | any): any {
-        if ('array' in value) {
+    public static firstElement(value: ElementType): ElementType {
+        if (value instanceof MultiArray) {
             // It is a MultiArray.
             if (value.dimension.reduce((p: number, c: number) => p * c, 1) > 0) {
                 // Return first element.
@@ -769,7 +777,7 @@ export class MultiArray {
      */
     public static scalarOpMultiArray(op: ComplexDecimal.TBinaryOperationName, left: ComplexDecimal, right: MultiArray): MultiArray {
         const result = new MultiArray(right.dimension);
-        result.array = right.array.map((row) => row.map((value) => ComplexDecimal[op](left, value)));
+        result.array = right.array.map((row) => row.map((value) => ComplexDecimal[op](left, value as ComplexDecimal)));
         MultiArray.setType(result);
         return result;
     }
@@ -783,7 +791,7 @@ export class MultiArray {
      */
     public static MultiArrayOpScalar(op: ComplexDecimal.TBinaryOperationName, left: MultiArray, right: ComplexDecimal): MultiArray {
         const result = new MultiArray(left.dimension);
-        result.array = left.array.map((row) => row.map((value) => ComplexDecimal[op](value, right)));
+        result.array = left.array.map((row) => row.map((value) => ComplexDecimal[op](value as ComplexDecimal, right)));
         MultiArray.setType(result);
         return result;
     }
@@ -796,7 +804,7 @@ export class MultiArray {
      */
     public static leftOperation(op: ComplexDecimal.TUnaryOperationLeftName, right: MultiArray): MultiArray {
         const result = new MultiArray(right.dimension);
-        result.array = right.array.map((row) => row.map((value) => ComplexDecimal[op](value)));
+        result.array = right.array.map((row) => row.map((value) => ComplexDecimal[op](value as ComplexDecimal)));
         MultiArray.setType(result);
         return result;
     }
@@ -820,7 +828,7 @@ export class MultiArray {
         if (MultiArray.arrayEquals(leftDimension, rightDimension)) {
             // No broadcasting.
             const result = new MultiArray(leftDimension);
-            result.array = left.array.map((row, i) => row.map((value, j) => ComplexDecimal[op](value, right.array[i][j])));
+            result.array = left.array.map((row, i) => row.map((value, j) => ComplexDecimal[op](value as ComplexDecimal, right.array[i][j] as ComplexDecimal)));
             MultiArray.setType(result);
             return result;
         } else {
@@ -857,7 +865,7 @@ export class MultiArray {
                 const rightLinear = MultiArray.subscriptToLinearIndex(rightDimension, rightSubscript);
                 const [k, l] = MultiArray.linearIndexToMultiArrayRowColumn(rightDimension[0], rightDimension[1], rightLinear);
                 const [o, p] = MultiArray.linearIndexToMultiArrayRowColumn(resultDimension[0], resultDimension[1], n);
-                result.array[o][p] = ComplexDecimal[op](left.array[i][j], right.array[k][l]);
+                result.array[o][p] = ComplexDecimal[op](left.array[i][j] as ComplexDecimal, right.array[k][l] as ComplexDecimal);
             }
             MultiArray.setType(result);
             return result;
@@ -887,7 +895,7 @@ export class MultiArray {
      * @param callback Callback function.
      * @returns A new MultiArray with each element being the result of the callback function.
      */
-    public static rawMapRowColumn(M: MultiArray, callback: (element: any, i: number, j: number) => any): MultiArray {
+    public static rawMapRowColumn(M: MultiArray, callback: (element: ElementType, i: number, j: number) => ElementType): MultiArray {
         const result = new MultiArray(M.dimension);
         result.array = M.array.map((row, i) => row.map((element, j) => callback(element, i, j)));
         MultiArray.setType(result);
@@ -903,7 +911,7 @@ export class MultiArray {
      * @param callback Callback function.
      * @returns A new MultiArray with each element being the result of the callback function.
      */
-    public static rawMapLinearIndex(M: MultiArray, callback: (element: any, index: number, i?: number, j?: number) => any): MultiArray {
+    public static rawMapLinearIndex(M: MultiArray, callback: (element: ElementType, index: number, i?: number, j?: number) => ElementType): MultiArray {
         const result = new MultiArray(M.dimension);
         result.array = M.array.map((row, i) =>
             row.map((element, j) => callback(element, Math.floor(i / M.dimension[0]) * M.dimension[0] * M.dimension[1] + j * M.dimension[0] + (i % M.dimension[0]), i, j)),
@@ -922,7 +930,7 @@ export class MultiArray {
      * @param callback Callback function.
      * @returns A new MultiArray with each element being the result of the callback function.
      */
-    public static alongDimensionMap(dimension: number, M: MultiArray, callback: (element: any, d: number, i: number, j: number) => any): MultiArray {
+    public static alongDimensionMap(dimension: number, M: MultiArray, callback: (element: ElementType, d: number, i: number, j: number) => ElementType): MultiArray {
         const result = new MultiArray(M.dimension);
         if (dimension >= M.dimension.length) {
             result.array = M.array.map((row, i) => row.map((element, j) => callback(element, 0, i, j)));
@@ -977,9 +985,9 @@ export class MultiArray {
                     const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(M.dimension[0], M.dimension[1], linearM);
                     const [p, q] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], n);
                     if (d === 1) {
-                        result.array[p][q] = [M.array[i][j]] as unknown as Element;
+                        result.array[p][q] = [M.array[i][j]] as unknown as ElementType;
                     } else {
-                        (result.array[p][q] as unknown as Element[]).push(M.array[i][j]);
+                        (result.array[p][q] as unknown as ElementType[]).push(M.array[i][j]);
                     }
                 }
             }
@@ -999,7 +1007,12 @@ export class MultiArray {
      * element of dimension.
      * @returns Multiarray with `dimension` reduced using `callback`.
      */
-    public static reduce(dimension: number, M: MultiArray, callback: (previous: any, current: any, index?: number) => any, initial?: any): MultiArray | ComplexDecimal {
+    public static reduce(
+        dimension: number,
+        M: MultiArray,
+        callback: (previous: ElementType, current: ElementType, index?: number) => ElementType,
+        initial?: ElementType,
+    ): ElementType {
         if (dimension >= M.dimension.length) {
             return M;
         } else {
@@ -1086,21 +1099,21 @@ export class MultiArray {
      * @param indexList Linear index or subscript.
      * @returns MultiArray of selected items.
      */
-    public static getElements(M: MultiArray, id: string, indexList: (ComplexDecimal | MultiArray)[]): MultiArray | ComplexDecimal {
+    public static getElements(M: MultiArray, id: string, indexList: (ComplexDecimal | MultiArray)[]): ElementType {
         let result: MultiArray;
         if (indexList.length === 0) {
             return M;
         } else {
             const args = indexList.map((index) => MultiArray.linearize(index));
             const argsLength = args.map((arg) => arg.length);
-            if (indexList.length === 1 && 'array' in indexList[0]) {
+            if (indexList.length === 1 && indexList[0] instanceof MultiArray) {
                 result = new MultiArray(indexList[0].dimension);
             } else {
                 result = new MultiArray(argsLength.length > 1 ? argsLength : [argsLength[0], 1]);
             }
             for (let n = 0; n < argsLength.reduce((p, c) => p * c, 1); n++) {
                 const subscriptM = MultiArray.linearIndexToSubscript(argsLength, n).map((s, r) => args[r][s - 1]);
-                const linearM = MultiArray.parseSubscript(M.dimension, subscriptM, id);
+                const linearM = MultiArray.parseSubscript(M.dimension, subscriptM as ComplexDecimal[], id);
                 const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(M.dimension[0], M.dimension[1], linearM);
                 const [p, q] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], n);
                 result.array[p][q] = M.array[i][j];
@@ -1117,10 +1130,10 @@ export class MultiArray {
      * @param items Logical index.
      * @returns MultiArray of selected items.
      */
-    public static getElementsLogical(M: MultiArray, id: string, items: MultiArray): MultiArray | ComplexDecimal {
+    public static getElementsLogical(M: MultiArray, id: string, items: MultiArray): ElementType {
         const result = new MultiArray();
         const linM = MultiArray.linearize(M);
-        const test = MultiArray.linearize(items).map((value: ComplexDecimal) => value.re.toNumber());
+        const test = (MultiArray.linearize(items) as ComplexDecimal[]).map((value: ComplexDecimal) => value.re.toNumber());
         if (test.length > linM.length) {
             const dimM = M.dimension.slice();
             throw new EvalError(`${id}(${test.length}): out of bound ${linM.length} (dimensions are ${dimM.join('x')})`);
@@ -1141,7 +1154,7 @@ export class MultiArray {
      * @param args Linear indices or subscripts.
      * @param right Value to assign.
      */
-    public static setElements(nameTable: Evaluator.TNameTable, id: string, indexList: (ComplexDecimal | MultiArray)[], right: MultiArray, input?: string, that?: Evaluator): void {
+    public static setElements(nameTable: TNameTable, id: string, indexList: (ComplexDecimal | MultiArray)[], right: MultiArray, input?: string, that?: Evaluator): void {
         if (indexList.length === 0) {
             throw new RangeError('invalid empty index list.');
         } else {
@@ -1150,13 +1163,15 @@ export class MultiArray {
             const args = indexList.map((index) => MultiArray.linearize(index));
             const argsLength = args.map((arg) => arg.length);
             const argsParsed = args.map((arg) =>
-                arg.map((i) => MultiArray.testIndex(i, `${input ? input : ''}${that ? '(' + args.map((arg) => arg.map((i) => that.Unparse(i))).join() + ')' : ''}`)),
+                arg.map((i) =>
+                    MultiArray.testIndex(i as ComplexDecimal, `${input ? input : ''}${that ? '(' + args.map((arg) => arg.map((i) => that.Unparse(i))).join() + ')' : ''}`),
+                ),
             );
             const argsMax = argsParsed.map((arg) => Math.max(...arg));
             if (linright.length !== 1 && linright.length !== argsLength.reduce((p, c) => p * c, 1)) {
                 throw new RangeError(`=: nonconformant arguments (op1 is ${argsLength.join('x')}, op2 is ${right.dimension.join('x')})`);
             }
-            if (typeof nameTable[id] !== 'undefined' && 'array' in nameTable[id].expr) {
+            if (typeof nameTable[id] !== 'undefined' && nameTable[id].expr instanceof MultiArray) {
                 if (isLinearIndex) {
                     if (argsMax[0] > MultiArray.linearLength(nameTable[id].expr)) {
                         throw new RangeError('Invalid resizing operation or ambiguous assignment to an out-of-bounds array element.');
@@ -1182,7 +1197,10 @@ export class MultiArray {
             for (let n = 0; n < argsLength.reduce((p, c) => p * c, 1); n++) {
                 const subscript = MultiArray.linearIndexToSubscript(argsLength, n);
                 const subscriptArgs: number[] = subscript.map((s, r) =>
-                    MultiArray.testIndex(args[r][s - 1], `${input ? input : ''}${that ? '(' + subscript.map((i) => that.Unparse(new ComplexDecimal(i))).join() + ')' : ''}`),
+                    MultiArray.testIndex(
+                        args[r][s - 1] as ComplexDecimal,
+                        `${input ? input : ''}${that ? '(' + subscript.map((i) => that.Unparse(new ComplexDecimal(i))).join() + ')' : ''}`,
+                    ),
                 );
                 const indexLinear = MultiArray.subscriptToLinearIndex(dimension, subscriptArgs);
                 const [p, q] = MultiArray.linearIndexToMultiArrayRowColumn(dimension[0], dimension[1], indexLinear);
@@ -1198,7 +1216,7 @@ export class MultiArray {
      * @param arg Logical index.
      * @param right Value to assign.
      */
-    public static setElementsLogical(nameTable: Evaluator.TNameTable, id: string, arg: ComplexDecimal[], right: MultiArray): void {
+    public static setElementsLogical(nameTable: TNameTable, id: string, arg: ComplexDecimal[], right: MultiArray): void {
         const linright = MultiArray.linearize(right);
         const test = arg.map((value: ComplexDecimal) => value.re.toNumber());
         const testCount = test.reduce((p, c) => p + c, 0);
@@ -1207,7 +1225,7 @@ export class MultiArray {
         }
         const isDefinedId = typeof nameTable[id] !== 'undefined';
         const isNotFunction = isDefinedId && nameTable[id].args.length === 0;
-        const isMultiArray = isNotFunction && 'array' in nameTable[id].expr;
+        const isMultiArray = isNotFunction && nameTable[id].expr instanceof MultiArray;
         if (isMultiArray) {
             for (let j = 0, n = 0, r = 0; j < nameTable[id].expr.dimension[1]; j++) {
                 for (let i = 0; i < nameTable[id].expr.dimension[0]; i++, r++) {

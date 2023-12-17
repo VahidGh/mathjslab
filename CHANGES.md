@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.3.4
+- More strong type definitions in 'MultiArray.ts', 'Evaluator.ts' and 'MathOperation.ts' files.
+
 ## 1.3.3
 - File 'MathObject.ts' and (their respective class and test file) renamed to MathOperation.ts.
 - CharString conversion to MultiArray implemented as previous to any operation in MathOperation.ts.

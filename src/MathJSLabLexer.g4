@@ -425,7 +425,7 @@ EXIT_AT_EOF
 
 UNQUOTED_STRING
     : ~[ \t\r\n]+ {
-        this._type = this.previousTokenType = MathJSLabLexer.UNQUOTED_STRING;
+        this.previousTokenType = MathJSLabLexer.UNQUOTED_STRING;
     }
     ;
 

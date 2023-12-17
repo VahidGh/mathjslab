@@ -3,9 +3,10 @@ import { ComplexDecimal } from './ComplexDecimal';
 export type StringQuote = '"' | "'";
 
 export class CharString {
-    public readonly type = 3;
     public str: string;
     public quote: StringQuote;
+    public readonly type = 3;
+    public parent: any;
     constructor(str: string, quote: StringQuote = '"') {
         this.str = str;
         this.quote = quote;
@@ -25,11 +26,30 @@ export class CharString {
     public static unparse(value: CharString): string {
         return value.str;
     }
+    public static unparseEscaped(value: CharString): string {
+        let result = JSON.stringify(value.str);
+        result = result
+            .substring(1, result.length - 2)
+            .replace(/\\\\/, '\\')
+            .replace(/\\\"/, '""');
+        return '"' + result + '"';
+    }
     public static unparseMathML(value: CharString): string {
         return '<mn><pre>' + value.str + '</pre></mn>';
     }
+    public static unparseEscapedMathML(value: CharString): string {
+        let result = JSON.stringify(value.str);
+        result = result
+            .substring(1, result.length - 2)
+            .replace(/\\\\/, '\\')
+            .replace(/\\\"/, '""');
+        return '<mn><pre>"' + result + '"</pre></mn>';
+    }
     public unparse(): string {
         return this.str;
+    }
+    public unparseEscaped(): string {
+        return CharString.unparseEscaped(this);
     }
     public static toLogical(value: CharString): ComplexDecimal {
         return value.str ? ComplexDecimal.true() : ComplexDecimal.false();
