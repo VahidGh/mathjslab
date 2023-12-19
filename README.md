@@ -38,10 +38,10 @@ A functional [demo](https://mathjslab.netlify.app/) use of this package in a
 
 - Runs on any [JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/) engine.
 - Comes with a large set of built-in functions and constants.
-- Is easily extensible.
+- Is easily extensible through configuration parameters passed to Evaluator constructor.
 - [Open source](https://en.wikipedia.org/wiki/Open-source_software) with fully documented code.
 - Test suites.
-- Improved [demo](https://mathjslab.netlify.app/) [Web application](https://en.wikipedia.org/wiki/Web_application).
+- Improved [demo Web application](https://mathjslab.netlify.app/).
 
 ## Browser support
 
@@ -76,7 +76,7 @@ import { Evaluator, TEvaluatorConfig } from 'mathjslab';
 Initialize evaluator with:
 
 ```typescript
-let evaluator = Evaluator.initialize(EvaluatorConfiguration);
+let evaluator = new Evaluator(EvaluatorConfiguration);
 ```
 
 ### Examples:
@@ -109,10 +109,10 @@ MathJSLab via the [UNPKG](https://www.unpkg.com/) [CDN](https://en.wikipedia.org
 </head>
 ```
 
-The module will be loaded with `mathjslab` name. You can initialize evaluator with:
+The module will be loaded with `mathjslab` name. You can instantiate `Evaluator` with:
 
 ```typescript
-let evaluator = mathjslab.Evaluator.initialize(EvaluatorConfiguration);
+let evaluator = new mathjslab.Evaluator(EvaluatorConfiguration);
 ```
 
 ## Contributing
@@ -151,10 +151,7 @@ Some differences from the original MATLAB&reg;/Octave language are
 function_name(argument, argument, ...) = <expression>
 ```
 * There are only one a complex numeric type. Other implemented types is
-boolean and character string. Character strings are treated differently than
-in MATLAB&reg;/Octave. An entire string can be placed as an element of an
-array and operations with strings are not yet supported, nor are they converted
-to numbers.
+boolean and character string.
 
 ## License
 

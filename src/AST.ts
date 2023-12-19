@@ -164,7 +164,7 @@ export interface BinaryOperation extends PrimaryNode {
  */
 export interface NodeList extends PrimaryNode {
     type: 'LIST';
-    list: Array<NodeExpr>;
+    list: NodeInput[];
 }
 
 export type ReturnSelector = (length: number, index: number) => any;
@@ -175,6 +175,47 @@ export type ReturnSelector = (length: number, index: number) => any;
 export interface NodeReturnList extends PrimaryNode {
     type: 'RETLIST';
     selector: ReturnSelector;
+}
+
+export interface NodeFunctionHandle extends PrimaryNode {
+    type: 'FCNHANDLE';
+    id: string | null;
+    parameter: NodeInput[];
+    expression: NodeExpr;
+}
+
+export interface NodeFunction extends PrimaryNode {
+    type: 'FCN';
+    id: string;
+    return: NodeInput[];
+    parameter: NodeInput[];
+    arguments: NodeInput[];
+    statements: NodeInput[];
+}
+
+export interface NodeArgumentValidation {
+    name: NodeIdentifier;
+    size: NodeInput[];
+    class: NodeIdentifier | null;
+    functions: NodeInput[];
+    default: NodeExpr; // NodeExpr can be null.
+}
+
+export interface NodeArguments extends PrimaryNode {
+    type: 'ARGUMENTS';
+    attribute: NodeIdentifier | null;
+    validation: {
+        name: NodeIdentifier;
+        size: NodeInput[];
+        class: NodeIdentifier | null;
+        functions: NodeInput[];
+        default: NodeExpr; // NodeExpr can be null.
+    }[];
+}
+
+export interface NodeDeclaration extends PrimaryNode {
+    type: 'GLOBAL' | 'PERSISTENT';
+    list: NodeExpr[];
 }
 
 export interface NodeIf extends PrimaryNode {
@@ -265,30 +306,19 @@ export const nodeArgExpr = (nodeexpr: any, nodelist?: any): NodeArgExpr => {
 };
 
 /**
- * Create range node. If two arguments are passed then it is 'start' and
- * 'stop' of range. If three arguments are passed then it is 'start',
- * 'stride' and 'stop'.
- * @param args 'start' and 'stop' or 'start', 'stride' and 'stop'.
+ * Create range node.
+ * @param start
+ * @param stop
+ * @param stride
  * @returns NodeRange.
  */
-export const nodeRange = (...args: any): NodeRange => {
-    if (args.length === 2) {
-        return {
-            type: 'RANGE',
-            start: args[0],
-            stop: args[1],
-            stride: null,
-        };
-    } else if (args.length === 3) {
-        return {
-            type: 'RANGE',
-            start: args[0],
-            stop: args[2],
-            stride: args[1],
-        };
-    } else {
-        throw new SyntaxError('invalid range.');
-    }
+export const nodeRange = (start: any, stop: any, stride?: any): NodeRange => {
+    return {
+        type: 'RANGE',
+        start,
+        stop,
+        stride: stride ?? null,
+    };
 };
 
 /**
@@ -438,6 +468,69 @@ export const nodeReturnList = (selector: ReturnSelector): NodeReturnList => {
         type: 'RETLIST',
         selector,
     };
+};
+
+export const nodeFunctionHandle = (id: NodeIdentifier | null = null, parameter_list: NodeList | null = null, expression: NodeExpr = null): NodeFunctionHandle => {
+    return {
+        type: 'FCNHANDLE',
+        id: id ? id.id : null,
+        parameter: parameter_list ? parameter_list.list : [],
+        expression,
+    };
+};
+
+export const nodeFunction = (id: NodeIdentifier, return_list: NodeList, parameter_list: NodeList, arguments_list: NodeList, statements_list: NodeList): NodeFunction => {
+    return {
+        type: 'FCN',
+        id: id.id,
+        return: return_list.list,
+        parameter: parameter_list.list,
+        arguments: arguments_list.list,
+        statements: statements_list.list,
+    };
+};
+
+export const nodeArgumentValidation = (
+    name: NodeIdentifier,
+    size: NodeList,
+    cl: NodeIdentifier | null = null,
+    functions: NodeList,
+    dflt: NodeExpr = null,
+): NodeArgumentValidation => {
+    return {
+        name,
+        size: size.list,
+        class: cl,
+        functions: functions.list,
+        default: dflt,
+    };
+};
+
+export const nodeArguments = (attribute: NodeIdentifier | null, validationList: NodeList): NodeArguments => {
+    return {
+        type: 'ARGUMENTS',
+        attribute,
+        validation: validationList.list,
+    };
+};
+
+export const nodeGlobal = (): NodeDeclaration => {
+    return {
+        type: 'GLOBAL',
+        list: [],
+    };
+};
+
+export const nodePersistent = (): NodeDeclaration => {
+    return {
+        type: 'PERSISTENT',
+        list: [],
+    };
+};
+
+export const nodeAppendDeclaration = (node: NodeDeclaration, declaration: NodeExpr): NodeDeclaration => {
+    node.list.push(declaration);
+    return node;
 };
 
 export const nodeIfBegin = (expression: any, then: NodeList): NodeIf => {

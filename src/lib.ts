@@ -1,12 +1,11 @@
-export { CharString } from './CharString';
 export { Decimal } from 'decimal.js';
+export { CharString } from './CharString';
 export { ComplexDecimal } from './ComplexDecimal';
 export { MultiArray } from './MultiArray';
-export { CoreFunctions } from './CoreFunctions';
 export { LinearAlgebra } from './LinearAlgebra';
 export { MathOperation } from './MathOperation';
+export { CoreFunctions } from './CoreFunctions';
 export { Configuration } from './Configuration';
 export { SymbolTable } from './SymbolTable';
 export * as AST from './AST';
-export { Parser } from './Parser';
 export * from './Evaluator';

@@ -190,12 +190,27 @@ matrix_row returns [node: AST.NodeInput]
     } )* (COMMA | WSPACE)?
     ;
 
+fcn_handle returns [node: AST.NodeInput]
+    : EXCLAMATION identifier? {
+        localctx.node = AST.nodeFunctionHandle(localctx.identifier() ? localctx.identifier().node : null);
+    }
+    ;
+
+anon_fcn_handle returns [node: AST.NodeInput]
+    : EXCLAMATION param_list expression {
+        localctx.node = AST.nodeFunctionHandle(null, localctx.param_list().node, localctx.expression().node);
+    }
+    ;
+
 primary_expr returns [node: AST.NodeInput]
     : identifier {
         localctx.node = localctx.identifier().node;
     }
     | constant {
         localctx.node = localctx.constant().node;
+    }
+    | fcn_handle {
+        localctx.node = localctx.fcn_handle().node;
     }
     | matrix {
         localctx.node = localctx.matrix().node;
@@ -245,19 +260,19 @@ oper_expr returns [node: AST.NodeInput]
     | oper_expr op = (PLUS_PLUS | MINUS_MINUS) {
         localctx.node = AST.nodeOp('_' + localctx._op.text as AST.TOperator, localctx.oper_expr(0).node);
     }
-    | oper_expr LPAREN RPAREN {
-        localctx.node = AST.nodeArgExpr(localctx.oper_expr(0).node);
+    | oper_expr LPAREN arg_list? RPAREN {
+        localctx.node = AST.nodeArgExpr(localctx.oper_expr(0).node, localctx.arg_list() ? localctx.arg_list().node : null);
     }
-    | oper_expr LPAREN arg_list RPAREN {
-        localctx.node = AST.nodeArgExpr(localctx.oper_expr(0).node, localctx.arg_list().node);
+    | oper_expr LCURLYBR arg_list? RCURLYBR {
+        localctx.node = AST.nodeArgExpr(localctx.oper_expr(0).node, localctx.arg_list() ? localctx.arg_list().node : null);
     }
     | oper_expr op = (TRANSPOSE | HERMITIAN) {
         localctx.node = AST.nodeOp(localctx._op.text as AST.TOperator, localctx.oper_expr(0).node);
     }
-    | <assoc=right> oper_expr op = (POW | EPOW) power_expr {
+    | oper_expr op = (POW | EPOW) power_expr {
         localctx.node = AST.nodeOp(localctx._op.text as AST.TOperator, localctx.oper_expr(0).node, localctx.power_expr().node);
     }
-    | op = (PLUS | MINUS) oper_expr {
+    | op = (PLUS_PLUS | MINUS_MINUS | PLUS | MINUS) oper_expr {
         localctx.node = AST.nodeOp(localctx._op.text + '_' as AST.TOperator, localctx.oper_expr(0).node);
     }
     | op = (TILDE | EXCLAMATION) oper_expr {
@@ -278,26 +293,27 @@ power_expr returns [node: AST.NodeInput]
     | power_expr op = (PLUS_PLUS | MINUS_MINUS) {
         localctx.node = AST.nodeOp('_' + localctx._op.text as AST.TOperator, localctx.power_expr().node);
     }
-    | power_expr LPAREN RPAREN {
-        localctx.node = AST.nodeArgExpr(localctx.power_expr().node);
+    | power_expr LPAREN arg_list? RPAREN {
+        localctx.node = AST.nodeArgExpr(localctx.power_expr().node, localctx.arg_list() ? localctx.arg_list().node : null);
     }
-    | power_expr LPAREN arg_list RPAREN {
-        localctx.node = AST.nodeArgExpr(localctx.power_expr().node, localctx.arg_list().node);
+    | power_expr LCURLYBR arg_list? RCURLYBR {
+        localctx.node = AST.nodeArgExpr(localctx.power_expr().node, localctx.arg_list() ? localctx.arg_list().node : null);
     }
-    | op = (PLUS_PLUS | MINUS_MINUS) power_expr {
+    | op = (PLUS_PLUS | MINUS_MINUS | PLUS | MINUS) power_expr {
         localctx.node = AST.nodeOp(localctx._op.text + '_' as AST.TOperator, localctx.power_expr().node);
     }
-    | op = (PLUS | MINUS | TILDE | EXCLAMATION) power_expr {
-        localctx.node = AST.nodeOp(localctx._op.text + '_' as AST.TOperator, localctx.power_expr().node);
+    | op = (TILDE | EXCLAMATION) power_expr {
+        localctx.node = AST.nodeOp(localctx._op.text as AST.TOperator, localctx.power_expr().node);
     }
     ;
 
 colon_expr returns [node: AST.NodeInput]
-    : oper_expr COLON oper_expr {
-        localctx.node = AST.nodeRange(localctx.oper_expr(0).node, localctx.oper_expr(1).node);
-    }
-    | oper_expr COLON oper_expr COLON oper_expr {
-        localctx.node = AST.nodeRange(localctx.oper_expr(0).node, localctx.oper_expr(1).node, localctx.oper_expr(2).node);
+    : oper_expr COLON oper_expr (COLON oper_expr)? {
+        if (localctx.oper_expr(2)) {
+            localctx.node = AST.nodeRange(localctx.oper_expr(0).node, localctx.oper_expr(2).node, localctx.oper_expr(1).node);
+        } else {
+            localctx.node = AST.nodeRange(localctx.oper_expr(0).node, localctx.oper_expr(1).node);
+        }
     }
     ;
 
@@ -332,6 +348,9 @@ expression returns [node: AST.NodeInput]
     | simple_expr op = (EQ | ADD_EQ | SUB_EQ | MUL_EQ | EMUL_EQ | DIV_EQ | EDIV_EQ | LEFTDIV_EQ | ELEFTDIV_EQ | POW_EQ | EPOW_EQ | AND_EQ | OR_EQ) expression {
         localctx.node = AST.nodeOp(localctx._op.text as AST.TOperator, localctx.simple_expr().node, localctx.expression().node);
     }
+    | anon_fcn_handle {
+        localctx.node = localctx.anon_fcn_handle().node;
+    }
     ;
 
 /**
@@ -339,8 +358,38 @@ expression returns [node: AST.NodeInput]
  */
 
 command returns [node: AST.NodeInput]
-    : select_command {
+    : declaration {
+        localctx.node = localctx.declaration().node;
+    }
+    | select_command {
         localctx.node = localctx.select_command().node;
+    }
+    | function {
+        localctx.node = localctx.function_().node;
+    }
+    ;
+
+/**
+ * Declaration statements.
+ */
+
+declaration returns [node: AST.NodeInput]
+    locals [i: number = 0]
+    : (GLOBAL {
+        localctx.node = AST.nodeGlobal();
+    } | PERSISTENT {
+        localctx.node = AST.nodePersistent();
+    }) (decl_elt {
+        localctx.node = AST.nodeAppendDeclaration(localctx.node, localctx.decl_elt(localctx.i++));
+    })+
+    ;
+
+decl_elt returns [node: AST.NodeInput]
+    : identifier {
+        localctx.node = localctx.identifier().node;
+    }
+    | identifier '=' expression {
+        localctx.node = AST.nodeOp('=', localctx.identifier().node, localctx.expression().node);
     }
     ;
 
@@ -380,6 +429,100 @@ elseif_clause returns [node: AST.NodeInput]
 else_clause returns [node: AST.NodeInput]
     : ELSE sep? list? {
         localctx.node = AST.nodeElse(localctx.list() ? localctx.list().node : AST.nodeListFirst());
+    }
+    ;
+
+/**
+ * List of function parameters.
+ */
+
+param_list returns [node: AST.NodeInput]
+    locals [i: number = 0]
+    : LPAREN {
+        localctx.node = AST.nodeListFirst();
+    } (param_list_elt {
+        localctx.node = AST.appendNodeList(localctx.node, localctx.param_list_elt(localctx.i++));
+    } (COMMA param_list_elt {
+        localctx.node = AST.appendNodeList(localctx.node, localctx.param_list_elt(localctx.i++));
+    })*)? RPAREN
+    ;
+
+param_list_elt returns [node: AST.NodeInput]
+    : decl_elt {
+        localctx.node = localctx.decl_elt().node;
+    }
+    | magic_tilde {
+        localctx.node = localctx.magic_tilde().node;
+    }
+    ;
+
+/**
+ * List of function return value names.
+ */
+
+return_list returns [node: AST.NodeInput]
+    locals [i: number = 0]
+    : identifier {
+        localctx.node = AST.nodeListFirst(localctx.identifier(0).node);
+    }
+    | LBRACKET {
+        localctx.node = AST.nodeListFirst();
+    } (identifier {
+        localctx.node = AST.appendNodeList(localctx.node, localctx.identifier(localctx.i++).node);
+    } (COMMA identifier {
+        localctx.node = AST.appendNodeList(localctx.node, localctx.identifier(localctx.i++).node);
+    })*)? RBRACKET
+    ;
+
+/**
+ * Function definition.
+ */
+
+function returns [node: AST.NodeInput]
+    : FUNCTION (return_list EQ)? identifier param_list? sep? arguments_block_list? list? (END | ENDFUNCTION | EOF) {
+        localctx.node = AST.nodeFunction(
+            localctx.identifier().node,
+            localctx.return_list() ? localctx.return_list().node : AST.nodeListFirst(),
+            localctx.param_list() ? localctx.param_list().node : AST.nodeListFirst(),
+            localctx.arguments_block_list() ? localctx.arguments_block_list().node : AST.nodeListFirst(),
+            localctx.list() ? localctx.list().node : AST.nodeListFirst(),
+        );
+    }
+    ;
+
+arguments_block_list returns [node: AST.NodeInput]
+    locals [i: number = 0]
+    : arguments_block {
+        localctx.node = AST.nodeListFirst(localctx.arguments_block(localctx.i++).node);
+    } (sep? arguments_block {
+        localctx.node = AST.appendNodeList(localctx.node, localctx.arguments_block(localctx.i++).node);
+    })* sep?
+    ;
+
+arguments_block returns [node: AST.NodeInput]
+    : ARGUMENTS sep? (LPAREN identifier RPAREN)? args_validation_list sep? END {
+        localctx.node = AST.nodeArguments(localctx.identifier() ? localctx.identifier().node : null, localctx.args_validation_list().node);
+    }
+    ;
+
+args_validation_list returns [node: AST.NodeInput]
+    locals [i: number = 0]
+    : arg_validation {
+        localctx.node = AST.nodeListFirst(localctx.arg_validation(localctx.i++).node);
+    } (sep arg_validation {
+        localctx.node = AST.appendNodeList(localctx.node, localctx.arg_validation(localctx.i++).node);
+    })*
+    ;
+
+arg_validation returns [node: AST.NodeInput]
+    : identifier (LPAREN arg_list RPAREN)? identifier? (LCURLYBR arg_list RCURLYBR)? (EQ expression)? {
+        localctx.node = AST.nodeArgumentValidation(
+            localctx.identifier(0).node,
+            localctx.LPAREN() ? localctx.arg_list(0).node : AST.nodeListFirst(),
+            localctx.identifier(1) ? localctx.identifier(1).node : AST.nodeListFirst(),
+            localctx.LCURLYBR() ? (localctx.LPAREN() ? localctx.arg_list(1).node : localctx.arg_list(0).node) : AST.nodeListFirst(),
+            localctx.expression() ? localctx.expression().node : null,
+        );
     }
     ;
 

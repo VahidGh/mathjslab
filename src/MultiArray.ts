@@ -298,8 +298,8 @@ export class MultiArray {
      * @param M MultiArray object.
      * @returns String of unparsed MultiArray.
      */
-    public static unparse(M: MultiArray): string {
-        const unparseRows = (row: ElementType[]) => row.map((value) => global.EvaluatorPointer.Unparse(value)).join() + ';\n';
+    public static unparse(M: MultiArray, evaluator: Evaluator): string {
+        const unparseRows = (row: ElementType[]) => row.map((value) => evaluator.Unparse(value)).join() + ';\n';
         let arraystr: string = '';
         if (M.dimension.reduce((p, c) => p * c, 1) === 0) {
             return `${M.isCell ? '{ }' : '[ ]'}(${M.dimension.join('x')})`;
@@ -312,13 +312,13 @@ export class MultiArray {
                     .map(unparseRows)
                     .join('');
                 arraystr = arraystr.substring(0, arraystr.length - 2);
-                result += `${M.isCell ? '{' : '['}\n${arraystr}\n${M.isCell ? '}' : ']'} (:,:,${MultiArray.linearIndexToSubscript(M.dimensionR, p).slice(1).join()})\n`;
+                result += `${M.isCell ? '{' : '['}${arraystr}${M.isCell ? '}' : ']'} (:,:,${MultiArray.linearIndexToSubscript(M.dimensionR, p).slice(1).join()})\n`;
             }
             return result;
         } else {
             arraystr = M.array.map(unparseRows).join('');
             arraystr = arraystr.substring(0, arraystr.length - 2);
-            return `${M.isCell ? '{' : '['}\n${arraystr}\n${M.isCell ? '}' : ']'}`;
+            return `${M.isCell ? '{' : '['}${arraystr}${M.isCell ? '}' : ']'}`;
         }
     }
 
@@ -327,8 +327,8 @@ export class MultiArray {
      * @param M MultiArray object.
      * @returns String of unparsed MultiArray in MathML language.
      */
-    public static unparseMathML(M: MultiArray): string {
-        const unparseRows = (row: ElementType[]) => `<mtr>${row.map((value) => `<mtd>${global.EvaluatorPointer.unparserMathML(value)}</mtd>`).join('')}</mtr>`;
+    public static unparseMathML(M: MultiArray, evaluator: Evaluator): string {
+        const unparseRows = (row: ElementType[]) => `<mtr>${row.map((value) => `<mtd>${evaluator.unparserMathML(value)}</mtd>`).join('')}</mtr>`;
         const buildMrow = (rows: string) => `<mrow><mo>${M.isCell ? '{' : '['}</mo><mtable>${rows}</mtable><mo>${M.isCell ? '}' : ']'}</mo></mrow>`;
         if (M.dimension.reduce((p, c) => p * c, 1) === 0) {
             return `${buildMrow('<mspace width="0.5em"/>')}<mo>(</mo><mn>${M.dimension.join('</mn><mi>&times;</mi><mn>')}</mn><mo>)</mo>`;
@@ -369,7 +369,7 @@ export class MultiArray {
     }
 
     /**
-     * Evaluate array. Calls `global.EvaluatorPointer.Evaluator` for each
+     * Evaluate array. Calls `evaluator.Evaluator` for each
      * element of page (matrix row-ordered). Performs horizontal or vertical
      * concatenation if the evaluation of element results in an MultiArray.
      * @param array MultiArray page.
@@ -378,14 +378,14 @@ export class MultiArray {
      * @param parent Parent node of items in page.
      * @returns Evaluated matrix.
      */
-    private static evaluatePage(array: ElementType[][], local: boolean = false, fname: string = '', iscell: boolean = false, parent: any): ElementType[][] {
+    private static evaluatePage(array: ElementType[][], evaluator: Evaluator, local: boolean = false, fname: string = '', iscell: boolean = false, parent: any): ElementType[][] {
         const result: ElementType[][] = [];
         for (let i = 0, k = 0; i < array.length; i++, k++) {
             result.push([]);
             let h = 1;
             for (let j = 0; j < array[i].length; j++) {
                 array[i][j].parent = parent;
-                const element = global.EvaluatorPointer.Evaluator(array[i][j], local, fname);
+                const element = evaluator.Evaluator(array[i][j], local, fname);
                 if (element instanceof MultiArray && !iscell) {
                     if (j === 0) {
                         h = element.array.length;
@@ -420,11 +420,11 @@ export class MultiArray {
      * @param fname Function name (context).
      * @returns Evaluated MultiArray object.
      */
-    public static evaluate(M: MultiArray, local: boolean = false, fname: string = ''): MultiArray {
+    public static evaluate(M: MultiArray, evaluator: Evaluator, local: boolean = false, fname: string = ''): MultiArray {
         const result: MultiArray = new MultiArray();
         result.isCell = M.isCell;
         for (let p = 0; p < M.array.length; p += M.dimension[0]) {
-            const page = MultiArray.evaluatePage(M.array.slice(p, p + M.dimension[0]), local, fname, M.isCell, result);
+            const page = MultiArray.evaluatePage(M.array.slice(p, p + M.dimension[0]), evaluator, local, fname, M.isCell, result);
             if (p === 0) {
                 result.dimension = [page.length, page[0].length, ...M.dimension.slice(2)];
             } else {
@@ -699,9 +699,9 @@ export class MultiArray {
      * @param input Input string to generate error messages (the id of array).
      * @returns linear index.
      */
-    public static parseSubscript(dimension: number[], subscript: ComplexDecimal[], input?: string, that?: Evaluator): number {
+    public static parseSubscript(dimension: number[], subscript: ComplexDecimal[], input?: string, evaluator?: Evaluator): number {
         // Converts ComplexDecimal[] subscript parameter to number[].
-        const index = subscript.map((i) => MultiArray.testIndex(i, `${input ? input : ''}${that ? '(' + subscript.map((i) => that.Unparse(i)).join() + ')' : ''}`));
+        const index = subscript.map((i) => MultiArray.testIndex(i, `${input ? input : ''}${evaluator ? '(' + subscript.map((i) => evaluator.Unparse(i)).join() + ')' : ''}`));
         /**
          * Throws comprehensive out of bound error indicating subscript index and bound.
          * @param indexPosition Position of subscript index out of bound.
@@ -1154,7 +1154,7 @@ export class MultiArray {
      * @param args Linear indices or subscripts.
      * @param right Value to assign.
      */
-    public static setElements(nameTable: TNameTable, id: string, indexList: (ComplexDecimal | MultiArray)[], right: MultiArray, input?: string, that?: Evaluator): void {
+    public static setElements(nameTable: TNameTable, id: string, indexList: (ComplexDecimal | MultiArray)[], right: MultiArray, input?: string, evaluator?: Evaluator): void {
         if (indexList.length === 0) {
             throw new RangeError('invalid empty index list.');
         } else {
@@ -1164,7 +1164,10 @@ export class MultiArray {
             const argsLength = args.map((arg) => arg.length);
             const argsParsed = args.map((arg) =>
                 arg.map((i) =>
-                    MultiArray.testIndex(i as ComplexDecimal, `${input ? input : ''}${that ? '(' + args.map((arg) => arg.map((i) => that.Unparse(i))).join() + ')' : ''}`),
+                    MultiArray.testIndex(
+                        i as ComplexDecimal,
+                        `${input ? input : ''}${evaluator ? '(' + args.map((arg) => arg.map((i) => evaluator.Unparse(i))).join() + ')' : ''}`,
+                    ),
                 ),
             );
             const argsMax = argsParsed.map((arg) => Math.max(...arg));
@@ -1199,7 +1202,7 @@ export class MultiArray {
                 const subscriptArgs: number[] = subscript.map((s, r) =>
                     MultiArray.testIndex(
                         args[r][s - 1] as ComplexDecimal,
-                        `${input ? input : ''}${that ? '(' + subscript.map((i) => that.Unparse(new ComplexDecimal(i))).join() + ')' : ''}`,
+                        `${input ? input : ''}${evaluator ? '(' + subscript.map((i) => evaluator.Unparse(new ComplexDecimal(i))).join() + ')' : ''}`,
                     ),
                 );
                 const indexLinear = MultiArray.subscriptToLinearIndex(dimension, subscriptArgs);

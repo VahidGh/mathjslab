@@ -2,6 +2,13 @@
  * MATLAB®/Octave like syntax parser/interpreter/compiler.
  */
 
+import { CharStreams, CommonTokenStream, DiagnosticErrorListener, PredictionMode } from 'antlr4';
+import MathJSLabLexer from './MathJSLabLexer';
+import MathJSLabParser from './MathJSLabParser';
+import LexerErrorListener from './LexerErrorListener';
+import ParserErrorListener from './ParserErrorListener';
+import * as AST from './AST';
+
 import { constantsTable } from './constantsTable';
 import { substSymbol } from './substSymbol';
 import { CharString } from './CharString';
@@ -11,8 +18,6 @@ import { CoreFunctions } from './CoreFunctions';
 import { LinearAlgebra } from './LinearAlgebra';
 import { MathObject, MathOperationType, UnaryMathOperation, BinaryMathOperation, MathOperation } from './MathOperation';
 import { Configuration } from './Configuration';
-import * as AST from './AST';
-import { Parser } from './Parser';
 
 /**
  * aliasNameTable type.
@@ -34,7 +39,7 @@ export type TBaseFunctionTable = Record<string, TBaseFunctionTableEntry>;
  * nameTable type.
  */
 export type TNameTableEntry = {
-    args: Array<AST.NodeIdentifier>;
+    args: AST.NodeIdentifier[];
     expr: AST.NodeExpr;
 };
 export type TNameTable = Record<string, TNameTableEntry>;
@@ -60,22 +65,11 @@ export type TEvaluatorConfig = {
 export type IncDecOperator = (tree: AST.NodeIdentifier) => MathObject;
 
 /**
- * External parser declarations (defined in parser body)
- */
-declare global {
-    /* eslint-disable-next-line  no-var */
-    var EvaluatorPointer: Evaluator;
-}
-
-/**
  * Evaluator object.
- * It is implemented as a class but cannot be instantiated more than one time
- * simultaneously. Instance is given by `Evaluator.initialize` static method
- * or global variable global.EvaluatorPointer.
  */
 export class Evaluator {
     /**
-     * After run Parser or Evaluate method, the exitStatus property will contains
+     * After run Evaluate method, the exitStatus property will contains
      * exit state of method.
      */
     public response = {
@@ -234,7 +228,7 @@ export class Evaluator {
      * User functions.
      */
     private readonly functions: Record<string, Function> = {
-        unparse: (tree: AST.NodeInput): CharString => new CharString(EvaluatorPointer.Unparse(tree)),
+        unparse: (tree: AST.NodeInput): CharString => new CharString(this.Unparse(tree)),
     };
 
     /**
@@ -262,9 +256,6 @@ export class Evaluator {
     public readonly getDimension = MultiArray.getDimension;
     public readonly toLogical = MultiArray.toLogical;
 
-    public readonly parser = new Parser();
-    public readonly Parse = this.parser.parse;
-
     /**
      * Special functions MathML unparser.
      */
@@ -282,10 +273,16 @@ export class Evaluator {
     };
 
     /**
+     * Alias name function. This property is set at Evaluator instantiation.
+     * @param name Alias name.
+     * @returns Canonical name.
+     */
+    public aliasName: (name: string) => string = (name: string): string => name;
+
+    /**
      * Evaluator object constructor
      */
-    private constructor() {
-        global.EvaluatorPointer = this;
+    constructor(config?: TEvaluatorConfig) {
         this.exitStatus = this.response.OK;
         /* Set opTable aliases */
         this.opTable['**'] = this.opTable['^'];
@@ -332,23 +329,14 @@ export class Evaluator {
         for (const func in this.unparseMathMLFunctions) {
             this.baseFunctionTable[func].unparserMathML = this.unparseMathMLFunctions[func];
         }
-    }
-
-    /**
-     * Evaluator initialization.
-     * @param config Evaluator configuration.
-     * @returns Evaluator instance.
-     */
-    public static initialize(config?: TEvaluatorConfig): Evaluator {
-        const evaluator = new Evaluator();
         if (config) {
             if (config.aliasTable) {
-                evaluator.aliasTable = config.aliasTable;
-                evaluator.aliasName = (name: string): string => {
+                this.aliasTable = config.aliasTable;
+                this.aliasName = (name: string): string => {
                     let result = false;
                     let aliasname = '';
-                    for (const i in evaluator.aliasTable) {
-                        if (evaluator.aliasTable[i].test(name)) {
+                    for (const i in this.aliasTable) {
+                        if (this.aliasTable[i].test(name)) {
                             result = true;
                             aliasname = i;
                             break;
@@ -361,29 +349,52 @@ export class Evaluator {
                     }
                 };
             } else {
-                evaluator.aliasName = (name: string): string => name;
+                this.aliasName = (name: string): string => name;
             }
             if (config.externalFunctionTable) {
-                Object.assign(evaluator.baseFunctionTable, config.externalFunctionTable);
+                Object.assign(this.baseFunctionTable, config.externalFunctionTable);
             }
             if (config.externalCmdWListTable) {
-                Object.assign(evaluator.commandWordListTable, config.externalCmdWListTable);
-            }
-            for (const cmd in evaluator.commandWordListTable) {
-                evaluator.parser.commandNames.push(cmd);
+                Object.assign(this.commandWordListTable, config.externalCmdWListTable);
             }
         } else {
-            evaluator.aliasName = (name: string): string => name;
+            this.aliasName = (name: string): string => name;
         }
-        return evaluator;
     }
 
     /**
-     * Alias name function. This property is set when running Evaluator.initialize.
-     * @param name Alias name.
-     * @returns Canonical name.
+     * Parse input string.
+     * @param input String to parse.
+     * @returns Abstract syntax tree of input.
      */
-    public aliasName: (name: string) => string = (name: string): string => name;
+    public Parse(input: string): AST.NodeInput {
+        // Give the lexer the input as a stream of characters.
+        const inputStream = CharStreams.fromString(input);
+        const lexer = new MathJSLabLexer(inputStream);
+
+        // Set word-list commands in lexer.
+        lexer.commandNames = Object.keys(this.commandWordListTable);
+
+        // Create a stream of tokens and give it to the parser. Set parser to construct a parse tree.
+        const tokenStream = new CommonTokenStream(lexer);
+        const parser = new MathJSLabParser(tokenStream);
+        parser.buildParseTrees = true;
+
+        // Remove error listeners and add LexerErrorListener and ParserErrorListener.
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new LexerErrorListener());
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ParserErrorListener());
+        if (this._debug) {
+            // Add DiagnosticErrorListener to parser to notify when the parser
+            // detects an ambiguity. Set prediction mode to report all ambiguities.
+            parser.addErrorListener(new DiagnosticErrorListener());
+            parser._interp.predictionMode = PredictionMode.LL_EXACT_AMBIG_DETECTION;
+        }
+
+        // Parse input and return AST.
+        return parser.input().node;
+    }
 
     /**
      * Load native name table in name table.
@@ -618,7 +629,7 @@ export class Evaluator {
                 return tree;
             } else if (tree instanceof MultiArray) {
                 /* MATRIX */
-                return this.evaluateArray(tree, local, fname);
+                return this.evaluateArray(tree, this, local, fname);
             } else {
                 switch (tree.type) {
                     case '+':
@@ -909,7 +920,7 @@ export class Evaluator {
                                 tree.list[i].type === 'IDENT' &&
                                 !(local && this.localTable[fname] && this.localTable[fname][tree.list[i].id]) &&
                                 !(tree.list[i].id in this.nameTable) &&
-                                this.parser.commandNames.indexOf(tree.list[i].id) >= 0
+                                Object.keys(this.commandWordListTable).indexOf(tree.list[i].id) >= 0
                             ) {
                                 tree.list[i].type = 'CMDWLIST';
                                 tree.list[i].omitAns = true;
@@ -1165,7 +1176,7 @@ export class Evaluator {
                     return this.unparseString(tree);
                 } else if (tree instanceof MultiArray) {
                     /* MATRIX */
-                    return this.unparseArray(tree);
+                    return this.unparseArray(tree, this);
                 } else {
                     switch (tree.type) {
                         case '+':
@@ -1297,7 +1308,7 @@ export class Evaluator {
                     return this.unparseStringMathML(tree);
                 } else if (tree instanceof MultiArray) {
                     /* MATRIX */
-                    return this.unparseArrayMathML(tree);
+                    return this.unparseArrayMathML(tree, this);
                 } else {
                     switch (tree.type) {
                         case '+':

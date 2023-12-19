@@ -2,7 +2,7 @@ lexer grammar MathJSLabLexer;
 
 tokens { GLOBAL, PERSISTENT, IF, ENDIF, END, ENDRANGE, ELSEIF, ELSE, SWITCH, ENDSWITCH, CASE, OTHERWISE, WHILE, ENDWHILE, DO, UNTIL, FOR, ENDFOR, PARFOR, ENDPARFOR,
 BREAK, CONTINUE, RETURN, FUNCTION, ENDFUNCTION, TRY, CATCH, END_TRY_CATCH, UNWIND_PROTECT, UNWIND_PROTECT_CLEANUP, END_UNWIND_PROTECT, CLASSDEF, ENDCLASSDEF,
-ENUMERATION, ENDENUMERATION, PROPERTIES, ENDPROPERTIES, EVENTS, ENDEVENTS, METHODS, ENDMETHODS, WSPACE, STRING }
+ENUMERATION, ENDENUMERATION, PROPERTIES, ENDPROPERTIES, EVENTS, ENDEVENTS, METHODS, ENDMETHODS, WSPACE, STRING, ARGUMENTS }
 
 @members {
     /**
@@ -49,7 +49,8 @@ ENUMERATION, ENDENUMERATION, PROPERTIES, ENDPROPERTIES, EVENTS, ENDEVENTS, METHO
 	    'events',
 	    'endevents',
 	    'methods',
-	    'endmethods'
+	    'endmethods',
+        'arguments',
     ];
     /**
      * Reserved keywords token types.
@@ -95,7 +96,8 @@ ENUMERATION, ENDENUMERATION, PROPERTIES, ENDPROPERTIES, EVENTS, ENDEVENTS, METHO
         MathJSLabLexer.EVENTS,
         MathJSLabLexer.ENDEVENTS,
         MathJSLabLexer.METHODS,
-        MathJSLabLexer.ENDMETHODS
+        MathJSLabLexer.ENDMETHODS,
+        MathJSLabLexer.ARGUMENTS,
     ];
     /**
      * Word-list commands
@@ -121,6 +123,7 @@ EQ: '=' { this.previousTokenType = MathJSLabLexer.EQ; };
 COLON: ':' { this.previousTokenType = MathJSLabLexer.COLON; };
 SEMICOLON: ';' { this.previousTokenType = MathJSLabLexer.SEMICOLON; };
 COMMA: ',' { this.previousTokenType = MathJSLabLexer.COMMA; };
+DOT: '.' { this.previousTokenType = MathJSLabLexer.DOT; };
 TILDE: '~' { this.previousTokenType = MathJSLabLexer.TILDE; };
 EXCLAMATION: '!' { this.previousTokenType = MathJSLabLexer.EXCLAMATION; };
 COMMAT: '@' { this.previousTokenType = MathJSLabLexer.COMMAT; };
@@ -202,7 +205,7 @@ HERMITIAN: '\'' {
 };
 
 DQSTRING
-    : '"'{
+    : '"' {
         this.pushMode(MathJSLabLexer.DQ_STRING);
         this.quotedString = '';
         this.skip();
@@ -210,7 +213,7 @@ DQSTRING
     ;
 
 IDENTIFIER
-    : IDENT (SPACE? '.' SPACE? IDENT)* {
+    : FQIDENT {
         const ident = this.text.replace(/[ \t]/, '');
         let i = MathJSLabLexer.keywordNames.indexOf(ident);
         if (i >= 0) {
@@ -232,7 +235,19 @@ IDENTIFIER
     ;
 
 DECIMAL_NUMBER
-    :  REAL_DECIMAL [IiJj]?  { this.previousTokenType = MathJSLabLexer.DECIMAL_NUMBER; }
+    :  REAL_NUMBER [IiJj]?  { this.previousTokenType = MathJSLabLexer.DECIMAL_NUMBER; }
+    ;
+
+// The following rule is for expressions that are just digits followed
+// directly by an element-by-element operator, don't grab the '.'
+// part of the operator as part of the constant (for example, in an
+// expression like "13./x").
+
+DECIMAL_DOT_OP
+    : DECIMAL_DIGITS '.' [*/\\^'] {
+        this._input.seek(this._input.index - 2); // Unput two characters.
+        this._type = this.previousTokenType = MathJSLabLexer.DECIMAL_NUMBER;
+    }
     ;
 
 SPACE_OR_CONTINUATION
@@ -381,11 +396,17 @@ DOUBLEQ_END
 mode BLOCK_COMMENT;
 
 BLOCK_COMMENT_START_AGAIN
-    : SPACE? CCHAR '{' SPACE? NL { this.pushMode(MathJSLabLexer.BLOCK_COMMENT); this.skip(); }
+    : SPACE? CCHAR '{' SPACE? NL {
+        this.pushMode(MathJSLabLexer.BLOCK_COMMENT);
+        this.skip();
+    }
     ;
 
 BLOCK_COMMENT_END
-    :  SPACE? CCHAR '}' SPACE? NL? { this.popMode(); this.skip(); }
+    :  SPACE? CCHAR '}' SPACE? NL? {
+        this.popMode();
+        this.skip();
+    }
     ;
 
 BLOCK_COMMENT_LINE
@@ -403,10 +424,7 @@ SKIP_SPACE
     ;
 
 SKIP_COMMENT_LINE
-    : CCHAR ~[\r\n]* {
-        this.popMode();
-        this.skip();
-    }
+    : CCHAR ~[\r\n]* -> skip
     ;
 
 EXIT_AT_NEWLINE
@@ -419,7 +437,7 @@ EXIT_AT_NEWLINE
 EXIT_AT_EOF
     : EOF {
         this.popMode();
-        this.previousTokenType = MathJSLabLexer.EOF;
+        this._type = this.previousTokenType = MathJSLabLexer.EOF;
     }
     ;
 
@@ -430,7 +448,7 @@ UNQUOTED_STRING
     ;
 
 fragment CCHAR
-    : ('#' | '%')
+    : '#' | '%'
     ;
 
 fragment NL
@@ -442,17 +460,33 @@ fragment SPACE
     ;
 
 fragment IDENT
-    : [_a-zA-Z][_a-zA-Z0-9]*
+    : [_a-zA-Z] [_a-zA-Z0-9]*
+    ;
+
+fragment FQIDENT
+    : IDENT (SPACE? '.' SPACE? IDENT)*
     ;
 
 fragment DECIMAL_DIGITS
-    : [0-9][0-9_]*
+    : [0-9] [0-9_]*
     ;
 
 fragment EXPONENT
     : [DdEe] ('+' | '-')? DECIMAL_DIGITS
     ;
 
-fragment REAL_DECIMAL
+fragment REAL_NUMBER
     : ( (DECIMAL_DIGITS '.'?) | DECIMAL_DIGITS? '.' DECIMAL_DIGITS ) EXPONENT?
+    ;
+
+fragment SIZE_SUFFIX
+    : [su] ('8'|'16'|'32'|'64')
+    ;
+
+fragment BINARY_NUMBER
+    : '0' [bB] [01] [01_]* SIZE_SUFFIX?
+    ;
+
+fragment HEXADECIMAL_NUMBER
+    : '0' [xX] [0-9a-fA-F] [0-9a-fA-F_]* SIZE_SUFFIX?
     ;

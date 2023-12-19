@@ -21,15 +21,14 @@ const config: webpack.Configuration = {
     },
     resolve: {
         extensions: ['.ts', '.js'],
-        alias: {
-            parser: path.resolve(__dirname, 'src/'),
-        },
     },
     output: {
         path: path.resolve(__dirname, 'lib'),
         filename: 'mathjslab.js',
-        library: 'mathjslab',
-        libraryTarget: 'umd',
+        library: {
+            name: 'mathjslab',
+            type: 'umd',
+        },
         clean: true,
     },
 };

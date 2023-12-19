@@ -2,16 +2,23 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.4.0
+- Bug fix in parser (pre-increment and element-by-element operations).
+- Rules to functions definition and handlers in parser and AST implemented. Evaluation not yet implemented.
+- The string 'arguments' to define arguments block in functions is defined as keyword in lexer.
+- 'Parser.ts' file removed and Parser implemented as a method of `Evaluator`. The method `Evaluator.initialize` has been removed and initialization actions moved to `Evaluator` constructor. Now the `Evaluator` class can be instantiated more than one time.
+
 ## 1.3.4
 - More strong type definitions in 'MultiArray.ts', 'Evaluator.ts' and 'MathOperation.ts' files.
+- Global variable EvaluatorPointer removed. Evaluator instance reference passed in method parameters.
 
 ## 1.3.3
 - File 'MathObject.ts' and (their respective class and test file) renamed to MathOperation.ts.
 - CharString conversion to MultiArray implemented as previous to any operation in MathOperation.ts.
 
 ## 1.3.2
-- Tests for types implemented as 'instanceof' in 'MathObject.ts' and 'Evaluator.ts'. Method 'isThis' removed from classes.
-- Some bug fix ins evaluator (not operation).
+- Tests for types implemented as `instanceof` in 'MathObject.ts' and 'Evaluator.ts'. Method 'isThis' removed from classes.
+- Some bug fix in evaluator (not operation).
 
 ## 1.3.1
 - Improvements and some bug fixes in lexer and parser. Support for cell arrays in parser and MultiArray class. Error messages in existing functions and cell array functions no yet implemented.
@@ -19,7 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Some improvements in CharString class, removing 'removeQuotes' method an creating 'quote' property to store type of quote (single or double).
 
 ## 1.3.0
-- Parser implemented using ANTLR in files MathJSLabLexer.g4 and MathJSLabParser.g4. The wrapper class for lexer and parser has been created in file Parser.ts. Need to make extensive tests.
+- Parser implemented using ANTLR in files 'MathJSLabLexer.g4' and 'MathJSLabParser.g4'. The wrapper class for lexer and parser has been created in file Parser.ts. Need to make extensive tests.
 - File names converted to camel case.
 - The file AST.ts (Abstract Syntax Tree) has been created, and related types and interfaces defined in Evaluator.ts has been moved to AST.ts file.
 
