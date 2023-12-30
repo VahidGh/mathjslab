@@ -2,6 +2,26 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.4.1
+- More strong type definitions in 'AST.ts' and 'MathJSLabParser.g4' files.
+- Number input as binary, octal and hexadecimal implemented in REAL_NUMBER rule of lexer.
+- Optimizations in 'ComplexDecimal.ts' (use of isZero() method).
+- Bug fix in `Evaluator` (indexing with 'end' and literal indexing).
+- `clear` word list command defined inside body of `Evaluator` class.
+- 'constantsTable.ts' file and `Evaluator.readonlyNameTable` has been removed. Improvements in clear command.
+- 'Structure.ts' file with `Structure` class definition and its respective test file has been created. Some indirect reference implemented in lexer, parser and evaluator.
+- Bug fix in expansion with indexing from scalar.
+- Bug fix in test files (references to `Evaluator.initialize` changed to `new Evaluator`).
+- Bug fix in functions 'rand' and 'randi' (`CoreFunctions.newFilledEach`).
+- Optimizations in `Evaluator.validateAssignment` (remove `left` field in return value).
+- Create `ComplexDecimal.random` using `Decimal.random` so configuration 'crypt' takes effect.
+- Optimizations in `ComplexDecimal.set`.
+- Changes in `Evaluator.baseFunctionTable` and function calling:
+  * mapper field is now not optional.
+  * `Evaluator.localTable` variable creation using `global.crypto.randomUUID`.
+  * Function parameters selectively evaluated if ev.length > 0.
+
+
 ## 1.4.0
 - Bug fix in parser (pre-increment and element-by-element operations).
 - Rules to functions definition and handlers in parser and AST implemented. Evaluation not yet implemented.
@@ -100,7 +120,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Fix parser parenthesis node.
 
 ## 1.1.18
-- `end` in ranges implemented in parser rule `colon_item`. To do this it was necessary to track the context creating the `parent` property in each node, set during `Evaluator`, and also the `index` property in the 'LIST' and 'ARG' type nodes. This can be useful in `Unparse` and `UnparseMathML`, to eliminate unnecessary parentheses.
+- `end` in ranges implemented in parser rule `colon_item`. To do this it was necessary to track the context creating the `parent` property in each node, set during `Evaluator`, and also the `index` property in the 'LIST' and 'IDX' type nodes. This can be useful in `Unparse` and `UnparseMathML`, to eliminate unnecessary parenthesis.
 
 ## 1.1.17
 - Project launch.

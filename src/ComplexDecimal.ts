@@ -118,31 +118,13 @@ export class ComplexDecimal {
      * @param config
      */
     public static set(config: ComplexDecimal.ComplexDecimalConfig): void {
+        const decimalConfig = ['precision', 'rounding', 'toExpPos', 'toExpNeg', 'minE', 'maxE', 'modulo', 'crypto'];
         const decimal: Decimal.Config = {};
-        if (typeof config.precision !== 'undefined') {
-            ComplexDecimalConfig.precision = decimal.precision = config.precision;
-        }
-        if (typeof config.rounding !== 'undefined') {
-            ComplexDecimalConfig.rounding = decimal.rounding = config.rounding;
-        }
-        if (typeof config.toExpPos !== 'undefined') {
-            ComplexDecimalConfig.toExpPos = decimal.toExpPos = config.toExpPos;
-        }
-        if (typeof config.toExpNeg !== 'undefined') {
-            ComplexDecimalConfig.toExpNeg = decimal.toExpNeg = config.toExpNeg;
-        }
-        if (typeof config.minE !== 'undefined') {
-            ComplexDecimalConfig.minE = decimal.minE = config.minE;
-        }
-        if (typeof config.maxE !== 'undefined') {
-            ComplexDecimalConfig.maxE = decimal.maxE = config.maxE;
-        }
-        if (typeof config.modulo !== 'undefined') {
-            ComplexDecimalConfig.modulo = decimal.modulo = config.modulo;
-        }
-        if (typeof config.crypto !== 'undefined') {
-            ComplexDecimalConfig.crypto = decimal.crypto = config.crypto;
-        }
+        decimalConfig.forEach((param) => {
+            if (typeof (config as any)[param] !== 'undefined') {
+                (ComplexDecimalConfig as any)[param] = (decimal as any)[param] = (config as any)[param];
+            }
+        });
         if (typeof config.precisionCompare !== 'undefined') {
             ComplexDecimalConfig.precisionCompare = config.precisionCompare;
         }
@@ -226,11 +208,9 @@ export class ComplexDecimal {
     /**
      * Most restricted number class.
      */
-    public static readonly numberClass: Record<string, number> = {
-        logical: 0,
-        real: 1,
-        complex: 2,
-    };
+    public static readonly LOGICAL = 0;
+    public static readonly REAL = 1;
+    public static readonly COMPLEX = 2;
 
     /**
      * Real, imaginary and type properties.
@@ -241,12 +221,12 @@ export class ComplexDecimal {
     public parent: any;
 
     public static setNumberType(value: ComplexDecimal): void {
-        if (value.im.eq(0)) {
-            if (!((value.re.eq(0) || value.re.eq(1)) && value.type === ComplexDecimal.numberClass.logical)) {
-                value.type = ComplexDecimal.numberClass.real;
+        if (value.im.isZero()) {
+            if (!((value.re.isZero() || value.re.eq(1)) && value.type === ComplexDecimal.LOGICAL)) {
+                value.type = ComplexDecimal.REAL;
             }
         } else {
-            value.type = ComplexDecimal.numberClass.complex;
+            value.type = ComplexDecimal.COMPLEX;
         }
     }
 
@@ -259,13 +239,13 @@ export class ComplexDecimal {
     public constructor(re?: number | string | Decimal, im?: number | string | Decimal, type?: number) {
         this.re = re ? new Decimal(re) : new Decimal(0);
         this.im = im ? new Decimal(im) : new Decimal(0);
-        this.type = type ?? ComplexDecimal.numberClass.complex;
-        if (this.im.eq(0)) {
-            if (!((this.re.eq(0) || this.re.eq(1)) && this.type === ComplexDecimal.numberClass.logical)) {
-                this.type = ComplexDecimal.numberClass.real;
+        this.type = type ?? ComplexDecimal.COMPLEX;
+        if (this.im.isZero()) {
+            if (!((this.re.isZero() || this.re.eq(1)) && this.type === ComplexDecimal.LOGICAL)) {
+                this.type = ComplexDecimal.REAL;
             }
         } else {
-            this.type = ComplexDecimal.numberClass.complex;
+            this.type = ComplexDecimal.COMPLEX;
         }
     }
 
@@ -304,8 +284,8 @@ export class ComplexDecimal {
      * @returns ComplexDecimal parsed value.
      */
     public static parse(value: string): ComplexDecimal {
-        const num = (value as string).toLowerCase().replace('d', 'e');
-        if (num[num.length - 1] == 'i' || num[num.length - 1] == 'j') {
+        const num = value[0] === '0' && (value[1] === 'x' || value[1] === 'X') ? value.replace('_', '') : value.replace(/[dD]/, 'e'); // Replace underline because bug in decimal constructor when creating hexadecimal with underlines.
+        if (num[num.length - 1] === 'i' || num[num.length - 1] === 'I' || num[num.length - 1] === 'j' || num[num.length - 1] === 'J') {
             return new ComplexDecimal(0, num.substring(0, num.length - 1));
         } else {
             return new ComplexDecimal(num, 0);
@@ -319,14 +299,14 @@ export class ComplexDecimal {
      */
     private static unparseDecimal(value: Decimal): string {
         if (value.isFinite()) {
-            const value_unparsed = value.toString().split('e');
+            const value_unparsed = value.valueOf().split('e');
             if (value_unparsed.length == 1) {
                 return value_unparsed[0].slice(0, Decimal.toExpPos);
             } else {
                 return value_unparsed[0].slice(0, Decimal.toExpPos) + 'e' + Number(value_unparsed[1]);
             }
         } else {
-            return value.isNaN() ? 'NaN' : (value.isNegative() ? '-' : '') + '&infin;';
+            return value.isNaN() ? 'NaN' : (value.isNeg() ? '-' : '') + '&infin;';
         }
     }
 
@@ -339,9 +319,9 @@ export class ComplexDecimal {
      * @returns String of unparsed value.
      */
     public static unparse(value: ComplexDecimal): string {
-        if (value.type !== ComplexDecimal.numberClass.logical) {
+        if (value.type !== ComplexDecimal.LOGICAL) {
             const value_prec = ComplexDecimal.toMaxPrecision(value);
-            if (!value_prec.re.eq(0) && !value_prec.im.eq(0)) {
+            if (!value_prec.re.isZero() && !value_prec.im.isZero()) {
                 return (
                     '(' +
                     ComplexDecimal.unparseDecimal(value_prec.re) +
@@ -349,15 +329,21 @@ export class ComplexDecimal {
                     (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimal(value_prec.im) : '-') : '') +
                     'i)'
                 );
-            } else if (!value_prec.re.eq(0)) {
+            } else if (!value_prec.re.isZero()) {
                 return ComplexDecimal.unparseDecimal(value_prec.re);
-            } else if (!value_prec.im.eq(0)) {
+            } else if (!value_prec.im.isZero()) {
                 return (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimal(value_prec.im) : '-') : '') + 'i';
-            } else {
+            } else if (!value_prec.re.isNeg() && !value_prec.im.isNeg()) {
                 return '0';
+            } else if (value_prec.re.isNeg() && value_prec.im.isNeg()) {
+                return '-0';
+            } else if (value_prec.re.isNeg() && !value_prec.im.isNeg()) {
+                return '(-0+0i)';
+            } else {
+                return '(0-0i)';
             }
         } else {
-            if (value.re.eq(0)) {
+            if (value.re.isZero()) {
                 return 'false';
             } else {
                 return 'true';
@@ -374,9 +360,9 @@ export class ComplexDecimal {
      * @param value Decimal value
      * @returns string of value unparsed
      */
-    private static unparseDecimalML(value: Decimal): string {
+    private static unparseDecimalMathML(value: Decimal): string {
         if (value.isFinite()) {
-            const value_unparsed = value.toString().split('e');
+            const value_unparsed = value.valueOf().split('e');
             if (value_unparsed.length == 1) {
                 return '<mn>' + value_unparsed[0].slice(0, Decimal.toExpPos) + '</mn>';
             } else {
@@ -389,7 +375,7 @@ export class ComplexDecimal {
                 );
             }
         } else {
-            return value.isNaN() ? '<mi><b>NaN</b></mi>' : (value.isNegative() ? '<mo>-</mo>' : '') + '<mi>&infin;</mi>';
+            return value.isNaN() ? '<mi><b>NaN</b></mi>' : (value.isNeg() ? '<mo>-</mo>' : '') + '<mi>&infin;</mi>';
         }
     }
 
@@ -402,25 +388,31 @@ export class ComplexDecimal {
      * @returns string of unparsed value.
      */
     public static unparseMathML(value: ComplexDecimal): string {
-        if (value.type !== ComplexDecimal.numberClass.logical) {
+        if (value.type !== ComplexDecimal.LOGICAL) {
             const value_prec = ComplexDecimal.toMaxPrecision(value);
-            if (!value_prec.re.eq(0) && !value_prec.im.eq(0)) {
+            if (!value_prec.re.isZero() && !value_prec.im.isZero()) {
                 return (
                     '<mo>(</mo>' +
-                    ComplexDecimal.unparseDecimalML(value_prec.re) +
+                    ComplexDecimal.unparseDecimalMathML(value_prec.re) +
                     (value_prec.im.gt(0) ? '<mo>+</mo>' : '') +
-                    (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalML(value_prec.im) : '<mo>-</mo>') : '') +
+                    (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalMathML(value_prec.im) : '<mo>-</mo>') : '') +
                     '<mi>i</mi><mo>)</mo>'
                 );
-            } else if (!value_prec.re.eq(0)) {
-                return ComplexDecimal.unparseDecimalML(value_prec.re);
-            } else if (!value_prec.im.eq(0)) {
-                return (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalML(value_prec.im) : '<mo>-</mo>') : '') + '<mi>i</mi>';
-            } else {
+            } else if (!value_prec.re.isZero()) {
+                return ComplexDecimal.unparseDecimalMathML(value_prec.re);
+            } else if (!value_prec.im.isZero()) {
+                return (!value_prec.im.eq(1) ? (!value_prec.im.eq(-1) ? ComplexDecimal.unparseDecimalMathML(value_prec.im) : '<mo>-</mo>') : '') + '<mi>i</mi>';
+            } else if (!value_prec.re.isNeg() && !value_prec.im.isNeg()) {
                 return '<mn>0</mn>';
+            } else if (value_prec.re.isNeg() && value_prec.im.isNeg()) {
+                return '<mn>-0</mn>';
+            } else if (value_prec.re.isNeg() && !value_prec.im.isNeg()) {
+                return '<mo>(</mo><mn>-0</mn><mo>+</mo><mn>0</mn><mi>i</mi><mo>)</mo>';
+            } else {
+                return '<mo>(</mo><mn>0</mn><mo>-</mo><mn>0</mn><mi>i</mi><mo>)</mo>';
             }
         } else {
-            if (value.re.eq(0)) {
+            if (value.re.isZero()) {
                 return '<mi>false</mi>';
             } else {
                 return '<mi>true</mi>';
@@ -447,9 +439,7 @@ export class ComplexDecimal {
      * @returns Reduced precision value.
      */
     private static toMaxPrecisionDecimal(value: Decimal): Decimal {
-        return value
-            .toSignificantDigits(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number))
-            .toDecimalPlaces(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number));
+        return value.toSignificantDigits(Decimal.precision - ComplexDecimalConfig.precisionCompare!).toDecimalPlaces(Decimal.precision - ComplexDecimalConfig.precisionCompare!);
     }
 
     /**
@@ -459,12 +449,8 @@ export class ComplexDecimal {
      */
     public static toMaxPrecision(value: ComplexDecimal): ComplexDecimal {
         return new ComplexDecimal(
-            value.re
-                .toSignificantDigits(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number))
-                .toDecimalPlaces(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number)),
-            value.im
-                .toSignificantDigits(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number))
-                .toDecimalPlaces(Decimal.precision - (ComplexDecimalConfig.precisionCompare as number)),
+            value.re.toSignificantDigits(Decimal.precision - ComplexDecimalConfig.precisionCompare!).toDecimalPlaces(Decimal.precision - ComplexDecimalConfig.precisionCompare!),
+            value.im.toSignificantDigits(Decimal.precision - ComplexDecimalConfig.precisionCompare!).toDecimalPlaces(Decimal.precision - ComplexDecimalConfig.precisionCompare!),
         );
     }
 
@@ -474,7 +460,7 @@ export class ComplexDecimal {
      * @returns Minimal diference of two consecutive numbers.
      */
     private static epsilonDecimal(): Decimal {
-        return Decimal.pow(10, -Decimal.precision + (ComplexDecimalConfig.precisionCompare as number));
+        return Decimal.pow(10, -Decimal.precision + ComplexDecimalConfig.precisionCompare!);
     }
 
     /**
@@ -484,6 +470,10 @@ export class ComplexDecimal {
      */
     public static epsilon(): ComplexDecimal {
         return new ComplexDecimal(ComplexDecimal.epsilonDecimal());
+    }
+
+    public static random(): ComplexDecimal {
+        return new ComplexDecimal(Decimal.random());
     }
 
     /**
@@ -522,7 +512,7 @@ export class ComplexDecimal {
     private static cmp(cmp: 'lt' | 'lte' | 'gt' | 'gte', left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        if (left_prec.im.eq(0) && right_prec.im.eq(0)) {
+        if (left_prec.im.isZero() && right_prec.im.isZero()) {
             return left_prec.re[cmp](right_prec.re) ? ComplexDecimal.true() : ComplexDecimal.false();
         }
         const left_abs = ComplexDecimal.toMaxPrecisionDecimal(ComplexDecimal.abs(left).re);
@@ -619,7 +609,7 @@ export class ComplexDecimal {
      * @returns Minimum of left and right
      */
     public static min(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        if (left.im.eq(0) && right.im.eq(0)) {
+        if (left.im.isZero() && right.im.isZero()) {
             return left.re.lt(right.re) ? left : right;
         } else {
             const left_abs = ComplexDecimal.abs(left).re;
@@ -633,7 +623,7 @@ export class ComplexDecimal {
     }
 
     public static minWise(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        if (left.type <= ComplexDecimal.numberClass.real && left.type <= ComplexDecimal.numberClass.real) {
+        if (left.type <= ComplexDecimal.REAL && left.type <= ComplexDecimal.REAL) {
             return left.re.lt(right.re) ? left : right;
         } else {
             const left_abs = ComplexDecimal.abs(left).re;
@@ -655,7 +645,7 @@ export class ComplexDecimal {
      * @returns Maximum of left and right
      */
     public static max(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        if (left.im.eq(0) && right.im.eq(0)) {
+        if (left.im.isZero() && right.im.isZero()) {
             return left.re.gte(right.re) ? left : right;
         } else {
             const left_abs = ComplexDecimal.abs(left).re;
@@ -669,7 +659,7 @@ export class ComplexDecimal {
     }
 
     public static maxWise(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        if (left.type <= ComplexDecimal.numberClass.real && left.type <= ComplexDecimal.numberClass.real) {
+        if (left.type <= ComplexDecimal.REAL && left.type <= ComplexDecimal.REAL) {
             return left.re.gte(right.re) ? left : right;
         } else {
             const left_abs = ComplexDecimal.abs(left).re;
@@ -727,7 +717,7 @@ export class ComplexDecimal {
      * @returns new ComplexDecimal(0, 0, 'logical')
      */
     public static false(): ComplexDecimal {
-        return new ComplexDecimal(0, 0, ComplexDecimal.numberClass.logical);
+        return new ComplexDecimal(0, 0, ComplexDecimal.LOGICAL);
     }
 
     /**
@@ -735,17 +725,17 @@ export class ComplexDecimal {
      * @returns new ComplexDecimal(1, 0, 'logical')
      */
     public static true(): ComplexDecimal {
-        return new ComplexDecimal(1, 0, ComplexDecimal.numberClass.logical);
+        return new ComplexDecimal(1, 0, ComplexDecimal.LOGICAL);
     }
 
     public static toLogical(value: ComplexDecimal): ComplexDecimal {
         const prec = ComplexDecimal.toMaxPrecision(value);
-        return prec.re.eq(0) && prec.im.eq(0) ? new ComplexDecimal(0, 0, ComplexDecimal.numberClass.logical) : new ComplexDecimal(1, 0, ComplexDecimal.numberClass.logical);
+        return prec.re.isZero() && prec.im.isZero() ? new ComplexDecimal(0, 0, ComplexDecimal.LOGICAL) : new ComplexDecimal(1, 0, ComplexDecimal.LOGICAL);
     }
 
     public toLogical(): ComplexDecimal {
         const prec = ComplexDecimal.toMaxPrecision(this);
-        return prec.re.eq(0) && prec.im.eq(0) ? new ComplexDecimal(0, 0, ComplexDecimal.numberClass.logical) : new ComplexDecimal(1, 0, ComplexDecimal.numberClass.logical);
+        return prec.re.isZero() && prec.im.isZero() ? new ComplexDecimal(0, 0, ComplexDecimal.LOGICAL) : new ComplexDecimal(1, 0, ComplexDecimal.LOGICAL);
     }
 
     /**
@@ -755,7 +745,7 @@ export class ComplexDecimal {
      */
     public static logical(value: ComplexDecimal): ComplexDecimal {
         const value_prec = ComplexDecimal.toMaxPrecision(value);
-        return new ComplexDecimal(value_prec.re.eq(0) && value_prec.im.eq(0) ? 0 : 1, 0, ComplexDecimal.numberClass.logical);
+        return new ComplexDecimal(value_prec.re.isZero() && value_prec.im.isZero() ? 0 : 1, 0, ComplexDecimal.LOGICAL);
     }
 
     /**
@@ -767,7 +757,7 @@ export class ComplexDecimal {
     public static and(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return (left_prec.re.eq(0) && left_prec.im.eq(0)) || (right_prec.re.eq(0) && right_prec.im.eq(0)) ? ComplexDecimal.false() : ComplexDecimal.true();
+        return (left_prec.re.isZero() && left_prec.im.isZero()) || (right_prec.re.isZero() && right_prec.im.isZero()) ? ComplexDecimal.false() : ComplexDecimal.true();
     }
 
     /**
@@ -779,7 +769,7 @@ export class ComplexDecimal {
     public static or(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return left_prec.re.eq(0) && left_prec.im.eq(0) && right_prec.re.eq(0) && right_prec.im.eq(0) ? ComplexDecimal.false() : ComplexDecimal.true();
+        return left_prec.re.isZero() && left_prec.im.isZero() && right_prec.re.isZero() && right_prec.im.isZero() ? ComplexDecimal.false() : ComplexDecimal.true();
     }
 
     /**
@@ -791,8 +781,8 @@ export class ComplexDecimal {
     public static xor(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const left_prec = ComplexDecimal.toMaxPrecision(left);
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return (left_prec.re.eq(0) && left_prec.im.eq(0) && !(right_prec.re.eq(0) && right_prec.im.eq(0))) ||
-            (!(left_prec.re.eq(0) && left_prec.im.eq(0)) && right_prec.re.eq(0) && right_prec.im.eq(0))
+        return (left_prec.re.isZero() && left_prec.im.isZero() && !(right_prec.re.isZero() && right_prec.im.isZero())) ||
+            (!(left_prec.re.isZero() && left_prec.im.isZero()) && right_prec.re.isZero() && right_prec.im.isZero())
             ? ComplexDecimal.true()
             : ComplexDecimal.false();
     }
@@ -804,7 +794,7 @@ export class ComplexDecimal {
      */
     public static not(right: ComplexDecimal): ComplexDecimal {
         const right_prec = ComplexDecimal.toMaxPrecision(right);
-        return right_prec.re.eq(0) && right_prec.im.eq(0) ? ComplexDecimal.true() : ComplexDecimal.false();
+        return right_prec.re.isZero() && right_prec.im.isZero() ? ComplexDecimal.true() : ComplexDecimal.false();
     }
 
     /**
@@ -971,7 +961,7 @@ export class ComplexDecimal {
      * @returns left * right
      */
     public static mul(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        if (left.im.eq(0) && right.im.eq(0)) {
+        if (left.im.isZero() && right.im.isZero()) {
             return new ComplexDecimal(Decimal.mul(left.re, right.re), new Decimal(0));
         } else {
             return new ComplexDecimal(
@@ -990,8 +980,8 @@ export class ComplexDecimal {
     public static rdiv(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
         const denom = Decimal.add(Decimal.mul(right.re, right.re), Decimal.mul(right.im, right.im));
         if (denom.isFinite()) {
-            if (denom.eq(0)) {
-                return new ComplexDecimal(Decimal.mul(left.re, Infinity), left.im.eq(0) ? new Decimal(0) : Decimal.mul(left.im, Infinity));
+            if (denom.isZero()) {
+                return new ComplexDecimal(Decimal.mul(left.re, Infinity), left.im.isZero() ? new Decimal(0) : Decimal.mul(left.im, Infinity));
             } else {
                 return new ComplexDecimal(
                     Decimal.div(Decimal.add(Decimal.mul(left.re, right.re), Decimal.mul(left.im, right.im)), denom),
@@ -1029,7 +1019,7 @@ export class ComplexDecimal {
     public static inv(x: ComplexDecimal): ComplexDecimal {
         const denom = Decimal.add(Decimal.mul(x.re, x.re), Decimal.mul(x.im, x.im));
         if (denom.isFinite()) {
-            if (denom.eq(0)) {
+            if (denom.isZero()) {
                 return new ComplexDecimal(Infinity, 0);
             } else {
                 return new ComplexDecimal(Decimal.div(x.re, denom), Decimal.div(x.im, denom).neg());
@@ -1054,16 +1044,16 @@ export class ComplexDecimal {
      * @returns left^right
      */
     public static power(left: ComplexDecimal, right: ComplexDecimal): ComplexDecimal {
-        if (left.im.eq(0) && right.im.eq(0) && left.re.gte(0)) {
+        if (left.im.isZero() && right.im.isZero() && left.re.gte(0)) {
             return new ComplexDecimal(Decimal.pow(left.re, right.re), new Decimal(0));
         } else {
-            const arg_left = Decimal.atan2(left.im.eq(0) ? 0 : left.im, left.re.eq(0) ? 0 : left.re);
+            const arg_left = Decimal.atan2(left.im.isZero() ? 0 : left.im, left.re.isZero() ? 0 : left.re);
             const mod2_left = Decimal.add(Decimal.mul(left.re, left.re), Decimal.mul(left.im, left.im));
             const mul = Decimal.mul(Decimal.pow(mod2_left, Decimal.div(right.re, 2)), Decimal.exp(Decimal.mul(Decimal.mul(-1, right.im), arg_left)));
             const trig = Decimal.add(Decimal.mul(right.re, arg_left), Decimal.mul(Decimal.div(right.im, 2), Decimal.ln(mod2_left)));
             return new ComplexDecimal(
                 Decimal.mul(mul, Decimal.cos(trig)),
-                left.im.eq(0) && right.im.eq(0) && (right.re.gte(1) || right.re.lte(-1)) ? 0 : Decimal.mul(mul, Decimal.sin(trig)),
+                left.im.isZero() && right.im.isZero() && (right.re.gte(1) || right.re.lte(-1)) ? 0 : Decimal.mul(mul, Decimal.sin(trig)),
             );
         }
     }
@@ -1084,7 +1074,7 @@ export class ComplexDecimal {
      * @returns Absolute value of z
      */
     public static abs(z: ComplexDecimal): ComplexDecimal {
-        return z.im.eq(0) ? new ComplexDecimal(Decimal.abs(z.re)) : new ComplexDecimal(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im))));
+        return z.im.isZero() ? new ComplexDecimal(Decimal.abs(z.re)) : new ComplexDecimal(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im))));
     }
 
     /**
@@ -1105,7 +1095,7 @@ export class ComplexDecimal {
      * @returns Phase angle of z.
      */
     public static arg(z: ComplexDecimal): ComplexDecimal {
-        return new ComplexDecimal(Decimal.atan2(z.im.eq(0) ? 0 : z.im, z.re) /*test if imaginary part is 0 to change -0 to 0*/, 0);
+        return new ComplexDecimal(Decimal.atan2(z.im.isZero() ? 0 : z.im, z.re) /*test if imaginary part is 0 to change -0 to 0*/, 0);
     }
 
     /**
@@ -1125,10 +1115,10 @@ export class ComplexDecimal {
      * @returns Remainder after division.
      */
     public static mod(x: ComplexDecimal, y: ComplexDecimal): ComplexDecimal {
-        if (!(x.im.eq(0) && y.im.eq(0))) {
+        if (!(x.im.isZero() && y.im.isZero())) {
             throw new Error('mod: not defined for complex numbers');
         }
-        if (y.re.eq(0)) {
+        if (y.re.isZero()) {
             return x;
         } else {
             return new ComplexDecimal(Decimal.mod(x.re, y.re));
@@ -1142,7 +1132,7 @@ export class ComplexDecimal {
      * @returns Remainder after division.
      */
     public static rem(x: ComplexDecimal, y: ComplexDecimal): ComplexDecimal {
-        if (!(x.im.eq(0) && y.im.eq(0))) {
+        if (!(x.im.isZero() && y.im.isZero())) {
             throw new Error('rem: not defined for complex numbers');
         }
         return new ComplexDecimal(Decimal.mod(x.re, y.re));
@@ -1195,14 +1185,14 @@ export class ComplexDecimal {
      * * z/abs(z) if z is complex.
      */
     public static sign(z: ComplexDecimal): ComplexDecimal {
-        if (z.re.eq(0)) {
-            if (z.im.eq(0)) {
+        if (z.re.isZero()) {
+            if (z.im.isZero()) {
                 return ComplexDecimal.zero();
             } else {
                 return new ComplexDecimal(0, Decimal.div(z.im, Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im)))));
             }
         } else {
-            if (z.im.eq(0)) {
+            if (z.im.isZero()) {
                 return new ComplexDecimal(Decimal.div(z.re, Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im)))), 0);
             } else {
                 return new ComplexDecimal(
@@ -1220,7 +1210,7 @@ export class ComplexDecimal {
      */
     public static sqrt(z: ComplexDecimal): ComplexDecimal {
         const mod_z = Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im)));
-        const arg_z = Decimal.atan2(z.im.eq(0) ? 0 : z.im, z.re);
+        const arg_z = Decimal.atan2(z.im.isZero() ? 0 : z.im, z.re);
         return new ComplexDecimal(Decimal.mul(Decimal.sqrt(mod_z), Decimal.cos(Decimal.div(arg_z, 2))), Decimal.mul(Decimal.sqrt(mod_z), Decimal.sin(Decimal.div(arg_z, 2))));
     }
 
@@ -1240,7 +1230,7 @@ export class ComplexDecimal {
      * @returns Natural logarithm of z.
      */
     public static log(z: ComplexDecimal): ComplexDecimal {
-        return new ComplexDecimal(Decimal.ln(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im)))), Decimal.atan2(z.im.eq(0) ? 0 : z.im, z.re));
+        return new ComplexDecimal(Decimal.ln(Decimal.sqrt(Decimal.add(Decimal.mul(z.re, z.re), Decimal.mul(z.im, z.im)))), Decimal.atan2(z.im.isZero() ? 0 : z.im, z.re));
     }
 
     /**
@@ -1251,12 +1241,12 @@ export class ComplexDecimal {
      */
     public static logb(b: ComplexDecimal, l: ComplexDecimal): ComplexDecimal {
         const mod_b = Decimal.sqrt(Decimal.add(Decimal.mul(b.re, b.re), Decimal.mul(b.im, b.im)));
-        if (mod_b.eq(0)) {
+        if (mod_b.isZero()) {
             return ComplexDecimal.zero();
         } else {
-            const arg_b = Decimal.atan2(b.im.eq(0) ? 0 : b.im, b.re);
+            const arg_b = Decimal.atan2(b.im.isZero() ? 0 : b.im, b.re);
             const mod_l = Decimal.sqrt(Decimal.add(Decimal.mul(l.re, l.re), Decimal.mul(l.im, l.im)));
-            const arg_l = Decimal.atan2(l.im.eq(0) ? 0 : l.im, l.re);
+            const arg_l = Decimal.atan2(l.im.isZero() ? 0 : l.im, l.re);
             const denom = Decimal.add(Decimal.mul(Decimal.ln(mod_b), Decimal.ln(mod_b)), Decimal.mul(arg_b, arg_b));
             return new ComplexDecimal(
                 Decimal.div(Decimal.add(Decimal.mul(Decimal.ln(mod_l), Decimal.ln(mod_b)), Decimal.mul(arg_l, arg_b)), denom),
@@ -1691,7 +1681,7 @@ export class ComplexDecimal {
      * @returns Factorial of x.
      */
     public static factorial(x: ComplexDecimal) {
-        if (!(x.re.gte(0) && x.re.trunc().eq(x.re) && x.im.eq(0))) {
+        if (!(x.re.gte(0) && x.re.trunc().eq(x.re) && x.im.isZero())) {
             throw new Error('factorial: all N must be real non-negative integers');
         }
         const result = ComplexDecimal.gamma(ComplexDecimal.add(new ComplexDecimal(x.re.round()), ComplexDecimal.one()));

@@ -2,6 +2,7 @@ import { CharString } from './CharString';
 import { ComplexDecimal } from './ComplexDecimal';
 import { ElementType, MultiArray } from './MultiArray';
 import { LinearAlgebra } from './LinearAlgebra';
+import { Structure } from './Structure';
 
 export type MathObject = ElementType;
 
@@ -51,8 +52,10 @@ export abstract class MathOperation {
             return ComplexDecimal.copy(right);
         } else if (right instanceof MultiArray) {
             return MultiArray.copy(right);
-        } else {
+        } else if (right instanceof CharString) {
             return CharString.copy(right);
+        } else {
+            return Structure.copy(right!);
         }
     }
 
@@ -69,8 +72,10 @@ export abstract class MathOperation {
             return MultiArray.scalarOpMultiArray(op, left, right);
         } else if (left instanceof MultiArray && right instanceof ComplexDecimal) {
             return MultiArray.MultiArrayOpScalar(op, left, right);
+        } else if (left instanceof MultiArray && right instanceof MultiArray) {
+            return MultiArray.elementWiseOperation(op, left, right);
         } else {
-            return MultiArray.elementWiseOperation(op, left as MultiArray, right as MultiArray);
+            throw new EvalError(`binary operator '${op}' not implemented for 'scalar struct' operands.`);
         }
     }
 
@@ -80,8 +85,10 @@ export abstract class MathOperation {
         }
         if (right instanceof ComplexDecimal) {
             return ComplexDecimal[op](right);
-        } else {
+        } else if (right instanceof MultiArray) {
             return MultiArray.leftOperation(op, right);
+        } else {
+            throw new EvalError(`unary operator '${op}' not implemented for 'scalar struct' operands.`);
         }
     }
 
@@ -169,7 +176,7 @@ export abstract class MathOperation {
         } else if (left instanceof MultiArray && right instanceof ComplexDecimal) {
             return LinearAlgebra.power(left, right);
         } else {
-            // TODO implement matrix power.
+            // TODO: implement matrix power.
             throw new Error("invalid exponent in '^'.");
         }
     }
@@ -189,7 +196,7 @@ export abstract class MathOperation {
         if (left instanceof MultiArray) {
             return LinearAlgebra.transpose(left);
         } else {
-            return left.copy();
+            return left!.copy();
         }
     }
 
@@ -199,8 +206,10 @@ export abstract class MathOperation {
         }
         if (left instanceof ComplexDecimal) {
             return ComplexDecimal.conj(left);
-        } else {
+        } else if (left instanceof MultiArray) {
             return LinearAlgebra.ctranspose(left);
+        } else {
+            return left!.copy();
         }
     }
 
@@ -270,8 +279,10 @@ export abstract class MathOperation {
         }
         if (right instanceof ComplexDecimal) {
             return ComplexDecimal.not(right);
-        } else {
+        } else if (right instanceof MultiArray) {
             return ComplexDecimal.not(MultiArray.toLogical(right));
+        } else {
+            return ComplexDecimal.not(Structure.toLogical(right!));
         }
     }
 

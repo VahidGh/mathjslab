@@ -194,7 +194,7 @@ HERMITIAN: '\'' {
         this.previousTokenType === MathJSLabLexer.RBRACKET ||
         this.previousTokenType === MathJSLabLexer.RCURLYBR ||
         this.previousTokenType === MathJSLabLexer.IDENTIFIER ||
-        this.previousTokenType === MathJSLabLexer.DECIMAL_NUMBER
+        this.previousTokenType === MathJSLabLexer.FLOAT_NUMBER
     ) {
         this.previousTokenType = MathJSLabLexer.HERMITIAN;
     } else {
@@ -213,29 +213,34 @@ DQSTRING
     ;
 
 IDENTIFIER
-    : FQIDENT {
-        const ident = this.text.replace(/[ \t]/, '');
-        let i = MathJSLabLexer.keywordNames.indexOf(ident);
-        if (i >= 0) {
-            switch (MathJSLabLexer.keywordTypes[i]) {
-                case MathJSLabLexer.END:
-                    this._type = this.previousTokenType = this.parenthesisCount > 0 ? MathJSLabLexer.ENDRANGE : MathJSLabLexer.END;
-                    break;
-                default:
-                    this._type = this.previousTokenType = MathJSLabLexer.keywordTypes[i];
-            }
-        } else {
-            i = this.commandNames.indexOf(ident);
-            if (i >= 0) {
-                this.pushMode(MathJSLabLexer.ANY_AS_STRING_UNTIL_END_OF_LINE);
-            }
+    : IDENT {
+        if (this.previousTokenType === MathJSLabLexer.DOT) {
             this.previousTokenType = MathJSLabLexer.IDENTIFIER;
+        } else {
+            let i = MathJSLabLexer.keywordNames.indexOf(this.text);
+            if (i >= 0) {
+                switch (MathJSLabLexer.keywordTypes[i]) {
+                    case MathJSLabLexer.END:
+                        this._type = this.previousTokenType = (this.parenthesisCount > 0 || this.matrixContext.length > 0) ? MathJSLabLexer.ENDRANGE : MathJSLabLexer.END;
+                        break;
+                    default:
+                        this._type = this.previousTokenType = MathJSLabLexer.keywordTypes[i];
+                }
+            } else {
+                i = this.commandNames.indexOf(this.text);
+                if (i >= 0) {
+                    this.pushMode(MathJSLabLexer.ANY_AS_STRING_UNTIL_END_OF_LINE);
+                }
+                this.previousTokenType = MathJSLabLexer.IDENTIFIER;
+            }
         }
     }
     ;
 
-DECIMAL_NUMBER
-    :  REAL_NUMBER [IiJj]?  { this.previousTokenType = MathJSLabLexer.DECIMAL_NUMBER; }
+FLOAT_NUMBER
+    :  REAL_NUMBER [IiJj]?  {
+        this.previousTokenType = MathJSLabLexer.FLOAT_NUMBER;
+    }
     ;
 
 // The following rule is for expressions that are just digits followed
@@ -243,10 +248,10 @@ DECIMAL_NUMBER
 // part of the operator as part of the constant (for example, in an
 // expression like "13./x").
 
-DECIMAL_DOT_OP
-    : DECIMAL_DIGITS '.' [*/\\^'] {
+NUMBER_DOT_OP
+    : INTEGER_DIGITS '.' [*/\\^'] {
         this._input.seek(this._input.index - 2); // Unput two characters.
-        this._type = this.previousTokenType = MathJSLabLexer.DECIMAL_NUMBER;
+        this._type = this.previousTokenType = MathJSLabLexer.FLOAT_NUMBER;
     }
     ;
 
@@ -467,26 +472,37 @@ fragment FQIDENT
     : IDENT (SPACE? '.' SPACE? IDENT)*
     ;
 
+fragment REAL_NUMBER
+    : ( (DECIMAL_DIGITS '.'?) | DECIMAL_DIGITS? '.' DECIMAL_DIGITS ) ( [DdEe] EXPONENT )?
+    | '0' [bB] ( (BINARY_DIGITS '.'?) | BINARY_DIGITS? '.' BINARY_DIGITS ) ( [pP] EXPONENT )?
+    | '0' [oO] ( (OCTAL_DIGITS '.'?) | OCTAL_DIGITS? '.' OCTAL_DIGITS ) ( [pP] EXPONENT )?
+    | '0' [xX] ( (HEXADECIMAL_DIGITS '.'?) | HEXADECIMAL_DIGITS? '.' HEXADECIMAL_DIGITS ) ( [pP] EXPONENT )?
+    ;
+
+fragment INTEGER_NUMBER
+    : INTEGER_DIGITS [su] ('8'|'16'|'32'|'64')
+    ;
+
+fragment INTEGER_DIGITS
+    : DECIMAL_DIGITS | ('0' ([bB] BINARY_DIGITS | [oO] OCTAL_DIGITS | [xX] HEXADECIMAL_DIGITS))
+    ;
+
 fragment DECIMAL_DIGITS
     : [0-9] [0-9_]*
     ;
 
+fragment BINARY_DIGITS
+    : [01] [01_]*
+    ;
+
+fragment OCTAL_DIGITS
+    : [0-7] [0-7_]*
+    ;
+
+fragment HEXADECIMAL_DIGITS
+    : [0-9a-fA-F] [0-9a-fA-F_]*
+    ;
+
 fragment EXPONENT
-    : [DdEe] ('+' | '-')? DECIMAL_DIGITS
-    ;
-
-fragment REAL_NUMBER
-    : ( (DECIMAL_DIGITS '.'?) | DECIMAL_DIGITS? '.' DECIMAL_DIGITS ) EXPONENT?
-    ;
-
-fragment SIZE_SUFFIX
-    : [su] ('8'|'16'|'32'|'64')
-    ;
-
-fragment BINARY_NUMBER
-    : '0' [bB] [01] [01_]* SIZE_SUFFIX?
-    ;
-
-fragment HEXADECIMAL_NUMBER
-    : '0' [xX] [0-9a-fA-F] [0-9a-fA-F_]* SIZE_SUFFIX?
+    : ('+' | '-')? DECIMAL_DIGITS
     ;

@@ -117,6 +117,7 @@ Here are some references consulted to carry out this project.
 * [Decimal.js Documentation](https://mikemcl.github.io/decimal.js/)
 * [MATLAB&reg; Documentation](https://www.mathworks.com/help/matlab/index.html)
     * [Get Started with MATLAB&reg;](https://www.mathworks.com/help/matlab/getting-started-with-matlab.html)
+    * [Fundamental MATLAB Classes](https://www.mathworks.com/help/matlab/matlab_prog/fundamental-matlab-classes.html)
     * [Language Fundamentals](https://www.mathworks.com/help/matlab/language-fundamentals.html)
     * [Array Indexing](https://www.mathworks.com/help/matlab/math/array-indexing.html)
     * [Compatible Array Sizes for Basic Operations](https://www.mathworks.com/help/matlab/matlab_prog/compatible-array-sizes-for-basic-operations.html)

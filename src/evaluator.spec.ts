@@ -4,7 +4,7 @@ let evaluator: Evaluator;
 
 describe('Evaluator', () => {
     beforeEach(async () => {
-        evaluator = Evaluator.initialize();
+        evaluator = new Evaluator();
     });
 
     it('Evaluator should be defined', () => {

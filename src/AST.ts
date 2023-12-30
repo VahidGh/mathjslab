@@ -1,6 +1,6 @@
 import { CharString } from './CharString';
 import { ComplexDecimal } from './ComplexDecimal';
-import { MultiArray } from './MultiArray';
+import { ElementType, MultiArray } from './MultiArray';
 
 /**
  * AST (Abstract Syntax Tree).
@@ -72,21 +72,22 @@ export interface PrimaryNode {
     stop?: { line: number; column: number };
 }
 
-export type NodeInput = NodeExpr;
-
-export interface NodeNull {
-    type: 'NULL';
-}
+export type NodeInput = NodeExpr | NodeList | NodeDeclaration | NodeIf;
 
 /**
  * Expression node.
  */
-export type NodeExpr = NodeReserved | NodeIdentifier | NodeArgExpr | NodeOperation | NodeList | NodeRange | NodeReturnList | MultiArray | ComplexDecimal | CharString | null | any;
+export type NodeExpr = ElementType | NodeIdentifier | NodeIndexExpr | NodeOperation | NodeRange | NodeIndirectRef | NodeReturnList | NodeFunctionHandle | any;
 
 /**
  * Reserved node.
  */
 export interface NodeReserved extends PrimaryNode {}
+
+/**
+ * Literal node.
+ */
+export interface NodeLiteral extends PrimaryNode {}
 
 /**
  * Name node.
@@ -102,17 +103,18 @@ export interface NodeIdentifier extends PrimaryNode {
 export interface NodeCmdWList extends PrimaryNode {
     type: 'CMDWLIST';
     id: string;
-    args: Array<CharString>;
+    args: CharString[];
     omitAns?: boolean;
 }
 
 /**
  * Expression and arguments node.
  */
-export interface NodeArgExpr extends PrimaryNode {
-    type: 'ARG';
+export interface NodeIndexExpr extends PrimaryNode {
+    type: 'IDX';
     expr: NodeExpr;
-    args: Array<NodeExpr>;
+    args: NodeExpr[];
+    delim: '()' | '{}';
 }
 
 /**
@@ -120,9 +122,9 @@ export interface NodeArgExpr extends PrimaryNode {
  */
 export interface NodeRange extends PrimaryNode {
     type: 'RANGE';
-    start: NodeExpr | null;
-    stop: NodeExpr | null;
-    stride: NodeExpr | null;
+    start_: NodeExpr | null;
+    stop_: NodeExpr | null;
+    stride_: NodeExpr | null;
 }
 
 /**
@@ -167,6 +169,12 @@ export interface NodeList extends PrimaryNode {
     list: NodeInput[];
 }
 
+export interface NodeIndirectRef extends PrimaryNode {
+    type: '.';
+    obj: NodeExpr;
+    field: (string | NodeExpr)[];
+}
+
 export type ReturnSelector = (length: number, index: number) => any;
 
 /**
@@ -178,9 +186,9 @@ export interface NodeReturnList extends PrimaryNode {
 }
 
 export interface NodeFunctionHandle extends PrimaryNode {
-    type: 'FCNHANDLE';
+    type: '@';
     id: string | null;
-    parameter: NodeInput[];
+    parameter: NodeExpr[];
     expression: NodeExpr;
 }
 
@@ -201,20 +209,13 @@ export interface NodeArgumentValidation {
     default: NodeExpr; // NodeExpr can be null.
 }
 
-export interface NodeArguments extends PrimaryNode {
-    type: 'ARGUMENTS';
+export interface NodeArguments {
     attribute: NodeIdentifier | null;
-    validation: {
-        name: NodeIdentifier;
-        size: NodeInput[];
-        class: NodeIdentifier | null;
-        functions: NodeInput[];
-        default: NodeExpr; // NodeExpr can be null.
-    }[];
+    validation: NodeArgumentValidation[];
 }
 
 export interface NodeDeclaration extends PrimaryNode {
-    type: 'GLOBAL' | 'PERSISTENT';
+    type: 'GLOBAL' | 'PERSIST';
     list: NodeExpr[];
 }
 
@@ -226,28 +227,18 @@ export interface NodeIf extends PrimaryNode {
     omitAns?: boolean;
 }
 
-export interface NodeElseIf extends PrimaryNode {
-    type: 'ELSEIF';
+export interface NodeElseIf {
     expression: NodeExpr;
     then: NodeList;
 }
 
-export interface NodeElse extends PrimaryNode {
-    type: 'ELSE';
+export interface NodeElse {
     else: NodeList;
 }
 
 /**
  * AST (Abstract Syntax Tree) constructor methods.
  */
-
-/**
- * Create null node.
- * @returns
- */
-export const nodeNull = (): NodeNull => {
-    return { type: 'NULL' };
-};
 
 export const nodeString = CharString.create;
 export const nodeNumber = ComplexDecimal.parse;
@@ -257,22 +248,20 @@ export const emptyArray = MultiArray.emptyArray;
 
 /**
  * Create literal node.
- * @param nodeid
+ * @param type
  * @returns
  */
-export const nodeLiteral = (nodeid: string): NodeReserved => {
-    return { type: nodeid };
-};
+export const nodeLiteral = (type: string): NodeLiteral => ({ type });
 
 /**
  * Create name node.
  * @param nodeid
  * @returns
  */
-export const nodeIdentifier = (nodeid: string): NodeIdentifier => {
+export const nodeIdentifier = (id: string): NodeIdentifier => {
     return {
         type: 'IDENT',
-        id: nodeid.replace(/(\r\n|[\n\r])|[\ ]/gm, ''),
+        id: id.replace(/(\r\n|[\n\r])|[\ ]/gm, ''),
     };
 };
 
@@ -286,7 +275,7 @@ export const nodeCmdWList = (nodename: NodeIdentifier, nodelist: NodeList): Node
     return {
         type: 'CMDWLIST',
         id: nodename.id,
-        args: nodelist ? (nodelist.list as any) : [],
+        args: nodelist ? (nodelist.list as CharString[]) : [],
         omitAns: true,
     };
 };
@@ -297,27 +286,28 @@ export const nodeCmdWList = (nodename: NodeIdentifier, nodelist: NodeList): Node
  * @param nodelist
  * @returns
  */
-export const nodeArgExpr = (nodeexpr: any, nodelist?: any): NodeArgExpr => {
+export const nodeIndexExpr = (nodeexpr: NodeExpr, nodelist: NodeList | null = null, delimiter: '()' | '{}' = '()'): NodeIndexExpr => {
     return {
-        type: 'ARG',
+        type: 'IDX',
         expr: nodeexpr,
-        args: nodelist ? nodelist.list : [],
+        args: nodelist ? (nodelist.list as NodeExpr[]) : [],
+        delim: delimiter,
     };
 };
 
 /**
  * Create range node.
- * @param start
- * @param stop
- * @param stride
+ * @param start_
+ * @param stop_
+ * @param stride_
  * @returns NodeRange.
  */
-export const nodeRange = (start: any, stop: any, stride?: any): NodeRange => {
+export const nodeRange = (start_: NodeExpr, stop_: NodeExpr, stride_?: NodeExpr): NodeRange => {
     return {
         type: 'RANGE',
-        start,
-        stop,
-        stride: stride ?? null,
+        start_,
+        stop_,
+        stride_: stride_ ?? null,
     };
 };
 
@@ -328,7 +318,7 @@ export const nodeRange = (start: any, stop: any, stride?: any): NodeRange => {
  * @param data2
  * @returns
  */
-export const nodeOp = (op: TOperator, data1: any, data2?: any): NodeOperation => {
+export const nodeOp = (op: TOperator, data1: NodeExpr, data2?: NodeExpr): NodeOperation => {
     switch (op) {
         case '+':
         case '-':
@@ -395,7 +385,7 @@ export const nodeOp = (op: TOperator, data1: any, data2?: any): NodeOperation =>
  * @param node First element of list node.
  * @returns A NodeList.
  */
-export const nodeListFirst = (node?: any): NodeList => {
+export const nodeListFirst = (node?: NodeInput): NodeList => {
     if (node) {
         const result = {
             type: 'LIST',
@@ -417,18 +407,17 @@ export const nodeListFirst = (node?: any): NodeList => {
  * @param node Element to append to list.
  * @returns NodeList with element appended.
  */
-export const appendNodeList = (lnode: NodeList, node: any): NodeList => {
-    node.parent = lnode;
+export const appendNodeList = (lnode: NodeList, node: NodeInput): NodeList => {
+    node!.parent = lnode;
     lnode.list.push(node);
     return lnode;
 };
 
-export const nodeList = (list: any[]): NodeList => {
-    const result = {
+export const nodeList = (list: NodeInput[]): NodeList => {
+    return {
         type: 'LIST',
         list,
     };
-    return result as NodeList;
 };
 
 /**
@@ -436,9 +425,9 @@ export const nodeList = (list: any[]): NodeList => {
  * @param row
  * @returns
  */
-export const nodeFirstRow = (row: NodeList, iscell?: boolean): MultiArray => {
+export const nodeFirstRow = (row: NodeList | null = null, iscell?: boolean): MultiArray => {
     if (row) {
-        return firstRow(row.list, iscell);
+        return firstRow(row.list as ElementType[], iscell);
     } else {
         return emptyArray(iscell);
     }
@@ -450,11 +439,24 @@ export const nodeFirstRow = (row: NodeList, iscell?: boolean): MultiArray => {
  * @param row
  * @returns
  */
-export const nodeAppendRow = (M: MultiArray, row: NodeList): MultiArray => {
+export const nodeAppendRow = (M: MultiArray, row: NodeList | null = null): MultiArray => {
     if (row) {
-        return appendRow(M, row.list);
+        return appendRow(M, row.list as ElementType[]);
     } else {
         return M;
+    }
+};
+
+export const nodeIndirectRef = (left: NodeExpr, right: string | NodeExpr): NodeIndirectRef => {
+    if (left.type === '.') {
+        left.field.push(right);
+        return left;
+    } else {
+        return {
+            type: '.',
+            obj: left,
+            field: [right],
+        };
     }
 };
 
@@ -472,9 +474,9 @@ export const nodeReturnList = (selector: ReturnSelector): NodeReturnList => {
 
 export const nodeFunctionHandle = (id: NodeIdentifier | null = null, parameter_list: NodeList | null = null, expression: NodeExpr = null): NodeFunctionHandle => {
     return {
-        type: 'FCNHANDLE',
+        type: '@',
         id: id ? id.id : null,
-        parameter: parameter_list ? parameter_list.list : [],
+        parameter: parameter_list ? (parameter_list.list as NodeExpr[]) : [],
         expression,
     };
 };
@@ -508,22 +510,14 @@ export const nodeArgumentValidation = (
 
 export const nodeArguments = (attribute: NodeIdentifier | null, validationList: NodeList): NodeArguments => {
     return {
-        type: 'ARGUMENTS',
         attribute,
-        validation: validationList.list,
+        validation: validationList.list as unknown as NodeArgumentValidation[],
     };
 };
 
-export const nodeGlobal = (): NodeDeclaration => {
+export const nodeDeclarationFirst = (type: 'GLOBAL' | 'PERSIST'): NodeDeclaration => {
     return {
-        type: 'GLOBAL',
-        list: [],
-    };
-};
-
-export const nodePersistent = (): NodeDeclaration => {
-    return {
-        type: 'PERSISTENT',
+        type,
         list: [],
     };
 };
@@ -533,7 +527,7 @@ export const nodeAppendDeclaration = (node: NodeDeclaration, declaration: NodeEx
     return node;
 };
 
-export const nodeIfBegin = (expression: any, then: NodeList): NodeIf => {
+export const nodeIfBegin = (expression: NodeExpr, then: NodeList): NodeIf => {
     return {
         type: 'IF',
         expression: [expression],
@@ -554,9 +548,8 @@ export const nodeIfAppendElseIf = (nodeIf: NodeIf, nodeElseIf: NodeElseIf): Node
     return nodeIf;
 };
 
-export const nodeElseIf = (expression: any, then: NodeList): NodeElseIf => {
+export const nodeElseIf = (expression: NodeExpr, then: NodeList): NodeElseIf => {
     return {
-        type: 'ELSEIF',
         expression,
         then,
     };
@@ -564,7 +557,6 @@ export const nodeElseIf = (expression: any, then: NodeList): NodeElseIf => {
 
 export const nodeElse = (elseStmt: NodeList): NodeElse => {
     return {
-        type: 'ELSE',
         else: elseStmt,
     };
 };

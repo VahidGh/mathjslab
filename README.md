@@ -157,7 +157,7 @@ boolean and character string.
 
 >MIT License
 >
->Copyright &copy; 2016-2023 Sergio Lindau, ISBN 978-65-00-82338-7
+>Copyright &copy; 2016-2024 Sergio Lindau, ISBN 978-65-00-82338-7
 >
 >Permission is hereby granted, free of charge, to any person obtaining a copy
 >of this software and associated documentation files (the "Software"), to deal

@@ -4,8 +4,6 @@ describe('MathOperation', () => {
     it('MathOperation and its generic methods should be defined', () => {
         expect(MathOperation).toBeDefined();
         expect(MathOperation.copy).toBeDefined();
-        expect(MathOperation.elementWiseOperation).toBeDefined();
-        expect(MathOperation.leftOperation).toBeDefined();
         expect(MathOperation.mand).toBeDefined();
         expect(MathOperation.mor).toBeDefined();
     });

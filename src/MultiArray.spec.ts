@@ -6,7 +6,7 @@ let evaluator: Evaluator;
 
 describe('MultiArray', () => {
     beforeEach(async () => {
-        evaluator = Evaluator.initialize();
+        evaluator = new Evaluator();
     });
 
     it('ComplexDecimal should be defined', () => {

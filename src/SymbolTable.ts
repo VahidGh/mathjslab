@@ -1,5 +1,12 @@
 import * as AST from './AST';
 
+export type FunctionTableEntry = {
+    mapper?: boolean;
+    ev: boolean[];
+    func: Function;
+    unparserMathML?: (tree: AST.NodeExpr) => string;
+};
+
 export type EntryType = 'name' | 'function';
 
 export interface PrimarySymbolTableEntry {
@@ -8,13 +15,13 @@ export interface PrimarySymbolTableEntry {
 
 export interface ValueSymbolTableEntry extends PrimarySymbolTableEntry {
     type: 'name';
-    expr?: AST.NodeExpr;
+    expression?: AST.NodeExpr;
 }
 
 export interface FunctionSymbolTableEntry extends PrimarySymbolTableEntry {
     type: 'function';
-    args?: AST.NodeIdentifier[];
-    expr?: AST.NodeExpr;
+    parameter?: AST.NodeIdentifier[];
+    expression?: AST.NodeExpr;
 }
 
 export type SymbolTableEntry = ValueSymbolTableEntry | FunctionSymbolTableEntry;

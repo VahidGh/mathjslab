@@ -3,10 +3,6 @@ import { ComplexDecimal } from './ComplexDecimal';
 import { CoreFunctions } from './CoreFunctions';
 import { ElementType, MultiArray } from './MultiArray';
 
-const roundingStrings = ['up', 'down', 'ceil', 'floor', 'half_up', 'half_down', 'half_even', 'half_ceil', 'half_floor'];
-
-const moduloStrings = ['up', 'down', undefined, 'floor', undefined, undefined, 'half_even', undefined, undefined, 'euclid'];
-
 /**
  * MathJSLab configuration.
  */
@@ -18,6 +14,10 @@ export abstract class Configuration {
         configure: Configuration.configure,
         getconfig: Configuration.getconfig,
     };
+
+    private static roundingStrings = ['up', 'down', 'ceil', 'floor', 'half_up', 'half_down', 'half_even', 'half_ceil', 'half_floor'];
+
+    private static moduloStrings = ['up', 'down', undefined, 'floor', undefined, undefined, 'half_even', undefined, undefined, 'euclid'];
 
     /**
      * Configuration parameters table.
@@ -42,7 +42,7 @@ export abstract class Configuration {
         },
         rounding: {
             set: (rounding: CharString) => {
-                const roundingMode = roundingStrings.indexOf(rounding.str);
+                const roundingMode = Configuration.roundingStrings.indexOf(rounding.str);
                 if (roundingMode > 0) {
                     ComplexDecimal.set({ rounding: roundingMode as ComplexDecimal.Rounding });
                 } else {
@@ -50,7 +50,7 @@ export abstract class Configuration {
                 }
             },
             setDefault: () => ComplexDecimal.set({ rounding: ComplexDecimal.defaultConfiguration.rounding }),
-            get: () => new CharString(roundingStrings[ComplexDecimal.settings.rounding as number]),
+            get: () => new CharString(Configuration.roundingStrings[ComplexDecimal.settings.rounding as number]),
         },
         toExpPos: {
             set: (toExpPos: ComplexDecimal) => ComplexDecimal.set({ toExpPos: toExpPos.re.toNumber() }),
@@ -74,7 +74,7 @@ export abstract class Configuration {
         },
         modulo: {
             set: (modulo: CharString) => {
-                const moduloMode = moduloStrings.indexOf(modulo.str);
+                const moduloMode = Configuration.moduloStrings.indexOf(modulo.str);
                 if (moduloMode > 0) {
                     ComplexDecimal.set({ modulo: moduloMode as ComplexDecimal.Modulo });
                 } else {
@@ -82,12 +82,12 @@ export abstract class Configuration {
                 }
             },
             setDefault: () => ComplexDecimal.set({ modulo: ComplexDecimal.defaultConfiguration.modulo }),
-            get: () => new CharString(moduloStrings[ComplexDecimal.settings.modulo as number] as string),
+            get: () => new CharString(Configuration.moduloStrings[ComplexDecimal.settings.modulo as number] as string),
         },
         crypto: {
             set: (crypto: ComplexDecimal) => ComplexDecimal.set({ crypto: Boolean(crypto.re.toNumber()) }),
             setDefault: () => ComplexDecimal.set({ crypto: ComplexDecimal.defaultConfiguration.crypto }),
-            get: () => new ComplexDecimal(Number(ComplexDecimal.settings.crypto), 0, ComplexDecimal.numberClass.logical),
+            get: () => new ComplexDecimal(Number(ComplexDecimal.settings.crypto), 0, ComplexDecimal.LOGICAL),
         },
     };
 
@@ -96,7 +96,7 @@ export abstract class Configuration {
     public static configure(CONFIG: MultiArray): CharString;
     public static configure(...args: any[]): CharString | undefined {
         const setConfig = (config: [CharString, any]): void => {
-            if ('str' in config[0]) {
+            if (config[0] instanceof CharString) {
                 if (config[0].str in Configuration.configuration) {
                     Configuration.configuration[config[0].str].set(config[1]);
                 } else {
@@ -112,17 +112,17 @@ export abstract class Configuration {
                 Configuration.configuration[config].setDefault();
             }
             return new CharString('All configuration set to default values.');
-        } else if (args.length === 1 && 'array' in args[0]) {
+        } else if (args.length === 1 && args[0] instanceof MultiArray) {
             // Array of configuration key and value.
             if (args[0].dimension[1] === 2) {
-                args[0].array.forEach((config: [CharString, any]) => {
+                (args[0].array as [CharString, any][]).forEach((config: [CharString, any]) => {
                     setConfig(config);
                 });
                 return new CharString(`${args[0].array.length} configuration values set.`);
             } else {
                 CoreFunctions.throwInvalidCallError('configure');
             }
-        } else if (args.length === 2 && 'str' in args[0]) {
+        } else if (args.length === 2 && args[0] instanceof CharString) {
             // Configuration key and value.
             setConfig(args as [CharString, any]);
             return new CharString(`Configuration parameter '${args[0].str}' set to ${Configuration.configuration[args[0].str].get().unparse()}`);
@@ -140,24 +140,24 @@ export abstract class Configuration {
         const loadResult = (list: string[]): void => {
             list.forEach((config, i) => {
                 const conf = Configuration.configuration[config].get();
-                result.array[i] = [new CharString(config) as unknown as ComplexDecimal, conf];
+                result.array[i] = [new CharString(config), conf];
             });
         };
         if (args.length === 0) {
             // Get all configurations.
-            result = new MultiArray([keys.length, 2]);
+            result = new MultiArray([keys.length, 2], null, true);
             loadResult(keys);
             return result;
         } else if (args.length === 1) {
             // Get selected configurations.
             const C = MultiArray.linearize(MultiArray.scalarToMultiArray(args[0])).map((c) => {
-                if ('str' in c && c.str in Configuration.configuration) {
+                if (c instanceof CharString && c.str in Configuration.configuration) {
                     return c.str;
                 } else {
                     throw new Error('getconfig: invalid configuration parameter.');
                 }
             });
-            result = new MultiArray([C.length, 2]);
+            result = new MultiArray([C.length, 2], null, true);
             loadResult(C);
             return result;
         } else {

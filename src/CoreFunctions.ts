@@ -163,7 +163,7 @@ export abstract class CoreFunctions {
                     } else {
                         result.array = subscript.map((row) => row.map((value) => new ComplexDecimal(value[index])));
                     }
-                    result.type = ComplexDecimal.numberClass.real;
+                    result.type = ComplexDecimal.REAL;
                     return MultiArray.MultiArrayToScalar(result);
                 }
             });
@@ -223,7 +223,7 @@ export abstract class CoreFunctions {
             if (DIM.length === 0) {
                 const result = new MultiArray([1, sizeDim.length]);
                 result.array[0] = sizeDim.map((d) => new ComplexDecimal(d));
-                result.type = ComplexDecimal.numberClass.real;
+                result.type = ComplexDecimal.REAL;
                 return result;
             } else {
                 const dims =
@@ -233,7 +233,7 @@ export abstract class CoreFunctions {
                 MultiArray.appendSingletonTail(sizeDim, Math.max(...dims));
                 const result = new MultiArray([1, dims.length]);
                 result.array[0] = dims.map((dim: number) => new ComplexDecimal(sizeDim[dim - 1]));
-                result.type = ComplexDecimal.numberClass.real;
+                result.type = ComplexDecimal.REAL;
                 return MultiArray.MultiArrayToScalar(result);
             }
         } else {
@@ -309,6 +309,9 @@ export abstract class CoreFunctions {
         } else {
             dims = dimension.map((dim) => (MultiArray.firstElement(dim) as ComplexDecimal).re.toNumber());
         }
+        if (dims.length === 1) {
+            dims[dims.length] = dims[0];
+        }
         const result = new MultiArray(dims);
         for (let n = 0; n < MultiArray.linearLength(result); n++) {
             const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], n);
@@ -343,7 +346,7 @@ export abstract class CoreFunctions {
      * @returns
      */
     public static rand(...dimension: (MultiArray | ComplexDecimal)[]): ElementType {
-        return CoreFunctions.newFilledEach(() => new ComplexDecimal(Math.random()), ...dimension);
+        return CoreFunctions.newFilledEach(() => ComplexDecimal.random(), ...dimension);
     }
 
     /**
@@ -353,31 +356,35 @@ export abstract class CoreFunctions {
      * @returns
      */
     public static randi(range: MultiArray | ComplexDecimal, ...dimension: (MultiArray | ComplexDecimal)[]): ElementType {
-        let imin = 0;
-        let imax = 0;
+        let imin: ComplexDecimal;
+        let imax: ComplexDecimal;
         if (range instanceof MultiArray) {
             const rangeLinearized = MultiArray.linearize(range) as ComplexDecimal[];
             if (rangeLinearized.length > 1) {
-                imin = rangeLinearized[0].re.toNumber();
-                imax = rangeLinearized[1].re.toNumber();
+                imin = rangeLinearized[0];
+                imax = rangeLinearized[1];
             } else if (rangeLinearized.length > 0) {
-                imax = rangeLinearized[0].re.toNumber();
+                imin = ComplexDecimal.zero();
+                imax = rangeLinearized[0];
             } else {
                 throw new Error('bounds(1): out of bound 0 (dimensions are 0x0)');
             }
         } else {
-            imax = range.re.toNumber();
+            imin = ComplexDecimal.zero();
+            imax = range;
         }
-        if (Math.trunc(imin) !== imin || Math.trunc(imax) !== imax) {
+        if (!(imin.re.isInt() && imax.re.isInt())) {
             throw new Error(`randi: must be integer bounds.`);
         }
-        if (imax > imin) {
+        if (ComplexDecimal.gt(imax, imin)) {
             return CoreFunctions.newFilledEach(
-                imin === 0 ? () => new ComplexDecimal(Math.round(imax * Math.random())) : () => new ComplexDecimal(Math.round((imax - imin) * Math.random() + imin)),
+                imin.re.isZero()
+                    ? () => ComplexDecimal.round(ComplexDecimal.mul(imax, ComplexDecimal.random()))
+                    : () => ComplexDecimal.round(ComplexDecimal.add(ComplexDecimal.mul(ComplexDecimal.sub(imax, imin), ComplexDecimal.random()), imin)),
                 ...dimension,
             );
         } else {
-            if ((imin = 0)) {
+            if (imin.re.isZero()) {
                 throw new Error(`randi: require imax >= 1.`);
             } else {
                 throw new Error(`randi: require imax > imin.`);
@@ -601,8 +608,8 @@ export abstract class CoreFunctions {
             dim,
             M,
             (
-                (sum) => (element, dimension) =>
-                    (sum = dimension !== 0 ? ComplexDecimal[op](sum, element as ComplexDecimal) : (element as ComplexDecimal))
+                (cum) => (element, dimension) =>
+                    (cum = dimension !== 0 ? ComplexDecimal[op](cum, element as ComplexDecimal) : (element as ComplexDecimal))
             )(initialValue),
         );
         MultiArray.setType(result);

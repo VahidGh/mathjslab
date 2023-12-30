@@ -1,16 +1,17 @@
 import { CharString } from './CharString';
 import { ComplexDecimal } from './ComplexDecimal';
 import { Evaluator, TNameTable } from './Evaluator';
+import { Structure } from './Structure';
 
 /**
  * MultiArray Element type.
  */
-export type ElementType = ComplexDecimal | CharString | MultiArray;
+export type ElementType = MultiArray | ComplexDecimal | CharString | Structure | null | undefined;
 
 /**
  * # MultiArray
  *
- * A multimensional array library.
+ * Multimensional array library. This class represents common arrays and cell arrays.
  */
 export class MultiArray {
     /**
@@ -35,6 +36,12 @@ export class MultiArray {
      */
     public type: number;
 
+    public static LOGICAL = ComplexDecimal.LOGICAL;
+    public static REAL = ComplexDecimal.REAL;
+    public static COMPLEX = ComplexDecimal.COMPLEX;
+    public static STRING = CharString.STRING;
+    public static STRUCTURE = Structure.STRUCTURE;
+
     /**
      * True if cell array.
      */
@@ -47,32 +54,45 @@ export class MultiArray {
 
     /**
      * MultiArray constructor.
-     * @param shape Array<number> of dimensions ([rows, columns, pages, blocks, ...]).
+     * @param shape Dimensions ([rows, columns, pages, blocks, ...]).
      * @param fill Data to fill MultiArray. The same object will be put in all elements of MultiArray.
      */
-    public constructor(shape?: number[], fill?: ElementType) {
+    public constructor(shape?: number[], fill?: ElementType, iscell?: boolean) {
         if (shape) {
             this.dimension = shape.slice();
             MultiArray.appendSingletonTail(this.dimension, 2);
             MultiArray.removeSingletonTail(this.dimension);
             this.array = new Array(this.dimensionR.reduce((p, c) => p * c, 1));
             if (fill) {
-                for (let i = 0; i < this.array.length; i++) {
-                    this.array[i] = new Array(this.dimension[1]).fill(fill);
+                if (fill instanceof MultiArray || fill instanceof Structure) {
+                    for (let i = 0; i < this.array.length; i++) {
+                        this.array[i] = new Array(this.dimension[1]);
+                        for (let j = 0; j < this.dimension[1]; j++) {
+                            this.array[i][j] = fill.copy();
+                        }
+                    }
+                } else {
+                    for (let i = 0; i < this.array.length; i++) {
+                        this.array[i] = new Array(this.dimension[1]).fill(fill);
+                    }
                 }
                 this.type = fill.type;
+                this.isCell = iscell ?? false;
             } else {
                 for (let i = 0; i < this.array.length; i++) {
-                    this.array[i] = new Array(this.dimension[1]).fill({ type: -1 });
+                    this.array[i] = new Array(this.dimension[1]);
+                    for (let j = 0; j < this.dimension[1]; j++) {
+                        this.array[i][j] = { type: -1 } as ElementType;
+                    }
                 }
                 this.type = -1;
-                this.isCell = false;
+                this.isCell = iscell ?? false;
             }
         } else {
             this.dimension = [0, 0];
             this.array = [];
             this.type = -1;
-            this.isCell = false;
+            this.isCell = iscell ?? false;
         }
     }
 
@@ -102,7 +122,7 @@ export class MultiArray {
      * @param M MultiArray to set type property.
      */
     public static setType(M: MultiArray): void {
-        M.type = Math.max(...M.array.map((row) => Math.max(...row.map((value) => value.type))));
+        M.type = Math.max(...M.array.map((row) => Math.max(...row.map((value) => value!.type))));
     }
 
     /**
@@ -361,7 +381,7 @@ export class MultiArray {
         if (text.str.length > 0) {
             const result = new MultiArray([1, text.str.length]);
             result.array = [text.str.split('').map((char) => new ComplexDecimal(char.charCodeAt(0)))];
-            result.type = ComplexDecimal.numberClass.real;
+            result.type = ComplexDecimal.REAL;
             return MultiArray.MultiArrayToScalar(result) as MultiArray;
         } else {
             return MultiArray.emptyArray();
@@ -384,7 +404,7 @@ export class MultiArray {
             result.push([]);
             let h = 1;
             for (let j = 0; j < array[i].length; j++) {
-                array[i][j].parent = parent;
+                array[i][j]!.parent = parent;
                 const element = evaluator.Evaluator(array[i][j], local, fname);
                 if (element instanceof MultiArray && !iscell) {
                     if (j === 0) {
@@ -399,7 +419,7 @@ export class MultiArray {
                         }
                     }
                 } else {
-                    result[k][j] = element;
+                    result[k][j] = element as ElementType;
                 }
             }
             k += h - 1;
@@ -420,7 +440,7 @@ export class MultiArray {
      * @param fname Function name (context).
      * @returns Evaluated MultiArray object.
      */
-    public static evaluate(M: MultiArray, evaluator: Evaluator, local: boolean = false, fname: string = ''): MultiArray {
+    public static evaluate(M: MultiArray, evaluator: Evaluator, local: boolean, fname: string): MultiArray {
         const result: MultiArray = new MultiArray();
         result.isCell = M.isCell;
         for (let p = 0; p < M.array.length; p += M.dimension[0]) {
@@ -471,7 +491,7 @@ export class MultiArray {
     }
 
     /**
-     * Convert a scalar value to 1x1 MultiArray.
+     * If value is a scalar then convert to a 1x1 MultiArray.
      * @param value MultiArray or scalar.
      * @returns MultiArray 1x1 if value is scalar.
      */
@@ -481,7 +501,7 @@ export class MultiArray {
         } else {
             const result = new MultiArray([1, 1]);
             result.array[0] = [value];
-            result.type = value.type;
+            result.type = value!.type ?? -1;
             return result;
         }
     }
@@ -528,14 +548,14 @@ export class MultiArray {
      */
     public static copy(M: MultiArray): MultiArray {
         const result = new MultiArray(M.dimension);
-        result.array = M.array.map((row) => row.map((value) => value.copy()));
+        result.array = M.array.map((row) => row.map((value) => value!.copy()));
         result.type = M.type;
         return result;
     }
 
     public copy(): MultiArray {
         const result = new MultiArray(this.dimension);
-        result.array = this.array.map((row) => row.map((value) => value.copy()));
+        result.array = this.array.map((row) => row.map((value) => value!.copy()));
         result.type = this.type;
         return result;
     }
@@ -550,7 +570,7 @@ export class MultiArray {
         for (let i = 0; i < M.array.length; i++) {
             const row = M.array[i];
             for (let j = 0; j < M.dimension[1]; j++) {
-                const value = row[j].toLogical();
+                const value = row[j]!.toLogical();
                 if (value.re.eq(0)) {
                     return ComplexDecimal.false();
                 }
@@ -563,7 +583,7 @@ export class MultiArray {
         for (let i = 0; i < this.array.length; i++) {
             const row = this.array[i];
             for (let j = 0; j < this.dimension[1]; j++) {
-                const value = row[j].toLogical();
+                const value = row[j]!.toLogical();
                 if (value.re.eq(0)) {
                     return ComplexDecimal.false();
                 }
@@ -592,7 +612,8 @@ export class MultiArray {
         if (MultiArray.arrayEquals(dimM, resultDimension)) {
             return;
         }
-        const result = new MultiArray(resultDimension, ComplexDecimal.zero());
+        const blankValue: ElementType = M.array[0][0] instanceof Structure ? Structure.cloneFields(M.array[0][0]) : ComplexDecimal.zero();
+        const result = new MultiArray(resultDimension, blankValue);
         for (let n = 0; n < MultiArray.linearLength(M); n++) {
             const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(M.dimension[0], M.dimension[1], n);
             const subscriptM = MultiArray.linearIndexToSubscript(M.dimension, n);
@@ -1099,7 +1120,7 @@ export class MultiArray {
      * @param indexList Linear index or subscript.
      * @returns MultiArray of selected items.
      */
-    public static getElements(M: MultiArray, id: string, indexList: (ComplexDecimal | MultiArray)[]): ElementType {
+    public static getElements(M: MultiArray, id: string, field: string[], indexList: (ComplexDecimal | MultiArray)[]): ElementType {
         let result: MultiArray;
         if (indexList.length === 0) {
             return M;
@@ -1112,11 +1133,15 @@ export class MultiArray {
                 result = new MultiArray(argsLength.length > 1 ? argsLength : [argsLength[0], 1]);
             }
             for (let n = 0; n < argsLength.reduce((p, c) => p * c, 1); n++) {
-                const subscriptM = MultiArray.linearIndexToSubscript(argsLength, n).map((s, r) => args[r][s - 1]);
-                const linearM = MultiArray.parseSubscript(M.dimension, subscriptM as ComplexDecimal[], id);
+                const subscriptM = MultiArray.linearIndexToSubscript(argsLength, n).map((s, r) => args[r][s - 1]) as ComplexDecimal[];
+                const linearM = MultiArray.parseSubscript(M.dimension, subscriptM, id);
                 const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(M.dimension[0], M.dimension[1], linearM);
                 const [p, q] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], n);
-                result.array[p][q] = M.array[i][j];
+                if (field.length > 0) {
+                    result.array[p][q] = Structure.getField(M.array[i][j], field);
+                } else {
+                    result.array[p][q] = M.array[i][j];
+                }
             }
             MultiArray.setType(result);
             return MultiArray.MultiArrayToScalar(result);
@@ -1130,7 +1155,7 @@ export class MultiArray {
      * @param items Logical index.
      * @returns MultiArray of selected items.
      */
-    public static getElementsLogical(M: MultiArray, id: string, items: MultiArray): ElementType {
+    public static getElementsLogical(M: MultiArray, id: string, field: string[], items: MultiArray): ElementType {
         const result = new MultiArray();
         const linM = MultiArray.linearize(M);
         const test = (MultiArray.linearize(items) as ComplexDecimal[]).map((value: ComplexDecimal) => value.re.toNumber());
@@ -1154,7 +1179,15 @@ export class MultiArray {
      * @param args Linear indices or subscripts.
      * @param right Value to assign.
      */
-    public static setElements(nameTable: TNameTable, id: string, indexList: (ComplexDecimal | MultiArray)[], right: MultiArray, input?: string, evaluator?: Evaluator): void {
+    public static setElements(
+        nameTable: TNameTable,
+        id: string,
+        field: string[],
+        indexList: (ComplexDecimal | MultiArray)[],
+        right: MultiArray,
+        input?: string,
+        evaluator?: Evaluator,
+    ): void {
         if (indexList.length === 0) {
             throw new RangeError('invalid empty index list.');
         } else {
@@ -1174,29 +1207,50 @@ export class MultiArray {
             if (linright.length !== 1 && linright.length !== argsLength.reduce((p, c) => p * c, 1)) {
                 throw new RangeError(`=: nonconformant arguments (op1 is ${argsLength.join('x')}, op2 is ${right.dimension.join('x')})`);
             }
-            if (typeof nameTable[id] !== 'undefined' && nameTable[id].expr instanceof MultiArray) {
-                if (isLinearIndex) {
-                    if (argsMax[0] > MultiArray.linearLength(nameTable[id].expr)) {
-                        throw new RangeError('Invalid resizing operation or ambiguous assignment to an out-of-bounds array element.');
+            if (typeof nameTable[id] !== 'undefined') {
+                if (nameTable[id].expression instanceof MultiArray) {
+                    if (isLinearIndex) {
+                        if (argsMax[0] > MultiArray.linearLength(nameTable[id].expression as MultiArray)) {
+                            throw new RangeError('Invalid resizing operation or ambiguous assignment to an out-of-bounds array element.');
+                        }
+                    } else {
+                        MultiArray.expand(nameTable[id].expression, argsMax);
                     }
                 } else {
-                    MultiArray.expand(nameTable[id].expr, argsMax);
+                    const value = nameTable[id].expression;
+                    const blankValue: ElementType = value instanceof Structure ? Structure.cloneFields(value) : ComplexDecimal.zero();
+                    if (isLinearIndex) {
+                        nameTable[id] = {
+                            parameter: [],
+                            expression: new MultiArray([1, argsMax[0]], blankValue),
+                        };
+                    } else {
+                        nameTable[id] = {
+                            parameter: [],
+                            expression: new MultiArray(argsMax, blankValue),
+                        };
+                    }
+                    nameTable[id].expression.array[0][0] = value;
                 }
             } else {
+                const blankValue: ElementType = field.length > 0 ? new Structure(field) : ComplexDecimal.zero();
                 if (isLinearIndex) {
                     nameTable[id] = {
-                        args: [],
-                        expr: new MultiArray([1, argsMax[0]], ComplexDecimal.zero()),
+                        parameter: [],
+                        expression: new MultiArray([1, argsMax[0]], blankValue),
                     };
                 } else {
                     nameTable[id] = {
-                        args: [],
-                        expr: new MultiArray(argsMax, ComplexDecimal.zero()),
+                        parameter: [],
+                        expression: new MultiArray(argsMax, blankValue),
                     };
                 }
             }
-            const array: MultiArray = nameTable[id].expr;
-            const dimension: number[] = nameTable[id].expr.dimension.slice();
+            const array: MultiArray = nameTable[id].expression as MultiArray;
+            if (field.length > 0) {
+                Structure.setEmptyField(array, field[0]);
+            }
+            const dimension: number[] = (nameTable[id].expression as MultiArray).dimension.slice();
             for (let n = 0; n < argsLength.reduce((p, c) => p * c, 1); n++) {
                 const subscript = MultiArray.linearIndexToSubscript(argsLength, n);
                 const subscriptArgs: number[] = subscript.map((s, r) =>
@@ -1207,7 +1261,11 @@ export class MultiArray {
                 );
                 const indexLinear = MultiArray.subscriptToLinearIndex(dimension, subscriptArgs);
                 const [p, q] = MultiArray.linearIndexToMultiArrayRowColumn(dimension[0], dimension[1], indexLinear);
-                array.array[p][q] = linright.length === 1 ? linright[0] : linright[n];
+                if (field.length > 0) {
+                    Structure.setField(array.array[p][q] as Structure, field, linright.length === 1 ? linright[0] : linright[n]);
+                } else {
+                    array.array[p][q] = linright.length === 1 ? linright[0] : linright[n];
+                }
             }
         }
     }
@@ -1219,7 +1277,7 @@ export class MultiArray {
      * @param arg Logical index.
      * @param right Value to assign.
      */
-    public static setElementsLogical(nameTable: TNameTable, id: string, arg: ComplexDecimal[], right: MultiArray): void {
+    public static setElementsLogical(nameTable: TNameTable, id: string, field: string[], arg: ComplexDecimal[], right: MultiArray): void {
         const linright = MultiArray.linearize(right);
         const test = arg.map((value: ComplexDecimal) => value.re.toNumber());
         const testCount = test.reduce((p, c) => p + c, 0);
@@ -1227,13 +1285,13 @@ export class MultiArray {
             throw new EvalError(`=: nonconformant arguments (op1 is ${testCount}x1, op2 is ${right.dimension[0]}x${right.dimension[1]})`);
         }
         const isDefinedId = typeof nameTable[id] !== 'undefined';
-        const isNotFunction = isDefinedId && nameTable[id].args.length === 0;
-        const isMultiArray = isNotFunction && nameTable[id].expr instanceof MultiArray;
+        const isNotFunction = isDefinedId && nameTable[id].parameter.length === 0;
+        const isMultiArray = isNotFunction && nameTable[id].expression instanceof MultiArray;
         if (isMultiArray) {
-            for (let j = 0, n = 0, r = 0; j < nameTable[id].expr.dimension[1]; j++) {
-                for (let i = 0; i < nameTable[id].expr.dimension[0]; i++, r++) {
+            for (let j = 0, n = 0, r = 0; j < (nameTable[id].expression as MultiArray).dimension[1]; j++) {
+                for (let i = 0; i < (nameTable[id].expression as MultiArray).dimension[0]; i++, r++) {
                     if (test[r]) {
-                        nameTable[id].expr.array[i][j] = linright[n];
+                        (nameTable[id].expression as MultiArray).array[i][j] = linright[n];
                         n++;
                     }
                 }
