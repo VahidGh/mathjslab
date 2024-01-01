@@ -3,6 +3,7 @@ import { ElementType, MultiArray } from './MultiArray';
 import { Evaluator } from './Evaluator';
 import { CharString } from './CharString';
 import * as AST from './AST';
+import { Structure } from './Structure';
 
 export abstract class CoreFunctions {
     public static functions: Record<string, Function> = {
@@ -33,6 +34,7 @@ export abstract class CoreFunctions {
         cummax: CoreFunctions.cummax,
         cumsum: CoreFunctions.cumsum,
         cumprod: CoreFunctions.cumprod,
+        struct: CoreFunctions.struct,
     };
 
     /**
@@ -282,6 +284,9 @@ export abstract class CoreFunctions {
                 throw new Error(`${name} (A): use ${name} (size (A)) instead.`);
             }
             dims = m.array[0].map((data) => (data as ComplexDecimal).re.toNumber());
+            if (dims.length === 1) {
+                dims[dims.length] = dims[0];
+            }
         } else {
             dims = dimension.map((dim) => {
                 if (dim instanceof MultiArray) {
@@ -634,5 +639,38 @@ export abstract class CoreFunctions {
      */
     public static cumprod(M: MultiArray | ComplexDecimal, DIM?: MultiArray | ComplexDecimal): MultiArray | ComplexDecimal {
         return CoreFunctions.cumSumProd('mul', M, DIM);
+    }
+
+    /**
+     *
+     * @param args
+     * @returns
+     */
+    public static struct(...args: ElementType[]): Structure | MultiArray {
+        const errorMessage = `struct: additional arguments must occur as "field", VALUE pairs`;
+        if (args.length === 0) {
+            return new Structure({});
+        } else if (args.length === 1) {
+            if (args[0] instanceof MultiArray && MultiArray.isEmpty(args[0])) {
+                return MultiArray.emptyArray();
+            } else if (args[0] instanceof Structure) {
+                return args[0].copy();
+            } else {
+                throw new Error(errorMessage);
+            }
+        } else {
+            if (args.length % 2 !== 0) {
+                throw new Error(errorMessage);
+            }
+            const resultFields: Record<string, ElementType> = {};
+            for (let i = 0; i < args.length; i += 2) {
+                if (args[i] instanceof CharString) {
+                    resultFields[(args[i] as CharString).str] = args[i + 1];
+                } else {
+                    throw new Error(errorMessage);
+                }
+            }
+            return new Structure(resultFields);
+        }
     }
 }

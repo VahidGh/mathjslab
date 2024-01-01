@@ -97,14 +97,12 @@ export class MultiArray {
     }
 
     /**
-     * Check if object is a MultiArray and it is a row vector. To be used
-     * only in Evaluator to test multiple assignment. The restrictions
-     * imposed by parser can restrict the check only to `obj.dimension[0] === 1`.
+     * Check if object is a MultiArray and it is a row vector.
      * @param obj Any object.
      * @returns `true` if object is a row vector. false otherwise.
      */
     public static isRowVector(obj: any): boolean {
-        return obj instanceof MultiArray && obj.dimension[0] === 1;
+        return obj instanceof MultiArray && obj.dimension[0] === 1 && obj.dimension.length === 2;
     }
 
     /**
@@ -666,14 +664,28 @@ export class MultiArray {
      * @param strideNode Optional stride value.
      * @returns MultiArray of range expanded.
      */
-    public static expandRange(startNode: ComplexDecimal, stopNode: ComplexDecimal, strideNode?: ComplexDecimal | null): MultiArray {
+    public static expandRange(start: ComplexDecimal, stop: ComplexDecimal, stride?: ComplexDecimal | null): MultiArray {
         const expanded = [];
-        const s = strideNode ? strideNode.re.toNumber() : 1;
-        for (let n = startNode.re.toNumber(), i = 0; s > 0 ? n <= stopNode.re.toNumber() : n >= stopNode.re.toNumber(); n += s, i++) {
+        const s = stride ? stride.re.toNumber() : 1;
+        for (let n = start.re.toNumber(), i = 0; s > 0 ? n <= stop.re.toNumber() : n >= stop.re.toNumber(); n += s, i++) {
             expanded[i] = new ComplexDecimal(n);
         }
         const result = new MultiArray([1, expanded.length]);
         result.array = [expanded];
+        MultiArray.setType(result);
+        return result;
+    }
+
+    /**
+     * Expand colon to a column vector.
+     * @param length
+     * @returns
+     */
+    public static expandColon(length: number): MultiArray {
+        const result = new MultiArray([length, 1]);
+        for (let i = 0; i < length; i++) {
+            result.array[i] = [new ComplexDecimal(i + 1)];
+        }
         MultiArray.setType(result);
         return result;
     }
@@ -1159,16 +1171,23 @@ export class MultiArray {
         const result = new MultiArray();
         const linM = MultiArray.linearize(M);
         const test = (MultiArray.linearize(items) as ComplexDecimal[]).map((value: ComplexDecimal) => value.re.toNumber());
+        const itemsIsRowVector = MultiArray.isRowVector(items);
+        if (itemsIsRowVector) {
+            result.array[0] = [];
+        }
         if (test.length > linM.length) {
-            const dimM = M.dimension.slice();
-            throw new EvalError(`${id}(${test.length}): out of bound ${linM.length} (dimensions are ${dimM.join('x')})`);
+            throw new EvalError(`${id}(${test.length}): out of bound ${linM.length} (dimensions are ${M.dimension.join('x')})`);
         }
         for (let n = 0; n < linM.length; n++) {
             if (test[n]) {
-                result.array.push([linM[n]]);
+                if (itemsIsRowVector) {
+                    result.array[0].push(linM[n]);
+                } else {
+                    result.array.push([linM[n]]);
+                }
             }
         }
-        result.dimension = [result.array.length, 1];
+        result.dimension = itemsIsRowVector ? [1, result.array[0].length] : [result.array.length, 1];
         return MultiArray.MultiArrayToScalar(result);
     }
 
@@ -1288,10 +1307,15 @@ export class MultiArray {
         const isNotFunction = isDefinedId && nameTable[id].parameter.length === 0;
         const isMultiArray = isNotFunction && nameTable[id].expression instanceof MultiArray;
         if (isMultiArray) {
-            for (let j = 0, n = 0, r = 0; j < (nameTable[id].expression as MultiArray).dimension[1]; j++) {
-                for (let i = 0; i < (nameTable[id].expression as MultiArray).dimension[0]; i++, r++) {
+            const array: MultiArray = nameTable[id].expression as MultiArray;
+            for (let j = 0, n = 0, r = 0; j < array.dimension[1]; j++) {
+                for (let i = 0; i < array.dimension[0]; i++, r++) {
                     if (test[r]) {
-                        (nameTable[id].expression as MultiArray).array[i][j] = linright[n];
+                        if (field.length > 0) {
+                            Structure.setField(array.array[i][j] as Structure, field, linright[n]);
+                        } else {
+                            array.array[i][j] = linright[n];
+                        }
                         n++;
                     }
                 }

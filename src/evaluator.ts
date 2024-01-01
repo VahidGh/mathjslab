@@ -289,13 +289,14 @@ export class Evaluator {
     public readonly setElements = MultiArray.setElements;
     public readonly setElementsLogical = MultiArray.setElementsLogical;
     public readonly expandRange = MultiArray.expandRange;
+    public readonly expandColon = MultiArray.expandColon;
     public readonly array0x0 = MultiArray.emptyArray;
     public readonly linearize = MultiArray.linearize;
     public readonly scalarToArray = MultiArray.scalarToMultiArray;
     public readonly linearLength = MultiArray.linearLength;
     public readonly getDimension = MultiArray.getDimension;
     public readonly toLogical = MultiArray.toLogical;
-    public readonly getField = Structure.getField;
+    public readonly getFields = Structure.getFields;
     public readonly setNewField = Structure.setNewField;
 
     /**
@@ -583,7 +584,8 @@ export class Evaluator {
      * @param func Function body.
      * @param map `true` if function is a mapper function.
      * @param ev A `boolean` array indicating which function argument should
-     * be evaluated before executing the function.
+     * be evaluated before executing the function. If array is zero-length all
+     * arguments are evaluated.
      */
     private defineFunction(name: string, func: Function, mapper: boolean = false, ev: boolean[] = []): void {
         this.baseFunctionTable[name] = { mapper, ev, func };
@@ -756,7 +758,7 @@ export class Evaluator {
                     case '.^=':
                     case '.**=':
                     case '&=':
-                    case '|=':
+                    case '|=': {
                         tree.left.parent = tree;
                         tree.right.parent = tree;
                         const assignment = this.validateAssignment(tree.left, true, local, fname);
@@ -967,6 +969,7 @@ export class Evaluator {
                             /* assignment at right side */
                             return (resultList.list[0] as AST.NodeExpr).right;
                         }
+                    }
                     case 'IDENT':
                         if (local && this.localTable[fname] && this.localTable[fname][tree.id]) {
                             /* Defined in localTable. */
@@ -985,8 +988,8 @@ export class Evaluator {
                         } else {
                             throw new ReferenceError(`'${tree.id}' undefined.`);
                         }
-                    case '.':
-                        return this.getField(
+                    case '.': {
+                        const result = this.getFields(
                             this.reduceIfReturnList(this.Evaluator(tree.obj, local, fname)),
                             tree.field.map((field: AST.NodeExpr) => {
                                 if (typeof field === 'string') {
@@ -1001,13 +1004,19 @@ export class Evaluator {
                                 }
                             }),
                         );
-                    case 'LIST':
+                        if (result.length === 1) {
+                            return result[0];
+                        } else {
+                            return AST.nodeList(result);
+                        }
+                    }
+                    case 'LIST': {
                         const result = {
                             type: 'LIST',
                             list: new Array(tree.list.length),
                             parent: tree.parent === null ? null : tree,
                         };
-                        for (let i = 0; i < tree.list.length; i++) {
+                        for (let i = 0, n = 0; i < tree.list.length; i++, n++) {
                             /* Convert undefined name, defined in word-list command, to word-list command.
                              * (Null length word-list command) */
                             if (
@@ -1021,13 +1030,26 @@ export class Evaluator {
                                 tree.list[i]['args'] = [];
                             }
                             tree.list[i].parent = result;
-                            tree.list[i].index = i;
-                            result.list[i] = this.reduceIfReturnList(this.Evaluator(tree.list[i], local, fname));
-                            if (tree.parent === null && !tree.list[i].omitAns) {
-                                this.nameTable['ans'] = { parameter: [], expression: result.list[i] };
+                            tree.list[i].index = n;
+                            const item = this.reduceIfReturnList(this.Evaluator(tree.list[i], local, fname));
+                            if (item.type === 'LIST') {
+                                for (let j = 0; j < item.list.length; j++, n++) {
+                                    item.list[j].parent = result;
+                                    item.list[j].index = n;
+                                    result.list[n] = item.list[j];
+                                    if (tree.parent === null && !result.list[n].omitAns) {
+                                        this.nameTable['ans'] = { parameter: [], expression: result.list[n] };
+                                    }
+                                }
+                            } else {
+                                result.list[n] = item;
+                                if (tree.parent === null && !result.list[n].omitAns) {
+                                    this.nameTable['ans'] = { parameter: [], expression: result.list[n] };
+                                }
                             }
                         }
                         return result;
+                    }
                     case 'RANGE':
                         tree.start_.parent = tree;
                         tree.stop_.parent = tree;
@@ -1047,30 +1069,25 @@ export class Evaluator {
                             index = parent.index;
                             parent = parent.parent;
                         }
-                        if (
-                            parent &&
-                            parent.type === 'IDX' &&
-                            parent.expr.id in this.nameTable &&
-                            this.nameTable[parent.expr.id].parameter.length === 0 &&
-                            this.nameTable[parent.expr.id].expression instanceof MultiArray
-                        ) {
-                            return parent.args.length === 1
-                                ? this.newNumber(this.linearLength(this.nameTable[parent.expr.id].expression))
-                                : this.newNumber(this.getDimension(this.nameTable[parent.expr.id].expression, index));
+                        if (parent && parent.type === 'IDX') {
+                            const expr = this.reduceIfReturnList(this.Evaluator(parent.expr, local, fname));
+                            if (expr instanceof MultiArray) {
+                                return parent.args.length === 1 ? this.newNumber(this.linearLength(expr)) : this.newNumber(this.getDimension(expr, index));
+                            } else {
+                                return ComplexDecimal.one();
+                            }
                         } else {
                             throw new SyntaxError("indeterminate end of range. The word 'end' to refer a value is valid only in indexing.");
                         }
                     }
                     case ':':
-                        if (
-                            tree.parent.type === 'IDX' &&
-                            tree.parent.expr.id in this.nameTable &&
-                            this.nameTable[tree.parent.expr.id].parameter.length === 0 &&
-                            this.nameTable[tree.parent.expr.id].expression instanceof MultiArray
-                        ) {
-                            return tree.parent.args.length === 1
-                                ? this.expandRange(ComplexDecimal.one(), this.newNumber(this.linearLength(this.nameTable[tree.parent.expr.id].expression)))
-                                : this.expandRange(ComplexDecimal.one(), this.newNumber(this.getDimension(this.nameTable[tree.parent.expr.id].expression, tree.index)));
+                        if (tree.parent.type === 'IDX') {
+                            const expr = this.reduceIfReturnList(this.Evaluator(tree.parent.expr, local, fname));
+                            if (expr instanceof MultiArray) {
+                                return tree.parent.args.length === 1 ? this.expandColon(this.linearLength(expr)) : this.expandColon(this.getDimension(expr, tree.index));
+                            } else {
+                                return ComplexDecimal.one();
+                            }
                         } else {
                             throw new SyntaxError('indeterminate colon. The colon to refer a range is valid only in indexing.');
                         }
@@ -1201,10 +1218,11 @@ export class Evaluator {
                             result!.parent = tree;
                             return result;
                         }
-                    case 'CMDWLIST':
-                        const commandWordListResult = this.commandWordListTable[tree.id].func(...tree.args.map((word: { str: string }) => word.str));
-                        return typeof commandWordListResult !== 'undefined' ? commandWordListResult : tree;
-                    case 'IF':
+                    case 'CMDWLIST': {
+                        const result = this.commandWordListTable[tree.id].func(...tree.args.map((word: CharString) => word.str));
+                        return typeof result !== 'undefined' ? result : tree;
+                    }
+                    case 'IF': {
                         for (let ifTest = 0; ifTest < tree.expression.length; ifTest++) {
                             tree.expression[ifTest].parent = tree;
                             if (this.toBoolean(this.reduceIfReturnList(this.Evaluator(tree.expression[ifTest], local, fname)))) {
@@ -1223,6 +1241,7 @@ export class Evaluator {
                             list: [],
                             parent: tree,
                         };
+                    }
                     default:
                         throw new EvalError(`evaluating undefined type '${tree.type}'.`);
                 }

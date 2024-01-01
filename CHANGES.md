@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.4.2
+- Bug fix in indexing by colon (:).
+- Bug fix in functions 'ones' and 'zeros' (`CoreFunctions.newFilled`).
+
 ## 1.4.1
 - More strong type definitions in 'AST.ts' and 'MathJSLabParser.g4' files.
 - Number input as binary, octal and hexadecimal implemented in REAL_NUMBER rule of lexer.

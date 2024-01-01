@@ -9,6 +9,14 @@ export class Structure {
     parent: any;
     public field: Record<string, ElementType>;
     private static readonly invalidReferenceMessage = 'value cannot be indexed with .';
+
+    /**
+     * Structure constructor. If an object is passed as parameter then create
+     * a Structure with same fields and values of object. If an array of field
+     * names as string is passed then create a Structure with this field
+     * branch and nested field value set to empty array.
+     * @param field An object with fields and values or an array of field names.
+     */
     constructor(field: Record<string, ElementType> | string[]) {
         this.field = {};
         if (Array.isArray(field)) {
@@ -24,20 +32,15 @@ export class Structure {
             }
         }
     }
-    public static append(S: Structure, field: Record<string, ElementType>): void {
-        for (const f in field) {
-            S.field[f] = field[f]!.copy();
-        }
-    }
-    public append(field: Record<string, ElementType>): void {
-        for (const f in field) {
-            this.field[f] = field[f]!.copy();
-        }
-    }
-    public addFields(S: Structure | MultiArray, field: string[]): Structure | MultiArray {
-        return S;
-    }
+
+    /**
+     *
+     * @param S
+     * @param field
+     * @param value
+     */
     public static setField(S: Structure, field: string[], value?: ElementType): void {
+        // TODO: check if struct.field[field[i]] exists, if it is a MultiArray of Structure...
         let struct = S;
         for (let i = 0; i < field.length - 1; i++) {
             struct.field[field[i]] = new Structure({});
@@ -45,6 +48,13 @@ export class Structure {
         }
         struct.field[field[field.length - 1]] = value ?? MultiArray.emptyArray();
     }
+
+    /**
+     *
+     * @param S
+     * @param field
+     * @param value
+     */
     public static setNewField(S: Structure, field: string[], value?: ElementType): void {
         let struct = S;
         for (let i = 0; i < field.length - 1; i++) {
@@ -59,6 +69,13 @@ export class Structure {
         }
         struct.field[field[field.length - 1]] = value ?? MultiArray.emptyArray();
     }
+
+    /**
+     *
+     * @param obj
+     * @param field
+     * @returns
+     */
     public static getField(obj: ElementType, field: string[]): ElementType {
         if (obj instanceof Structure) {
             let struct = obj;
@@ -79,11 +96,31 @@ export class Structure {
             throw new EvalError(Structure.invalidReferenceMessage);
         }
     }
+
+    public static getFields(obj: ElementType, field: string[]): ElementType[] {
+        return obj instanceof MultiArray && obj.array.length > 0 && obj.array[0].length > 0 && obj.array[0][0] instanceof Structure
+            ? MultiArray.linearize(obj).map((S) => Structure.getField(S, field))
+            : [Structure.getField(obj, field)];
+    }
+
+    /**
+     *
+     * @param S
+     * @param evaluator
+     * @returns
+     */
     public static unparse(S: Structure, evaluator: Evaluator): string {
         return `struct {\n${Object.entries(S.field)
             .map((entry) => `${entry[0]}: ${evaluator.Unparse(entry[1])}`)
             .join('\n')}\n}`;
     }
+
+    /**
+     *
+     * @param S
+     * @param evaluator
+     * @returns
+     */
     public static unparseMathML(S: Structure, evaluator: Evaluator): string {
         let result = `<mtr><mtd columnspan="2"><mtext>struct {</mtext></mtd></mtr>`;
         result += Object.entries(S.field)
@@ -92,6 +129,12 @@ export class Structure {
         result += `<mtr><mtd columnspan="2"><mtext>}</mtext></mtd></mtr>`;
         return `<mtable>${result}</mtable>`;
     }
+
+    /**
+     *
+     * @param S
+     * @returns
+     */
     public static copy(S: Structure): Structure {
         const result = new Structure({});
         for (const f in S.field) {
@@ -99,9 +142,20 @@ export class Structure {
         }
         return result;
     }
+
+    /**
+     *
+     * @returns
+     */
     public copy(): Structure {
         return Structure.copy(this);
     }
+
+    /**
+     *
+     * @param S
+     * @returns
+     */
     public static cloneFields(S: Structure): Structure {
         const result = new Structure({});
         Object.keys(S.field).forEach((key) => {
@@ -109,15 +163,24 @@ export class Structure {
         });
         return result;
     }
+
+    /**
+     *
+     * @param S
+     * @returns
+     */
     public static toLogical(S: Structure): ComplexDecimal {
         return Object.keys(S.field).length > 0 ? ComplexDecimal.true() : ComplexDecimal.false();
     }
+
+    /**
+     *
+     * @returns
+     */
     public toLogical(): ComplexDecimal {
         return Object.keys(this.field).length > 0 ? ComplexDecimal.true() : ComplexDecimal.false();
     }
-    public static evaluate(S: Structure, evaluator: Evaluator, local: boolean, fname: string): Structure {
-        return S;
-    }
+
     /**
      * Set empty field in all elements of MultiArray if it is not cell array and if field not defined.
      * @param M
