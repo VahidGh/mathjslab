@@ -1,5 +1,6 @@
 import { CharString } from './CharString';
 import { ComplexDecimal } from './ComplexDecimal';
+import { FunctionHandle } from './FunctionHandle';
 import { ElementType, MultiArray } from './MultiArray';
 
 /**
@@ -77,7 +78,7 @@ export type NodeInput = NodeExpr | NodeList | NodeDeclaration | NodeIf;
 /**
  * Expression node.
  */
-export type NodeExpr = ElementType | NodeIdentifier | NodeIndexExpr | NodeOperation | NodeRange | NodeIndirectRef | NodeReturnList | NodeFunctionHandle | any;
+export type NodeExpr = ElementType | NodeIdentifier | NodeIndexExpr | NodeOperation | NodeRange | NodeIndirectRef | NodeReturnList | any;
 
 /**
  * Reserved node.
@@ -183,13 +184,6 @@ export type ReturnSelector = (length: number, index: number) => any;
 export interface NodeReturnList extends PrimaryNode {
     type: 'RETLIST';
     selector: ReturnSelector;
-}
-
-export interface NodeFunctionHandle extends PrimaryNode {
-    type: '@';
-    id: string | null;
-    parameter: NodeExpr[];
-    expression: NodeExpr;
 }
 
 export interface NodeFunction extends PrimaryNode {
@@ -472,13 +466,8 @@ export const nodeReturnList = (selector: ReturnSelector): NodeReturnList => {
     };
 };
 
-export const nodeFunctionHandle = (id: NodeIdentifier | null = null, parameter_list: NodeList | null = null, expression: NodeExpr = null): NodeFunctionHandle => {
-    return {
-        type: '@',
-        id: id ? id.id : null,
-        parameter: parameter_list ? (parameter_list.list as NodeExpr[]) : [],
-        expression,
-    };
+export const nodeFunctionHandle = (id: NodeIdentifier | null = null, parameter_list: NodeList | null = null, expression: NodeExpr = null): FunctionHandle => {
+    return new FunctionHandle(id ? id.id : null, true, parameter_list ? parameter_list.list : [], expression);
 };
 
 export const nodeFunction = (id: NodeIdentifier, return_list: NodeList, parameter_list: NodeList, arguments_list: NodeList, statements_list: NodeList): NodeFunction => {

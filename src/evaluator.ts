@@ -18,48 +18,46 @@ import { LinearAlgebra } from './LinearAlgebra';
 import { MathObject, MathOperationType, UnaryMathOperation, BinaryMathOperation, MathOperation } from './MathOperation';
 import { Configuration } from './Configuration';
 import { Structure } from './Structure';
+import { SymbolTable } from './SymbolTable';
+import { FunctionHandle } from './FunctionHandle';
 
 /**
  * aliasNameTable type.
  */
-export type TAliasNameTable = Record<string, RegExp>;
+export type AliasNameTable = Record<string, RegExp>;
 
 /**
- * baseFunctionTable type.
+ * builtInFunctionTable type.
  */
-export type TBaseFunctionTableEntry = {
+export type BuiltInFunctionTableEntry = {
     mapper: boolean;
     ev: boolean[];
     func: Function;
     unparserMathML?: (tree: AST.NodeInput) => string;
 };
-export type TBaseFunctionTable = Record<string, TBaseFunctionTableEntry>;
+export type BuiltInFunctionTable = Record<string, BuiltInFunctionTableEntry>;
 
 /**
  * nameTable type.
  */
-export type TNameTableEntry = {
-    parameter: AST.NodeIdentifier[];
-    expression: AST.NodeExpr;
-};
-export type TNameTable = Record<string, TNameTableEntry>;
+export type NameTable = Record<string, AST.NodeExpr>;
 
 /**
  * commandWordListTable type.
  */
-export type TCommandWordListFunction = (...args: string[]) => any;
-export type TCommandWordListTableEntry = {
-    func: TCommandWordListFunction;
+export type CommandWordListFunction = (...args: string[]) => any;
+export type CommandWordListTableEntry = {
+    func: CommandWordListFunction;
 };
-export type TCommandWordListTable = Record<string, TCommandWordListTableEntry>;
+export type CommandWordListTable = Record<string, CommandWordListTableEntry>;
 
 /**
- * TEvaluatorConfig type.
+ * EvaluatorConfig type.
  */
-export type TEvaluatorConfig = {
-    aliasTable?: TAliasNameTable;
-    externalFunctionTable?: TBaseFunctionTable;
-    externalCmdWListTable?: TCommandWordListTable;
+export type EvaluatorConfig = {
+    aliasNameTable?: AliasNameTable;
+    externalFunctionTable?: BuiltInFunctionTable;
+    externalCmdWListTable?: CommandWordListTable;
 };
 
 export type IncDecOperator = (tree: AST.NodeIdentifier) => MathObject;
@@ -107,25 +105,25 @@ export class Evaluator {
     public readonly nativeNameTableList = Object.keys(this.nativeNameTable);
 
     /**
-     * Name table.
-     */
-    public nameTable: TNameTable = {};
-
-    /**
      * Alias table.
      */
-    private aliasTable: TAliasNameTable;
+    private aliasNameTable: AliasNameTable;
 
     /**
-     * Base function table.
+     * Name table.
      */
-    public baseFunctionTable: TBaseFunctionTable = {};
+    public nameTable: NameTable = {};
 
     /**
-     * Get a list of names of defined functions in baseFunctionTable.
+     * Built-in function table.
      */
-    public get baseFunctionList(): string[] {
-        return Object.keys(this.baseFunctionTable);
+    public builtInFunctionTable: BuiltInFunctionTable = {};
+
+    /**
+     * Get a list of names of defined functions in builtInFunctionTable.
+     */
+    public get builtInFunctionList(): string[] {
+        return Object.keys(this.builtInFunctionTable);
     }
 
     /**
@@ -136,7 +134,7 @@ export class Evaluator {
     /**
      * Command word list table.
      */
-    public commandWordListTable: TCommandWordListTable = {
+    public commandWordListTable: CommandWordListTable = {
         clear: {
             func: (...args: string[]): void => this.Clear(...args),
         },
@@ -162,7 +160,9 @@ export class Evaluator {
         __builtins__: {
             /* eslint-disable-next-line  @typescript-eslint/no-unused-vars */
             func: (...args: string[]): MultiArray => {
-                return MultiArray.emptyArray(true);
+                const result = new MultiArray([this.builtInFunctionList.length, 1], null, true);
+                result.array = this.builtInFunctionList.sort().map((name) => [new CharString(name)]);
+                return result;
             },
         },
         __list_functions__: {
@@ -171,7 +171,7 @@ export class Evaluator {
                 return MultiArray.emptyArray(true);
             },
         },
-        local_functions: {
+        localfunctions: {
             /* eslint-disable-next-line  @typescript-eslint/no-unused-vars */
             func: (...args: string[]): MultiArray => {
                 return MultiArray.emptyArray(true);
@@ -200,9 +200,9 @@ export class Evaluator {
         if (pre) {
             return (tree: AST.NodeIdentifier): MathObject => {
                 if (tree.type === 'IDENT') {
-                    if (this.nameTable[tree.id].expression) {
-                        this.nameTable[tree.id].expression = MathOperation[operation](this.nameTable[tree.id].expression, ComplexDecimal.one());
-                        return this.nameTable[tree.id].expression;
+                    if (this.nameTable[tree.id]) {
+                        this.nameTable[tree.id] = MathOperation[operation](this.nameTable[tree.id], ComplexDecimal.one());
+                        return this.nameTable[tree.id];
                     } else {
                         throw new EvalError('in x++ or ++x, x must be defined first.');
                     }
@@ -213,9 +213,9 @@ export class Evaluator {
         } else {
             return (tree: AST.NodeIdentifier): MathObject => {
                 if (tree.type === 'IDENT') {
-                    if (this.nameTable[tree.id].expression) {
-                        const value = MathOperation.copy(this.nameTable[tree.id].expression);
-                        this.nameTable[tree.id].expression = MathOperation[operation](this.nameTable[tree.id].expression, ComplexDecimal.one());
+                    if (this.nameTable[tree.id]) {
+                        const value = MathOperation.copy(this.nameTable[tree.id]);
+                        this.nameTable[tree.id] = MathOperation[operation](this.nameTable[tree.id], ComplexDecimal.one());
                         return value;
                     } else {
                         throw new EvalError('in x++ or ++x, x must be defined first.');
@@ -281,6 +281,9 @@ export class Evaluator {
     public readonly unparseArray = MultiArray.unparse;
     public readonly unparseStructure = Structure.unparse;
     public readonly unparseStructureMathML = Structure.unparseMathML;
+    public readonly newFunctionHandle = FunctionHandle.newThis;
+    public readonly unparseFunctionHandle = FunctionHandle.unparse;
+    public readonly unparseFunctionHandleMathML = FunctionHandle.unparseMathML;
     public readonly unparseArrayMathML = MultiArray.unparseMathML;
     public readonly evaluateArray = MultiArray.evaluate;
     public readonly mapArray = MultiArray.rawMap;
@@ -325,7 +328,7 @@ export class Evaluator {
     /**
      * Evaluator object constructor
      */
-    constructor(config?: TEvaluatorConfig) {
+    constructor(config?: EvaluatorConfig) {
         this.exitStatus = this.response.OK;
         /* Set opTable aliases */
         this.opTable['**'] = this.opTable['^'];
@@ -370,16 +373,16 @@ export class Evaluator {
         }
         /* Load unparserMathML for special functions */
         for (const func in this.unparseMathMLFunctions) {
-            this.baseFunctionTable[func].unparserMathML = this.unparseMathMLFunctions[func];
+            this.builtInFunctionTable[func].unparserMathML = this.unparseMathMLFunctions[func];
         }
         if (config) {
-            if (config.aliasTable) {
-                this.aliasTable = config.aliasTable;
+            if (config.aliasNameTable) {
+                this.aliasNameTable = config.aliasNameTable;
                 this.aliasName = (name: string): string => {
                     let result = false;
                     let aliasname = '';
-                    for (const i in this.aliasTable) {
-                        if (this.aliasTable[i].test(name)) {
+                    for (const i in this.aliasNameTable) {
+                        if (this.aliasNameTable[i].test(name)) {
                             result = true;
                             aliasname = i;
                             break;
@@ -395,7 +398,7 @@ export class Evaluator {
                 this.aliasName = (name: string): string => name;
             }
             if (config.externalFunctionTable) {
-                Object.assign(this.baseFunctionTable, config.externalFunctionTable);
+                Object.assign(this.builtInFunctionTable, config.externalFunctionTable);
             }
             if (config.externalCmdWListTable) {
                 Object.assign(this.commandWordListTable, config.externalCmdWListTable);
@@ -445,7 +448,7 @@ export class Evaluator {
     private loadNativeTable(): void {
         /* Insert nativeNameTable in nameTable */
         for (const name in this.nativeNameTable) {
-            this.nameTable[name] = { parameter: [], expression: this.nativeNameTable[name] };
+            this.nameTable[name] = this.nativeNameTable[name];
         }
     }
 
@@ -460,7 +463,7 @@ export class Evaluator {
 
     /**
      * Clear variables. If names is 0 lenght restart evaluator.
-     * @param names Variable names to clear in nameTable and baseFunctionTable.
+     * @param names Variable names to clear in nameTable and builtInFunctionTable.
      */
     public Clear(...names: string[]): void {
         if (names.length === 0) {
@@ -468,12 +471,9 @@ export class Evaluator {
         } else {
             names.forEach((name) => {
                 delete this.nameTable[name];
-                delete this.baseFunctionTable[name];
+                delete this.builtInFunctionTable[name];
                 if (this.nativeNameTableList.includes(name)) {
-                    this.nameTable[name] = {
-                        expression: this.nativeNameTable[name],
-                        parameter: [],
-                    };
+                    this.nameTable[name] = this.nativeNameTable[name];
                 }
             });
         }
@@ -514,7 +514,7 @@ export class Evaluator {
      * @returns An object with four properties: `left`, `id`, `args` and `field`.
      */
     public validateAssignment(tree: AST.NodeExpr, shallow: boolean, local: boolean, fname: string): { id: string; index: AST.NodeExpr[]; field: string[] }[] {
-        const invalidLeftAssignmentMessage = 'invalid left side of assignment';
+        const invalidLeftAssignmentMessage = 'invalid left hand side of assignment';
         if (tree.type === 'IDENT') {
             return [
                 {
@@ -579,7 +579,7 @@ export class Evaluator {
     }
 
     /**
-     * Define function in baseFunctionTable.
+     * Define function in builtInFunctionTable.
      * @param name Name of function.
      * @param func Function body.
      * @param map `true` if function is a mapper function.
@@ -588,16 +588,16 @@ export class Evaluator {
      * arguments are evaluated.
      */
     private defineFunction(name: string, func: Function, mapper: boolean = false, ev: boolean[] = []): void {
-        this.baseFunctionTable[name] = { mapper, ev, func };
+        this.builtInFunctionTable[name] = { mapper, ev, func };
     }
 
     /**
-     * Define unary operator function in baseFunctionTable.
+     * Define unary operator function in builtInFunctionTable.
      * @param name Name of function.
      * @param func Function body.
      */
     private defineUnaryOperatorFunction(name: string, func: UnaryMathOperation): void {
-        this.baseFunctionTable[name] = {
+        this.builtInFunctionTable[name] = {
             mapper: false,
             ev: [],
             func: (...operand: AST.NodeExpr) => {
@@ -611,12 +611,12 @@ export class Evaluator {
     }
 
     /**
-     * Define binary operator function in baseFunctionTable.
+     * Define binary operator function in builtInFunctionTable.
      * @param name Name of function.
      * @param func Function body.
      */
     private defineBinaryOperatorFunction(name: string, func: BinaryMathOperation): void {
-        this.baseFunctionTable[name] = {
+        this.builtInFunctionTable[name] = {
             mapper: false,
             ev: [],
             func: (left: AST.NodeExpr, ...right: AST.NodeExpr) => {
@@ -630,12 +630,12 @@ export class Evaluator {
     }
 
     /**
-     * Define define two-or-more operand function in baseFunctionTable.
+     * Define define two-or-more operand function in builtInFunctionTable.
      * @param name
      * @param func
      */
     private defineLeftAssociativeMultipleOperationFunction(name: string, func: BinaryMathOperation): void {
-        this.baseFunctionTable[name] = {
+        this.builtInFunctionTable[name] = {
             mapper: false,
             ev: [],
             func: (left: AST.NodeExpr, ...right: AST.NodeExpr) => {
@@ -686,11 +686,9 @@ export class Evaluator {
             );
         }
         if (tree) {
-            if (tree instanceof ComplexDecimal || tree instanceof CharString || tree instanceof Structure) {
-                /* NUMBER, STRING or STRUCTURE */
+            if (tree instanceof ComplexDecimal || tree instanceof FunctionHandle || tree instanceof CharString || tree instanceof Structure) {
                 return tree;
             } else if (tree instanceof MultiArray) {
-                /* MATRIX */
                 return this.evaluateArray(tree, this, local, fname);
             } else {
                 switch (tree.type) {
@@ -796,28 +794,28 @@ export class Evaluator {
                                     try {
                                         if (field.length > 0) {
                                             if (typeof this.nameTable[id] === 'undefined') {
-                                                this.nameTable[id] = { parameter: [], expression: new Structure({}) };
+                                                this.nameTable[id] = new Structure({});
                                             }
-                                            if (this.nameTable[id].expression instanceof Structure) {
-                                                this.setNewField(this.nameTable[id].expression, field, this.reduceIfReturnList(this.Evaluator(expr)));
+                                            if (this.nameTable[id] instanceof Structure) {
+                                                this.setNewField(this.nameTable[id], field, this.reduceIfReturnList(this.Evaluator(expr)));
                                             } else {
                                                 throw new EvalError('in indexed assignment.');
                                             }
-                                            AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id].expression));
+                                            AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id]));
                                         } else {
-                                            this.nameTable[id] = { parameter: [], expression: this.reduceIfReturnList(this.Evaluator(expr)) };
-                                            AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id].expression));
+                                            this.nameTable[id] = this.reduceIfReturnList(this.Evaluator(expr));
+                                            AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id]));
                                         }
                                         continue;
                                     } catch (error) {
-                                        this.nameTable[id] = { parameter: [], expression: expr };
+                                        this.nameTable[id] = expr;
                                         throw error;
                                     }
                                 } else {
                                     /* Function definition or indexed matrix reference. */
                                     if (op) {
                                         if (typeof this.nameTable[id] !== 'undefined') {
-                                            if (this.nameTable[id].parameter.length === 0) {
+                                            if (!(this.nameTable[id] instanceof FunctionHandle)) {
                                                 /* Indexed matrix reference on left hand side with operator. */
                                                 if (index.length === 1) {
                                                     /* Test logical indexing. */
@@ -834,7 +832,7 @@ export class Evaluator {
                                                                     this.Evaluator(
                                                                         AST.nodeOp(
                                                                             op,
-                                                                            this.getElementsLogical(this.nameTable[id].expression, id, field, arg0),
+                                                                            this.getElementsLogical(this.nameTable[id], id, field, arg0),
                                                                             this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                                                         ),
                                                                         false,
@@ -855,7 +853,7 @@ export class Evaluator {
                                                                     this.Evaluator(
                                                                         AST.nodeOp(
                                                                             op,
-                                                                            this.getElements(this.nameTable[id].expression, id, field, [arg0]),
+                                                                            this.getElements(this.nameTable[id], id, field, [arg0]),
                                                                             this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                                                         ),
                                                                         false,
@@ -876,7 +874,7 @@ export class Evaluator {
                                                                 this.Evaluator(
                                                                     AST.nodeOp(
                                                                         op,
-                                                                        this.getElements(this.nameTable[id].expression, id, field, index),
+                                                                        this.getElements(this.nameTable[id], id, field, index),
                                                                         this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                                                     ),
                                                                     false,
@@ -886,7 +884,7 @@ export class Evaluator {
                                                         ),
                                                     );
                                                 }
-                                                AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id].expression));
+                                                AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id]));
                                                 continue;
                                             } else {
                                                 throw new EvalError(`can't perform indexed assignment for function handle type.`);
@@ -895,63 +893,45 @@ export class Evaluator {
                                             throw new EvalError(`in computed assignment ${id}(index) OP= X, ${id} must be defined first.`);
                                         }
                                     } else {
-                                        /* Test if is a function definition (test if index is a list of undefined NAME). */
-                                        let isFunction: boolean = true;
-                                        for (let i = 0; i < index.length; i++) {
-                                            isFunction &&= index[i].type === 'IDENT';
-                                            if (isFunction) {
-                                                isFunction &&= typeof this.nameTable[index[i].id] === 'undefined';
-                                            }
-                                            if (!isFunction) {
-                                                break;
-                                            }
-                                        }
-                                        if (isFunction) {
-                                            this.nameTable[id] = { parameter: index, expression: right.selector(assignment.length, n) };
-                                            AST.appendNodeList(resultList, tree);
-                                            continue;
-                                        } else {
-                                            /* Indexed matrix reference on left hand side. */
-                                            if (index.length === 1) {
-                                                /* Test logical indexing. */
-                                                index[0].parent = tree.left;
-                                                index[0].index = 0;
-                                                const arg0 = this.reduceIfReturnList(this.Evaluator(index[0], local, fname));
-                                                if (arg0 instanceof MultiArray && arg0.type === ComplexDecimal.LOGICAL) {
-                                                    /* Logical indexing. */
-                                                    this.setElementsLogical(
-                                                        this.nameTable,
-                                                        id,
-                                                        field,
-                                                        this.linearize(arg0) as ComplexDecimal[],
-                                                        this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
-                                                    );
-                                                } else {
-                                                    /* Not logical indexing. */
-                                                    this.setElements(
-                                                        this.nameTable,
-                                                        id,
-                                                        field,
-                                                        [arg0],
-                                                        this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
-                                                    );
-                                                }
+                                        /* Indexed matrix reference on left hand side. */
+                                        if (index.length === 1) {
+                                            /* Test logical indexing. */
+                                            index[0].parent = tree.left;
+                                            index[0].index = 0;
+                                            const arg0 = this.reduceIfReturnList(this.Evaluator(index[0], local, fname));
+                                            if (arg0 instanceof MultiArray && arg0.type === ComplexDecimal.LOGICAL) {
+                                                /* Logical indexing. */
+                                                this.setElementsLogical(
+                                                    this.nameTable,
+                                                    id,
+                                                    field,
+                                                    this.linearize(arg0) as ComplexDecimal[],
+                                                    this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                                );
                                             } else {
+                                                /* Not logical indexing. */
                                                 this.setElements(
                                                     this.nameTable,
                                                     id,
                                                     field,
-                                                    index.map((arg: AST.NodeExpr, i: number) => {
-                                                        arg.parent = tree.left;
-                                                        arg.index = i;
-                                                        return this.reduceIfReturnList(this.Evaluator(arg));
-                                                    }),
+                                                    [arg0],
                                                     this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
                                                 );
                                             }
-                                            AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id].expression));
-                                            continue;
+                                        } else {
+                                            this.setElements(
+                                                this.nameTable,
+                                                id,
+                                                field,
+                                                index.map((arg: AST.NodeExpr, i: number) => {
+                                                    arg.parent = tree.left;
+                                                    arg.index = i;
+                                                    return this.reduceIfReturnList(this.Evaluator(arg));
+                                                }),
+                                                this.scalarToArray(this.reduceIfReturnList(this.Evaluator(right.selector(assignment.length, n)))),
+                                            );
                                         }
+                                        AST.appendNodeList(resultList, AST.nodeOp('=', AST.nodeIdentifier(id), this.nameTable[id]));
                                     }
                                 }
                             }
@@ -977,14 +957,11 @@ export class Evaluator {
                             return this.localTable[fname][tree.id];
                         } else if (tree.id in this.nameTable) {
                             /* Defined in nameTable. */
-                            if (this.nameTable[tree.id].parameter.length === 0) {
-                                /* Defined as name. */
-                                this.nameTable[tree.id].expression.parent = tree;
-                                return this.reduceIfReturnList(this.Evaluator(this.nameTable[tree.id].expression));
-                            } else {
-                                /* Defined as function name. */
-                                throw new EvalError(`calling ${tree.id} function without arguments list.`);
-                            }
+                            this.nameTable[tree.id].parent = tree;
+                            return this.reduceIfReturnList(this.Evaluator(this.nameTable[tree.id]));
+                        } else if (this.aliasName(tree.id) in this.builtInFunctionTable) {
+                            /* Defined as built-in function */
+                            return this.newFunctionHandle(tree.id);
                         } else {
                             throw new ReferenceError(`'${tree.id}' undefined.`);
                         }
@@ -1038,13 +1015,13 @@ export class Evaluator {
                                     item.list[j].index = n;
                                     result.list[n] = item.list[j];
                                     if (tree.parent === null && !result.list[n].omitAns) {
-                                        this.nameTable['ans'] = { parameter: [], expression: result.list[n] };
+                                        this.nameTable['ans'] = result.list[n];
                                     }
                                 }
                             } else {
                                 result.list[n] = item;
                                 if (tree.parent === null && !result.list[n].omitAns) {
-                                    this.nameTable['ans'] = { parameter: [], expression: result.list[n] };
+                                    this.nameTable['ans'] = result.list[n];
                                 }
                             }
                         }
@@ -1091,106 +1068,54 @@ export class Evaluator {
                         } else {
                             throw new SyntaxError('indeterminate colon. The colon to refer a range is valid only in indexing.');
                         }
-                    case 'IDX':
+                    case 'IDX': {
                         if (typeof tree.expr === 'undefined') {
+                            // TODO: It's need?
                             throw new ReferenceError(`'${tree.id}' undefined.`);
                         }
                         tree.expr.parent = tree;
-                        if (tree.expr.type === 'IDENT') {
-                            /* Indexed matrix reference or function call. */
-                            const aliasTreeName = this.aliasName(tree.expr.id);
-                            if (aliasTreeName in this.baseFunctionTable) {
-                                /* Parameters selectively evaluated if ev.length > 0. */
+                        const expr = this.reduceIfReturnList(this.Evaluator(tree.expr, local, fname));
+                        if (expr instanceof FunctionHandle) {
+                            if (expr.id) {
+                                const aliasTreeName = this.aliasName(expr.id as string);
                                 const argumentsList = tree.args.map((arg: AST.NodeExpr, i: number) => {
                                     arg.parent = tree;
                                     arg.index = i;
-                                    return this.baseFunctionTable[aliasTreeName].ev.length > 0 &&
-                                        i < this.baseFunctionTable[aliasTreeName].ev.length &&
-                                        !this.baseFunctionTable[aliasTreeName].ev[i]
+                                    return this.builtInFunctionTable[aliasTreeName].ev.length > 0 &&
+                                        i < this.builtInFunctionTable[aliasTreeName].ev.length &&
+                                        !this.builtInFunctionTable[aliasTreeName].ev[i]
                                         ? arg
                                         : this.reduceIfReturnList(this.Evaluator(arg, local, fname));
                                 });
                                 /* Error if mapper and #arguments!==1 (Invalid call). */
-                                if (this.baseFunctionTable[aliasTreeName].mapper && argumentsList.length !== 1) {
-                                    throw new EvalError(`Invalid call to ${aliasTreeName}. Type 'help ${tree.expr.id}' to see correct usage.`);
+                                if (this.builtInFunctionTable[aliasTreeName].mapper && argumentsList.length !== 1) {
+                                    throw new EvalError(`Invalid call to ${aliasTreeName}. Type 'help ${expr.id}' to see correct usage.`);
                                 }
-                                /* If function is mapper an called with one parameter of type MultiArray, apply map to array. Else call function with argumentsList */
-                                return this.baseFunctionTable[aliasTreeName].mapper && argumentsList.length === 1 && argumentsList[0] instanceof MultiArray
-                                    ? this.mapArray(argumentsList[0], this.baseFunctionTable[aliasTreeName].func)
-                                    : this.baseFunctionTable[aliasTreeName].func(...argumentsList);
-                            } else if (local && this.localTable[fname] && this.localTable[fname][tree.expr.id]) {
-                                /* Defined in localTable. */
-                                return this.localTable[fname][tree.expr.id];
-                            } else if (tree.expr.id in this.nameTable) {
-                                /* Defined in nameTable. */
-                                if (this.nameTable[tree.expr.id].parameter.length === 0) {
-                                    /* If is a defined name. */
-                                    this.nameTable[tree.expr.id].expression.parent = tree;
-                                    const temp = this.reduceIfReturnList(this.Evaluator(this.nameTable[tree.expr.id].expression));
-                                    if (tree.args.length === 0) {
-                                        /* Defined name. */
-                                        temp.parent = tree;
-                                        return temp;
-                                    } else if (temp instanceof MultiArray) {
-                                        /* Defined indexed matrix reference. */
-                                        let result: MathObject;
-                                        if (tree.args.length === 1) {
-                                            /* Test logical indexing. */
-                                            tree.args[0].parent = tree;
-                                            tree.args[0].index = 0;
-                                            const arg0 = this.reduceIfReturnList(this.Evaluator(tree.args[0], local, fname));
-                                            if (arg0 instanceof MultiArray && arg0.type === ComplexDecimal.LOGICAL) {
-                                                /* Logical indexing. */
-                                                result = this.getElementsLogical(temp, tree.expr.id, [], arg0);
-                                            } else {
-                                                /* Not logical indexing. */
-                                                result = this.getElements(temp, tree.expr.id, [], [arg0]);
-                                            }
-                                        } else {
-                                            result = this.getElements(
-                                                temp,
-                                                tree.expr.id,
-                                                [],
-                                                tree.args.map((arg: AST.NodeExpr, i: number) => {
-                                                    arg.parent = tree;
-                                                    arg.index = i;
-                                                    return this.reduceIfReturnList(this.Evaluator(arg, local, fname));
-                                                }),
-                                            );
-                                        }
-                                        result!.parent = tree;
-                                        return result;
-                                    } else {
-                                        throw new EvalError('invalid matrix indexing or function arguments.');
-                                    }
-                                } else {
-                                    /* Else is defined function. */
-                                    if (this.nameTable[tree.expr.id].parameter.length !== tree.args.length) {
-                                        throw new EvalError(`invalid number of arguments in function ${tree.expr.id}.`);
-                                    }
-                                    /* Create localTable entry. */
-                                    const new_fname = tree.expr.id + '_' + global.crypto.randomUUID();
-                                    this.localTable[new_fname] = {};
-                                    for (let i = 0; i < tree.args.length; i++) {
-                                        /* Evaluate defined function arguments list. */
-                                        tree.args[i].parent = tree;
-                                        tree.args[i].index = i;
-                                        this.localTable[new_fname][this.nameTable[tree.expr.id].parameter[i].id] = this.reduceIfReturnList(
-                                            this.Evaluator(tree.args[i], true, fname),
-                                        );
-                                    }
-                                    const temp = this.reduceIfReturnList(this.Evaluator(this.nameTable[tree.expr.id].expression, true, new_fname));
-                                    /* Delete localTable entry. */
-                                    delete this.localTable[new_fname];
-                                    return temp;
-                                }
+                                /* If function is mapper and called with one parameter of type MultiArray, apply map to array. Else call function with argumentsList */
+                                return this.builtInFunctionTable[aliasTreeName].mapper && argumentsList.length === 1 && argumentsList[0] instanceof MultiArray
+                                    ? this.mapArray(argumentsList[0], this.builtInFunctionTable[aliasTreeName].func)
+                                    : this.builtInFunctionTable[aliasTreeName].func(...argumentsList);
                             } else {
-                                throw new ReferenceError(`'${tree.expr.id}' undefined.`);
+                                if (expr.parameter.length !== tree.args.length) {
+                                    throw new EvalError(`invalid number of arguments in function ${tree.expr.id}.`);
+                                }
+                                /* Create localTable entry. */
+                                const new_fname = tree.expr.id + '_' + global.crypto.randomUUID();
+                                this.localTable[new_fname] = {};
+                                for (let i = 0; i < tree.args.length; i++) {
+                                    /* Evaluate defined function arguments list. */
+                                    tree.args[i].parent = tree;
+                                    tree.args[i].index = i;
+                                    this.localTable[new_fname][expr.parameter[i].id] = this.reduceIfReturnList(this.Evaluator(tree.args[i], true, fname));
+                                }
+                                const temp = this.reduceIfReturnList(this.Evaluator(expr.expression, true, new_fname));
+                                /* Delete localTable entry. */
+                                delete this.localTable[new_fname];
+                                return temp;
                             }
                         } else {
-                            /* literal indexing, ex: [1,2;3,4](1,2). */
+                            /* Defined indexed matrix reference. */
                             let result: MathObject;
-                            const expr = this.reduceIfReturnList(this.Evaluator(tree.expr, local, fname));
                             if (tree.args.length === 1) {
                                 /* Test logical indexing. */
                                 tree.args[0].parent = tree;
@@ -1198,15 +1123,15 @@ export class Evaluator {
                                 const arg0 = this.reduceIfReturnList(this.Evaluator(tree.args[0], local, fname));
                                 if (arg0 instanceof MultiArray && arg0.type === ComplexDecimal.LOGICAL) {
                                     /* Logical indexing. */
-                                    result = this.getElementsLogical(expr, this.Unparse(expr), [], arg0);
+                                    result = this.getElementsLogical(expr, tree.expr.id, [], arg0);
                                 } else {
                                     /* Not logical indexing. */
-                                    result = this.getElements(expr, this.Unparse(expr), [], [arg0]);
+                                    result = this.getElements(expr, tree.expr.id, [], [arg0]);
                                 }
                             } else {
                                 result = this.getElements(
                                     expr,
-                                    this.Unparse(expr),
+                                    tree.expr.id,
                                     [],
                                     tree.args.map((arg: AST.NodeExpr, i: number) => {
                                         arg.parent = tree;
@@ -1218,6 +1143,7 @@ export class Evaluator {
                             result!.parent = tree;
                             return result;
                         }
+                    }
                     case 'CMDWLIST': {
                         const result = this.commandWordListTable[tree.id].func(...tree.args.map((word: CharString) => word.str));
                         return typeof result !== 'undefined' ? result : tree;
@@ -1278,17 +1204,15 @@ export class Evaluator {
                 if (tree === undefined) {
                     return '<UNDEFINED>';
                 } else if (tree instanceof ComplexDecimal) {
-                    /* NUMBER */
                     return this.unparseNumber(tree);
                 } else if (tree instanceof CharString) {
-                    /* STRING */
                     return this.unparseString(tree);
                 } else if (tree instanceof MultiArray) {
-                    /* MATRIX */
                     return this.unparseArray(tree, this);
                 } else if (tree instanceof Structure) {
-                    /* STRUCTURE */
                     return this.unparseStructure(tree, this);
+                } else if (tree instanceof FunctionHandle) {
+                    return this.unparseFunctionHandle(tree, this);
                 } else {
                     switch (tree.type) {
                         case '+':
@@ -1417,17 +1341,15 @@ export class Evaluator {
                 if (tree === undefined) {
                     return '<mi>undefined</mi>';
                 } else if (tree instanceof ComplexDecimal) {
-                    /* NUMBER */
                     return this.unparseNumberMathML(tree);
                 } else if (tree instanceof CharString) {
-                    /* STRING */
                     return this.unparseStringMathML(tree);
                 } else if (tree instanceof MultiArray) {
-                    /* MATRIX */
                     return this.unparseArrayMathML(tree, this);
                 } else if (tree instanceof Structure) {
-                    /* STRUCTURE */
                     return this.unparseStructureMathML(tree, this);
+                } else if (tree instanceof FunctionHandle) {
+                    return this.unparseFunctionHandleMathML(tree, this);
                 } else {
                     switch (tree.type) {
                         case '+':
@@ -1531,8 +1453,8 @@ export class Evaluator {
                                 const arglist = tree.args.map((arg: AST.NodeExpr) => this.unparserMathML(arg)).join('<mo>,</mo>');
                                 if (tree.expr.type === 'IDENT') {
                                     const aliasTreeName = this.aliasName(tree.expr.id);
-                                    if (aliasTreeName in this.baseFunctionTable && this.baseFunctionTable[aliasTreeName].unparserMathML) {
-                                        return this.baseFunctionTable[aliasTreeName].unparserMathML!(tree);
+                                    if (aliasTreeName in this.builtInFunctionTable && this.builtInFunctionTable[aliasTreeName].unparserMathML) {
+                                        return this.builtInFunctionTable[aliasTreeName].unparserMathML!(tree);
                                     } else {
                                         return `<mi>${substSymbol(tree.expr.id)}</mi><mrow><mo>${tree.delim[0]}</mo>${arglist}<mo>${tree.delim[1]}</mo></mrow>`;
                                     }

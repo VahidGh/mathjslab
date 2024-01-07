@@ -3,6 +3,7 @@ import { ComplexDecimal } from './ComplexDecimal';
 import { ElementType, MultiArray } from './MultiArray';
 import { LinearAlgebra } from './LinearAlgebra';
 import { Structure } from './Structure';
+import { FunctionHandle } from './FunctionHandle';
 
 export type MathObject = ElementType;
 
@@ -54,8 +55,10 @@ export abstract class MathOperation {
             return MultiArray.copy(right);
         } else if (right instanceof CharString) {
             return CharString.copy(right);
+        } else if (right instanceof Structure) {
+            return Structure.copy(right);
         } else {
-            return Structure.copy(right!);
+            return FunctionHandle.copy(right!);
         }
     }
 
@@ -281,8 +284,10 @@ export abstract class MathOperation {
             return ComplexDecimal.not(right);
         } else if (right instanceof MultiArray) {
             return ComplexDecimal.not(MultiArray.toLogical(right));
+        } else if (right instanceof Structure) {
+            return ComplexDecimal.not(Structure.toLogical(right));
         } else {
-            return ComplexDecimal.not(Structure.toLogical(right!));
+            return ComplexDecimal.not(FunctionHandle.toLogical(right!));
         }
     }
 

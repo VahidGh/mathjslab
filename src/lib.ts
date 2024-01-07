@@ -3,6 +3,7 @@ export { CharString } from './CharString';
 export { ComplexDecimal } from './ComplexDecimal';
 export { MultiArray } from './MultiArray';
 export { Structure } from './Structure';
+export { FunctionHandle } from './FunctionHandle';
 export { LinearAlgebra } from './LinearAlgebra';
 export { MathOperation } from './MathOperation';
 export { CoreFunctions } from './CoreFunctions';

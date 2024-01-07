@@ -191,13 +191,13 @@ matrix_row returns [node: AST.NodeList | null]
     ;
 
 fcn_handle returns [node: AST.NodeExpr]
-    : EXCLAMATION identifier {
+    : COMMAT identifier {
         localctx.node = AST.nodeFunctionHandle(localctx.identifier().node);
     }
     ;
 
 anon_fcn_handle returns [node: AST.NodeExpr]
-    : EXCLAMATION param_list expression {
+    : COMMAT param_list expression {
         localctx.node = AST.nodeFunctionHandle(null, localctx.param_list().node, localctx.expression().node);
     }
     ;
@@ -453,9 +453,9 @@ param_list returns [node: AST.NodeList]
     : LPAREN {
         localctx.node = AST.nodeListFirst();
     } (param_list_elt {
-        localctx.node = AST.appendNodeList(localctx.node, localctx.param_list_elt(localctx.i++));
+        localctx.node = AST.appendNodeList(localctx.node, localctx.param_list_elt(localctx.i++).node);
     } (COMMA param_list_elt {
-        localctx.node = AST.appendNodeList(localctx.node, localctx.param_list_elt(localctx.i++));
+        localctx.node = AST.appendNodeList(localctx.node, localctx.param_list_elt(localctx.i++).node);
     })*)? RPAREN
     ;
 

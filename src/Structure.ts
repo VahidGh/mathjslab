@@ -4,7 +4,7 @@ import { Evaluator } from './Evaluator';
 import { ElementType, MultiArray } from './MultiArray';
 
 export class Structure {
-    public static STRUCTURE = CharString.STRING + 1;
+    public static readonly STRUCTURE = CharString.STRING + 1;
     public readonly type = Structure.STRUCTURE;
     parent: any;
     public field: Record<string, ElementType>;

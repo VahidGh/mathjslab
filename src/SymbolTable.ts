@@ -1,58 +1,75 @@
 import * as AST from './AST';
 
-export type FunctionTableEntry = {
-    mapper?: boolean;
-    ev: boolean[];
-    func: Function;
-    unparserMathML?: (tree: AST.NodeExpr) => string;
-};
+export type FunctionTableEntry = AST.NodeFunction;
 
-export type EntryType = 'name' | 'function';
-
-export interface PrimarySymbolTableEntry {
-    type: EntryType;
-}
-
-export interface ValueSymbolTableEntry extends PrimarySymbolTableEntry {
-    type: 'name';
-    expression?: AST.NodeExpr;
-}
-
-export interface FunctionSymbolTableEntry extends PrimarySymbolTableEntry {
-    type: 'function';
+export interface VariableTableEntry {
+    type: number;
     parameter?: AST.NodeIdentifier[];
     expression?: AST.NodeExpr;
 }
 
-export type SymbolTableEntry = ValueSymbolTableEntry | FunctionSymbolTableEntry;
-
-export type SymbolTableType = {
-    table: Record<string, SymbolTableEntry>;
+export class SymbolTable {
+    public static readonly NAME = 1;
+    public static readonly FUNCTION_HANDLER = 2;
+    public static readonly ANON_FUNCTION_HANDLER = 3;
+    variableTable: Record<string, VariableTableEntry>;
+    functionTable: Record<string, FunctionTableEntry>;
     parent: SymbolTable | null;
     child: SymbolTable[];
     scope: string | null;
-};
 
-export class SymbolTable {
-    Table: SymbolTableType;
-
-    constructor(parent?: SymbolTable | null, scope?: string, node?: any) {
+    constructor(parent?: SymbolTable | null, scope?: string | null, node?: any) {
         const thisParent = typeof parent !== 'undefined' ? parent : null;
         if (thisParent) {
-            thisParent.Table.child.push(this);
+            thisParent.child.push(this);
         }
-        this.Table = {
-            table: {},
-            parent: thisParent,
-            child: [],
-            scope: scope ?? null,
-        };
+        this.variableTable = {};
+        this.functionTable = {};
+        this.parent = thisParent;
+        this.child = [];
+        this.scope = scope ?? null;
         if (typeof node !== 'undefined') {
             node['symtab'] = this;
         }
     }
 
-    public getIdentifier(id: string): [SymbolTableEntry, string] {
-        return [{ type: 'name' }, 'scope'];
+    public lookupVariable(id: string): [VariableTableEntry, string | null] | null {
+        /* eslint-disable-next-line  @typescript-eslint/no-this-alias */
+        let table: SymbolTable | null = this;
+        while (table !== null) {
+            if (typeof table.variableTable[id] !== 'undefined') {
+                return [table.variableTable[id], table.scope];
+            } else {
+                table = table.parent;
+            }
+        }
+        return null;
+    }
+
+    public insertVariable(id: string, expression: AST.NodeExpr, parameter?: AST.NodeIdentifier[]): [VariableTableEntry, string | null] {
+        this.variableTable[id] = {
+            type: parameter ? SymbolTable.FUNCTION_HANDLER : SymbolTable.NAME,
+            expression,
+            parameter: parameter ?? [],
+        };
+        return [this.variableTable[id], this.scope];
+    }
+
+    public lookupFunction(id: string): [FunctionTableEntry, string | null] | null {
+        /* eslint-disable-next-line  @typescript-eslint/no-this-alias */
+        let table: SymbolTable | null = this;
+        while (table !== null) {
+            if (typeof table.functionTable[id] !== 'undefined') {
+                return [table.functionTable[id], table.scope];
+            } else {
+                table = table.parent;
+            }
+        }
+        return null;
+    }
+
+    public insertFunction(id: string, entry: FunctionTableEntry): [FunctionTableEntry, string | null] {
+        this.functionTable[id] = entry;
+        return [this.functionTable[id], this.scope];
     }
 }

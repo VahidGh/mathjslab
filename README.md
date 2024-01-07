@@ -140,18 +140,11 @@ npm run build
 
 ## Language subset
 
-Currently only the mathematical expressions of the language are implemented.
+Currently only the mathematical expressions of the language are implemented. The control and loop structures are not yet implemented.
 
-The control and loop structures are not yet implemented.
-
-Some differences from the original MATLAB&reg;/Octave language are
-
-* Defining functions is done simply using:
-```
-function_name(argument, argument, ...) = <expression>
-```
-* There are only one a complex numeric type. Other implemented types is
-boolean and character string.
+There are some differences from the original MATLAB&reg;/Octave language. The main difference is
+that there are only one a complex numeric type. Other implemented types is
+boolean, character string, structure and function handle.
 
 ## License
 

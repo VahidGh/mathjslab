@@ -1,12 +1,13 @@
 import { CharString } from './CharString';
 import { ComplexDecimal } from './ComplexDecimal';
-import { Evaluator, TNameTable } from './Evaluator';
+import { Evaluator, NameTable } from './Evaluator';
+import { FunctionHandle } from './FunctionHandle';
 import { Structure } from './Structure';
 
 /**
  * MultiArray Element type.
  */
-export type ElementType = MultiArray | ComplexDecimal | CharString | Structure | null | undefined;
+export type ElementType = MultiArray | ComplexDecimal | CharString | Structure | FunctionHandle | null | undefined;
 
 /**
  * # MultiArray
@@ -41,6 +42,7 @@ export class MultiArray {
     public static COMPLEX = ComplexDecimal.COMPLEX;
     public static STRING = CharString.STRING;
     public static STRUCTURE = Structure.STRUCTURE;
+    public static FUNCTION_HANDLE = FunctionHandle.FUNCTION_HANDLE;
 
     /**
      * True if cell array.
@@ -1199,7 +1201,7 @@ export class MultiArray {
      * @param right Value to assign.
      */
     public static setElements(
-        nameTable: TNameTable,
+        nameTable: NameTable,
         id: string,
         field: string[],
         indexList: (ComplexDecimal | MultiArray)[],
@@ -1227,49 +1229,37 @@ export class MultiArray {
                 throw new RangeError(`=: nonconformant arguments (op1 is ${argsLength.join('x')}, op2 is ${right.dimension.join('x')})`);
             }
             if (typeof nameTable[id] !== 'undefined') {
-                if (nameTable[id].expression instanceof MultiArray) {
+                if (nameTable[id] instanceof MultiArray) {
                     if (isLinearIndex) {
-                        if (argsMax[0] > MultiArray.linearLength(nameTable[id].expression as MultiArray)) {
+                        if (argsMax[0] > MultiArray.linearLength(nameTable[id])) {
                             throw new RangeError('Invalid resizing operation or ambiguous assignment to an out-of-bounds array element.');
                         }
                     } else {
-                        MultiArray.expand(nameTable[id].expression, argsMax);
+                        MultiArray.expand(nameTable[id], argsMax);
                     }
                 } else {
-                    const value = nameTable[id].expression;
+                    const value = nameTable[id];
                     const blankValue: ElementType = value instanceof Structure ? Structure.cloneFields(value) : ComplexDecimal.zero();
                     if (isLinearIndex) {
-                        nameTable[id] = {
-                            parameter: [],
-                            expression: new MultiArray([1, argsMax[0]], blankValue),
-                        };
+                        nameTable[id] = new MultiArray([1, argsMax[0]], blankValue);
                     } else {
-                        nameTable[id] = {
-                            parameter: [],
-                            expression: new MultiArray(argsMax, blankValue),
-                        };
+                        nameTable[id] = new MultiArray(argsMax, blankValue);
                     }
-                    nameTable[id].expression.array[0][0] = value;
+                    nameTable[id].array[0][0] = value;
                 }
             } else {
                 const blankValue: ElementType = field.length > 0 ? new Structure(field) : ComplexDecimal.zero();
                 if (isLinearIndex) {
-                    nameTable[id] = {
-                        parameter: [],
-                        expression: new MultiArray([1, argsMax[0]], blankValue),
-                    };
+                    nameTable[id] = new MultiArray([1, argsMax[0]], blankValue);
                 } else {
-                    nameTable[id] = {
-                        parameter: [],
-                        expression: new MultiArray(argsMax, blankValue),
-                    };
+                    nameTable[id] = new MultiArray(argsMax, blankValue);
                 }
             }
-            const array: MultiArray = nameTable[id].expression as MultiArray;
+            const array: MultiArray = nameTable[id];
             if (field.length > 0) {
                 Structure.setEmptyField(array, field[0]);
             }
-            const dimension: number[] = (nameTable[id].expression as MultiArray).dimension.slice();
+            const dimension: number[] = nameTable[id].dimension.slice();
             for (let n = 0; n < argsLength.reduce((p, c) => p * c, 1); n++) {
                 const subscript = MultiArray.linearIndexToSubscript(argsLength, n);
                 const subscriptArgs: number[] = subscript.map((s, r) =>
@@ -1296,7 +1286,7 @@ export class MultiArray {
      * @param arg Logical index.
      * @param right Value to assign.
      */
-    public static setElementsLogical(nameTable: TNameTable, id: string, field: string[], arg: ComplexDecimal[], right: MultiArray): void {
+    public static setElementsLogical(nameTable: NameTable, id: string, field: string[], arg: ComplexDecimal[], right: MultiArray): void {
         const linright = MultiArray.linearize(right);
         const test = arg.map((value: ComplexDecimal) => value.re.toNumber());
         const testCount = test.reduce((p, c) => p + c, 0);
@@ -1304,10 +1294,10 @@ export class MultiArray {
             throw new EvalError(`=: nonconformant arguments (op1 is ${testCount}x1, op2 is ${right.dimension[0]}x${right.dimension[1]})`);
         }
         const isDefinedId = typeof nameTable[id] !== 'undefined';
-        const isNotFunction = isDefinedId && nameTable[id].parameter.length === 0;
-        const isMultiArray = isNotFunction && nameTable[id].expression instanceof MultiArray;
+        const isNotFunction = isDefinedId && !(nameTable[id] instanceof FunctionHandle);
+        const isMultiArray = isNotFunction && nameTable[id] instanceof MultiArray;
         if (isMultiArray) {
-            const array: MultiArray = nameTable[id].expression as MultiArray;
+            const array: MultiArray = nameTable[id];
             for (let j = 0, n = 0, r = 0; j < array.dimension[1]; j++) {
                 for (let i = 0; i < array.dimension[0]; i++, r++) {
                     if (test[r]) {
