@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.1
+- Bug fix in `Evaluator` ('IDX' node processing).
+
 ## 1.5.0
 - The file 'FunctionHandle.ts' and its corresponding test file has been created. The `FunctionHandle` type has been created and made a member of `AST.NodeExpr` through `ElementType`. `Evaluator.nameTable` entries has been changed to `AST.NodeExpr`. Changes in `Evaluator.Evaluator`, removing function definition, and altering processing of node types 'IDENT' and 'IDX' to use function handles. Now the function definitions and use is the same like in MATLAB&reg;/Octave.
 

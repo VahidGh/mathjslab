@@ -1,30 +1,24 @@
 import * as AST from './AST';
-
-export type FunctionTableEntry = AST.NodeFunction;
-
-export interface VariableTableEntry {
-    type: number;
-    parameter?: AST.NodeIdentifier[];
-    expression?: AST.NodeExpr;
-}
+import { AliasFunction, BuiltInFunctionTable, BuiltInFunctionTableEntry } from './Evaluator';
 
 export class SymbolTable {
-    public static readonly NAME = 1;
-    public static readonly FUNCTION_HANDLER = 2;
-    public static readonly ANON_FUNCTION_HANDLER = 3;
-    variableTable: Record<string, VariableTableEntry>;
-    functionTable: Record<string, FunctionTableEntry>;
+    variableTable: Record<string, AST.NodeExpr>;
+    functionTable: Record<string, AST.NodeFunction>;
+    builtInTable: BuiltInFunctionTable;
+    aliasName: AliasFunction;
     parent: SymbolTable | null;
     child: SymbolTable[];
     scope: string | null;
 
-    constructor(parent?: SymbolTable | null, scope?: string | null, node?: any) {
+    constructor(builtInTable: BuiltInFunctionTable, aliasName: AliasFunction, parent?: SymbolTable | null, scope?: string | null, node?: any) {
         const thisParent = typeof parent !== 'undefined' ? parent : null;
         if (thisParent) {
             thisParent.child.push(this);
         }
         this.variableTable = {};
         this.functionTable = {};
+        this.builtInTable = builtInTable;
+        this.aliasName = aliasName;
         this.parent = thisParent;
         this.child = [];
         this.scope = scope ?? null;
@@ -33,7 +27,7 @@ export class SymbolTable {
         }
     }
 
-    public lookupVariable(id: string): [VariableTableEntry, string | null] | null {
+    public lookupVariable(id: string): [AST.NodeExpr, string | null] | null {
         /* eslint-disable-next-line  @typescript-eslint/no-this-alias */
         let table: SymbolTable | null = this;
         while (table !== null) {
@@ -46,16 +40,12 @@ export class SymbolTable {
         return null;
     }
 
-    public insertVariable(id: string, expression: AST.NodeExpr, parameter?: AST.NodeIdentifier[]): [VariableTableEntry, string | null] {
-        this.variableTable[id] = {
-            type: parameter ? SymbolTable.FUNCTION_HANDLER : SymbolTable.NAME,
-            expression,
-            parameter: parameter ?? [],
-        };
+    public insertVariable(id: string, expression: AST.NodeExpr): [AST.NodeExpr, string | null] {
+        this.variableTable[id] = expression;
         return [this.variableTable[id], this.scope];
     }
 
-    public lookupFunction(id: string): [FunctionTableEntry, string | null] | null {
+    public lookupFunction(id: string): [AST.NodeFunction | BuiltInFunctionTableEntry, string | null] | null {
         /* eslint-disable-next-line  @typescript-eslint/no-this-alias */
         let table: SymbolTable | null = this;
         while (table !== null) {
@@ -68,7 +58,7 @@ export class SymbolTable {
         return null;
     }
 
-    public insertFunction(id: string, entry: FunctionTableEntry): [FunctionTableEntry, string | null] {
+    public insertFunction(id: string, entry: AST.NodeFunction): [AST.NodeFunction, string | null] {
         this.functionTable[id] = entry;
         return [this.functionTable[id], this.scope];
     }

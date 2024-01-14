@@ -22,14 +22,16 @@ import { SymbolTable } from './SymbolTable';
 import { FunctionHandle } from './FunctionHandle';
 
 /**
- * aliasNameTable type.
+ * aliasNameTable and AliasFunction type.
  */
 export type AliasNameTable = Record<string, RegExp>;
+export type AliasFunction = (name: string) => string;
 
 /**
  * builtInFunctionTable type.
  */
 export type BuiltInFunctionTableEntry = {
+    type: 'BUILTIN';
     mapper: boolean;
     ev: boolean[];
     func: Function;
@@ -108,6 +110,8 @@ export class Evaluator {
      * Alias table.
      */
     private aliasNameTable: AliasNameTable;
+
+    // public symbolTable: SymbolTable;
 
     /**
      * Name table.
@@ -296,6 +300,7 @@ export class Evaluator {
     public readonly array0x0 = MultiArray.emptyArray;
     public readonly linearize = MultiArray.linearize;
     public readonly scalarToArray = MultiArray.scalarToMultiArray;
+    public readonly arrayToScalar = MultiArray.MultiArrayToScalar;
     public readonly linearLength = MultiArray.linearLength;
     public readonly getDimension = MultiArray.getDimension;
     public readonly toLogical = MultiArray.toLogical;
@@ -323,7 +328,7 @@ export class Evaluator {
      * @param name Alias name.
      * @returns Canonical name.
      */
-    public aliasName: (name: string) => string = (name: string): string => name;
+    public aliasName: AliasFunction = (name: string): string => name;
 
     /**
      * Evaluator object constructor
@@ -406,6 +411,7 @@ export class Evaluator {
         } else {
             this.aliasName = (name: string): string => name;
         }
+        // this.symbolTable = new SymbolTable(this.builtInFunctionTable, this.aliasName);
     }
 
     /**
@@ -588,7 +594,7 @@ export class Evaluator {
      * arguments are evaluated.
      */
     private defineFunction(name: string, func: Function, mapper: boolean = false, ev: boolean[] = []): void {
-        this.builtInFunctionTable[name] = { mapper, ev, func };
+        this.builtInFunctionTable[name] = { type: 'BUILTIN', mapper, ev, func };
     }
 
     /**
@@ -598,6 +604,7 @@ export class Evaluator {
      */
     private defineUnaryOperatorFunction(name: string, func: UnaryMathOperation): void {
         this.builtInFunctionTable[name] = {
+            type: 'BUILTIN',
             mapper: false,
             ev: [],
             func: (...operand: AST.NodeExpr) => {
@@ -617,6 +624,7 @@ export class Evaluator {
      */
     private defineBinaryOperatorFunction(name: string, func: BinaryMathOperation): void {
         this.builtInFunctionTable[name] = {
+            type: 'BUILTIN',
             mapper: false,
             ev: [],
             func: (left: AST.NodeExpr, ...right: AST.NodeExpr) => {
@@ -636,6 +644,7 @@ export class Evaluator {
      */
     private defineLeftAssociativeMultipleOperationFunction(name: string, func: BinaryMathOperation): void {
         this.builtInFunctionTable[name] = {
+            type: 'BUILTIN',
             mapper: false,
             ev: [],
             func: (left: AST.NodeExpr, ...right: AST.NodeExpr) => {
@@ -1116,6 +1125,7 @@ export class Evaluator {
                         } else {
                             /* Defined indexed matrix reference. */
                             let result: MathObject;
+                            const array = this.scalarToArray(expr);
                             if (tree.args.length === 1) {
                                 /* Test logical indexing. */
                                 tree.args[0].parent = tree;
@@ -1123,14 +1133,14 @@ export class Evaluator {
                                 const arg0 = this.reduceIfReturnList(this.Evaluator(tree.args[0], local, fname));
                                 if (arg0 instanceof MultiArray && arg0.type === ComplexDecimal.LOGICAL) {
                                     /* Logical indexing. */
-                                    result = this.getElementsLogical(expr, tree.expr.id, [], arg0);
+                                    result = this.getElementsLogical(array, tree.expr.id, [], arg0);
                                 } else {
                                     /* Not logical indexing. */
-                                    result = this.getElements(expr, tree.expr.id, [], [arg0]);
+                                    result = this.getElements(array, tree.expr.id, [], [arg0]);
                                 }
                             } else {
                                 result = this.getElements(
-                                    expr,
+                                    array,
                                     tree.expr.id,
                                     [],
                                     tree.args.map((arg: AST.NodeExpr, i: number) => {
@@ -1141,7 +1151,7 @@ export class Evaluator {
                                 );
                             }
                             result!.parent = tree;
-                            return result;
+                            return this.arrayToScalar(result);
                         }
                     }
                     case 'CMDWLIST': {
