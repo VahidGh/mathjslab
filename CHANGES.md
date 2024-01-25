@@ -2,10 +2,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.3
+- Bug fix in `MultiArray.evaluate` (evaluating null array throws error now solved).
+
 ## 1.5.2
 - Bug fix in `MultiArray.evaluate`. Before the method was page-oriented. Now is full dimensional using recursion and concatenation.
 - Exports `ElementType` from 'MultiArray.ts' in 'lib.ts'.
 - User functions repmat, colon, linspace, logspace, meshgrid and ndgrid.
+- Optimizations in `MultiArray.reshape`.
 
 ## 1.5.1
 - Bug fix in `Evaluator` ('IDX' node processing).

@@ -1118,12 +1118,15 @@ export class MultiArray {
      * then then concatenates the elements row by row horizontally, then
      * concatenates the rows vertically.
      * @param M MultiArray object.
+     * @param evaluator Evaluator instance.
      * @param local Local context (function evaluation).
      * @param fname Function name (context).
      * @returns Evaluated MultiArray object.
      */
-    public static evaluate(M: MultiArray, evaluator?: Evaluator | null | undefined, local: boolean = false, fname: string = ''): MultiArray {
-        if (M.dimension.length === 2) {
+    private static evaluateRecursive(M: MultiArray, evaluator?: Evaluator | null | undefined, local: boolean = false, fname: string = ''): MultiArray {
+        if (M.dimension.length > 2) {
+            return MultiArray.concatenate(M.dimension.length - 1, 'evaluate', ...MultiArray.splitLastDimension(M).map((S) => MultiArray.evaluate(S)));
+        } else {
             return MultiArray.concatenate(
                 0,
                 'evaluate',
@@ -1131,8 +1134,22 @@ export class MultiArray {
                     MultiArray.concatenate(1, 'evaluate', ...row.map((element) => MultiArray.scalarToMultiArray(evaluator ? evaluator.Evaluator(element, local, fname) : element))),
                 ),
             );
+        }
+    }
+
+    /**
+     * Wrapper to not pass the null array to `MultiArray.evaluatorRecursive`.
+     * @param M MultiArray object.
+     * @param evaluator Evaluator instance.
+     * @param local Local context (function evaluation).
+     * @param fname Function name (context).
+     * @returns Evaluated MultiArray object.
+     */
+    public static evaluate(M: MultiArray, evaluator?: Evaluator | null | undefined, local: boolean = false, fname: string = ''): MultiArray {
+        if (MultiArray.isEmpty(M)) {
+            return M;
         } else {
-            return MultiArray.concatenate(M.dimension.length - 1, 'evaluate', ...MultiArray.splitLastDimension(M).map((S) => MultiArray.evaluate(S)));
+            return MultiArray.evaluateRecursive(M, evaluator, local, fname);
         }
     }
 
