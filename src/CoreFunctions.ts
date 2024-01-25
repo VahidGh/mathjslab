@@ -24,6 +24,7 @@ export abstract class CoreFunctions {
         ndgrid: CoreFunctions.ndgrid,
         repmat: CoreFunctions.repmat,
         reshape: CoreFunctions.reshape,
+        squeeze: CoreFunctions.squeeze,
         zeros: CoreFunctions.zeros,
         ones: CoreFunctions.ones,
         rand: CoreFunctions.rand,
@@ -533,6 +534,29 @@ export abstract class CoreFunctions {
             }
         });
         return MultiArray.reshape(m, dims, d >= 0 ? d : undefined);
+    }
+
+    /**
+     * Remove singleton dimensions.
+     * @param args
+     * @returns
+     */
+    public static squeeze(...args: ElementType[]): ElementType {
+        if (args.length !== 1) {
+            CoreFunctions.throwInvalidCallError('squeeze');
+        }
+        if (args[0] instanceof MultiArray && !args[0].isCell) {
+            if (args[0].dimension.length > 2) {
+                return MultiArray.reshape(
+                    args[0],
+                    args[0].dimension.filter((value) => value !== 1),
+                );
+            } else {
+                return args[0];
+            }
+        } else {
+            return args[0];
+        }
     }
 
     /**

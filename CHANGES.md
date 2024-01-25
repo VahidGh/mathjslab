@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.5
+- Sizes and Zenodo badges in 'README.md'.
+- User function squeeze.
+
 ## 1.5.4
 - Bug fix in `MultiArray.evaluate` (array of cells be evaluated in the same way as common array now solved).
 
