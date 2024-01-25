@@ -146,6 +146,8 @@ There are some differences from the original MATLAB&reg;/Octave language. The ma
 that there are only one a complex numeric type. Other implemented types is
 boolean, character string, structure and function handle.
 
+Common arrays (not only cell arrays) can hold any type of element.
+
 ## License
 
 >MIT License

@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.4
+- Bug fix in `MultiArray.evaluate` (array of cells be evaluated in the same way as common array now solved).
+
 ## 1.5.3
 - Bug fix in `MultiArray.evaluate` (evaluating null array throws error now solved).
 

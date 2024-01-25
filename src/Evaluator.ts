@@ -300,6 +300,7 @@ export class Evaluator {
     public readonly array0x0 = MultiArray.emptyArray;
     public readonly linearize = MultiArray.linearize;
     public readonly scalarToArray = MultiArray.scalarToMultiArray;
+    public readonly scalarOrCellToArray = MultiArray.scalarOrCellToMultiArray;
     public readonly arrayToScalar = MultiArray.MultiArrayToScalar;
     public readonly linearLength = MultiArray.linearLength;
     public readonly getDimension = MultiArray.getDimension;
@@ -1124,8 +1125,11 @@ export class Evaluator {
                             }
                         } else {
                             /* Defined indexed matrix reference. */
+                            if (tree.delim === '{}' && !(expr instanceof MultiArray && expr.isCell)) {
+                                throw new EvalError('matrix cannot be indexed with {');
+                            }
                             let result: MathObject;
-                            const array = this.scalarToArray(expr);
+                            const array = this.scalarOrCellToArray(expr);
                             if (tree.args.length === 1) {
                                 /* Test logical indexing. */
                                 tree.args[0].parent = tree;
@@ -1151,7 +1155,12 @@ export class Evaluator {
                                 );
                             }
                             result!.parent = tree;
-                            return this.arrayToScalar(result);
+                            if (array.isCell && tree.delim === '()') {
+                                (result as MultiArray).isCell = true;
+                                return result;
+                            } else {
+                                return this.arrayToScalar(result);
+                            }
                         }
                     }
                     case 'CMDWLIST': {

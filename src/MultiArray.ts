@@ -428,12 +428,13 @@ export class MultiArray {
     }
 
     /**
-     * If value is a scalar then convert to a 1x1 MultiArray.
-     * @param value MultiArray or scalar.
-     * @returns MultiArray 1x1 if value is scalar.
+     * Convert scalar to MultiArray with aditional test if it is MultiArray.
+     * @param value
+     * @param test
+     * @returns
      */
-    public static scalarToMultiArray(value: ElementType): MultiArray {
-        if (value instanceof MultiArray) {
+    private static scalarToMultiArrayWithTest(value: ElementType, test: boolean): MultiArray {
+        if (value instanceof MultiArray && test) {
             return value;
         } else {
             const result = new MultiArray([1, 1]);
@@ -441,6 +442,26 @@ export class MultiArray {
             result.type = value!.type ?? -1;
             return result;
         }
+    }
+
+    /**
+     * If value is a scalar then convert to a 1x1 MultiArray. If is cell array
+     * the cell is put in a 1x1 MultiArray too.
+     * @param value MultiArray or scalar.
+     * @returns MultiArray 1x1 if value is scalar.
+     */
+    public static scalarToMultiArray(value: ElementType): MultiArray {
+        return MultiArray.scalarToMultiArrayWithTest(value, !(value as MultiArray).isCell);
+    }
+
+    /**
+     * If value is a scalar then convert to a 1x1 MultiArray. If is common
+     * array or cell array returns `value` unchanged.
+     * @param value MultiArray or scalar.
+     * @returns MultiArray 1x1 if value is scalar.
+     */
+    public static scalarOrCellToMultiArray(value: ElementType): MultiArray {
+        return MultiArray.scalarToMultiArrayWithTest(value, true);
     }
 
     /**
@@ -1149,7 +1170,10 @@ export class MultiArray {
         if (MultiArray.isEmpty(M)) {
             return M;
         } else {
-            return MultiArray.evaluateRecursive(M, evaluator, local, fname);
+            const result = MultiArray.evaluateRecursive(M, evaluator, local, fname);
+            result.isCell = M.isCell;
+            MultiArray.setType(result);
+            return result;
         }
     }
 
@@ -1184,7 +1208,7 @@ export class MultiArray {
                 }
             }
             MultiArray.setType(result);
-            return MultiArray.MultiArrayToScalar(result);
+            return result;
         }
     }
 
@@ -1216,7 +1240,7 @@ export class MultiArray {
             }
         }
         result.dimension = itemsIsRowVector ? [1, result.array[0].length] : [result.array.length, 1];
-        return MultiArray.MultiArrayToScalar(result);
+        return result;
     }
 
     /**
