@@ -104,7 +104,16 @@ export class MultiArray {
      * @returns `true` if object is a row vector. false otherwise.
      */
     public static isRowVector(obj: any): boolean {
-        return obj instanceof MultiArray && obj.dimension[0] === 1 && obj.dimension.length === 2;
+        return obj instanceof MultiArray && obj.dimension.length === 2 && obj.dimension[0] === 1;
+    }
+
+    /**
+     * Check if object is a MultiArray and it is a row vector or a column vector.
+     * @param obj Any object.
+     * @returns `true` if object is a row vector or a column vector. false otherwise.
+     */
+    public static isVector(obj: any): boolean {
+        return obj instanceof MultiArray && obj.dimension.length === 2 && (obj.dimension[0] === 1 || obj.dimension[1] === 1);
     }
 
     /**
@@ -389,78 +398,6 @@ export class MultiArray {
     }
 
     /**
-     * Evaluate array. Calls `evaluator.Evaluator` for each
-     * element of page (matrix row-ordered). Performs horizontal or vertical
-     * concatenation if the evaluation of element results in an MultiArray.
-     * @param array MultiArray page.
-     * @param local `local` Evaluator parameter.
-     * @param fname `fname` Evaluator parameter.
-     * @param parent Parent node of items in page.
-     * @returns Evaluated matrix.
-     */
-    private static evaluatePage(array: ElementType[][], evaluator: Evaluator, local: boolean = false, fname: string = '', iscell: boolean = false, parent: any): ElementType[][] {
-        const result: ElementType[][] = [];
-        for (let i = 0, k = 0; i < array.length; i++, k++) {
-            result.push([]);
-            let h = 1;
-            for (let j = 0; j < array[i].length; j++) {
-                array[i][j]!.parent = parent;
-                const element = evaluator.Evaluator(array[i][j], local, fname);
-                if (element instanceof MultiArray && !iscell) {
-                    if (j === 0) {
-                        h = element.array.length;
-                        result.splice(k, 1, element.array[0]);
-                        for (let n = 1; n < h; n++) {
-                            result.splice(k + n, 0, element.array[n]);
-                        }
-                    } else {
-                        for (let n = 0; n < element.array.length; n++) {
-                            result[k + n].push(...element.array[n]);
-                        }
-                    }
-                } else {
-                    result[k][j] = element as ElementType;
-                }
-            }
-            k += h - 1;
-            if (i != 0) {
-                if (result[i].length != result[0].length) {
-                    throw new EvalError(`vertical dimensions mismatch (${k}x${result[0].length} vs 1x${result[i].length}).`);
-                }
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Evaluate MultiArray object. Calls `MultiArray.evaluatePage` method for each page of
-     * multidimensional array.
-     * @param M MultiArray object.
-     * @param local Local context (function evaluation).
-     * @param fname Function name (context).
-     * @returns Evaluated MultiArray object.
-     */
-    public static evaluate(M: MultiArray, evaluator: Evaluator, local: boolean, fname: string): MultiArray {
-        const result: MultiArray = new MultiArray();
-        result.isCell = M.isCell;
-        for (let p = 0; p < M.array.length; p += M.dimension[0]) {
-            const page = MultiArray.evaluatePage(M.array.slice(p, p + M.dimension[0]), evaluator, local, fname, M.isCell, result);
-            if (p === 0) {
-                result.dimension = [page.length, page[0].length, ...M.dimension.slice(2)];
-            } else {
-                if (result.dimension[0] !== page.length || result.dimension[1] !== page[0].length) {
-                    throw new EvalError(`page dimensions mismatch (${result.dimension[0]}x${result.dimension[1]} vs ${page.length}x${page[0].length}).`);
-                }
-            }
-            for (let i = 0; i < page.length; i++) {
-                result.array[p + i] = page[i];
-            }
-        }
-        MultiArray.setType(result);
-        return result;
-    }
-
-    /**
      * Linearize MultiArray in an array of ElementType using column-major
      * order.
      * @param M Multidimensional array.
@@ -542,6 +479,23 @@ export class MultiArray {
     }
 
     /**
+     * If M is a line vector then return the line of M else return first column of M.
+     * @param M
+     * @returns
+     */
+    public static firstVector(M: ElementType): ElementType[] {
+        if (M instanceof MultiArray) {
+            if (M.dimension[0] === 1) {
+                return M.array[0];
+            } else {
+                return M.array.map((row) => row[0]);
+            }
+        } else {
+            return [M];
+        }
+    }
+
+    /**
      * Copy of MultiArray.
      * @param M MultiArray.
      * @returns Copy of MultiArray.
@@ -553,6 +507,10 @@ export class MultiArray {
         return result;
     }
 
+    /**
+     * Copy method (for element's generics).
+     * @returns
+     */
     public copy(): MultiArray {
         const result = new MultiArray(this.dimension);
         result.array = this.array.map((row) => row.map((value) => value!.copy()));
@@ -579,6 +537,10 @@ export class MultiArray {
         return ComplexDecimal.true();
     }
 
+    /**
+     * toLogical method (for element's generics).
+     * @returns
+     */
     public toLogical(): ComplexDecimal {
         for (let i = 0; i < this.array.length; i++) {
             const row = this.array[i];
@@ -649,12 +611,18 @@ export class MultiArray {
                 throw new Error(`reshape: can't reshape ${M.dimension.join('x')} array to ${dimension.join('x')} array`);
             }
         }
-        const result = new MultiArray(dimension);
-        MultiArray.rawMapLinearIndex(M, (element, index) => {
-            const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], index);
-            result.array[i][j] = element;
-            return element;
-        });
+        let result: MultiArray;
+        if (M.dimension[1] === dimension[1]) {
+            result = MultiArray.copy(M);
+            result.dimension = dimension;
+        } else {
+            result = new MultiArray(dimension);
+            MultiArray.rawMapLinearIndex(M, (element, index) => {
+                const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], index);
+                result.array[i][j] = element;
+                return element;
+            });
+        }
         result.type = M.type;
         return result;
     }
@@ -1125,6 +1093,47 @@ export class MultiArray {
         });
         MultiArray.setType(result);
         return result;
+    }
+
+    /**
+     * Split the MultiArray in the last dimension.
+     * @param M
+     * @returns
+     */
+    private static splitLastDimension(M: MultiArray): MultiArray[] {
+        const result = [];
+        const lastDim = M.dimension[M.dimension.length - 1];
+        for (let i = 0; i < lastDim; i++) {
+            const sliceLength = M.array.length / lastDim;
+            const array = new MultiArray(M.dimension.slice(0, -1));
+            array.array = M.array.slice(i * sliceLength, (i + 1) * sliceLength);
+            result.push(array);
+        }
+        return result;
+    }
+
+    /**
+     * Calls `splitLastDimension` and recursively calls `evaluate` for each
+     * result, concatenating on the last dimension, until the array is 2-D,
+     * then then concatenates the elements row by row horizontally, then
+     * concatenates the rows vertically.
+     * @param M MultiArray object.
+     * @param local Local context (function evaluation).
+     * @param fname Function name (context).
+     * @returns Evaluated MultiArray object.
+     */
+    public static evaluate(M: MultiArray, evaluator?: Evaluator | null | undefined, local: boolean = false, fname: string = ''): MultiArray {
+        if (M.dimension.length === 2) {
+            return MultiArray.concatenate(
+                0,
+                'evaluate',
+                ...M.array.map((row) =>
+                    MultiArray.concatenate(1, 'evaluate', ...row.map((element) => MultiArray.scalarToMultiArray(evaluator ? evaluator.Evaluator(element, local, fname) : element))),
+                ),
+            );
+        } else {
+            return MultiArray.concatenate(M.dimension.length - 1, 'evaluate', ...MultiArray.splitLastDimension(M).map((S) => MultiArray.evaluate(S)));
+        }
     }
 
     /**
