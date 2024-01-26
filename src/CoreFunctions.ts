@@ -8,6 +8,13 @@ import Decimal from 'decimal.js';
 
 export abstract class CoreFunctions {
     public static functions: Record<string, Function> = {
+        isempty: CoreFunctions.isempty,
+        isscalar: CoreFunctions.isscalar,
+        ismatrix: CoreFunctions.ismatrix,
+        isvector: CoreFunctions.isvector,
+        iscell: CoreFunctions.iscell,
+        isrow: CoreFunctions.isrow,
+        iscolumn: CoreFunctions.iscolumn,
         ndims: CoreFunctions.ndims,
         rows: CoreFunctions.rows,
         columns: CoreFunctions.columns,
@@ -16,7 +23,6 @@ export abstract class CoreFunctions {
         ind2sub: CoreFunctions.ind2sub,
         sub2ind: CoreFunctions.sub2ind,
         size: CoreFunctions.size,
-        isempty: CoreFunctions.isempty,
         colon: CoreFunctions.colon,
         linspace: CoreFunctions.linspace,
         logspace: CoreFunctions.logspace,
@@ -46,11 +52,13 @@ export abstract class CoreFunctions {
     };
 
     /**
-     *
+     * Throw invalid call error if (optional) test is true.
      * @param name
      */
-    public static throwInvalidCallError(name: string): void {
-        throw new Error(`Invalid call to ${name}. Type 'help ${name}' to see correct usage.`);
+    public static throwInvalidCallError(name: string, test: boolean = true): void {
+        if (test) {
+            throw new Error(`Invalid call to ${name}. Type 'help ${name}' to see correct usage.`);
+        }
     }
 
     /**
@@ -65,12 +73,73 @@ export abstract class CoreFunctions {
     }
 
     /**
-     *
+     * Return true if M is an empty matrix
+     * @param X
+     * @returns
+     */
+    public static isempty(X: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('isempty', arguments.length !== 1);
+        return MultiArray.isEmpty(X) ? ComplexDecimal.true() : ComplexDecimal.false();
+    }
+
+    /**
+     * Return true if X is a scalar.
+     * @param X
+     * @returns
+     */
+    public static isscalar(X: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('isscalar', arguments.length !== 1);
+        return MultiArray.isScalar(X) ? ComplexDecimal.true() : ComplexDecimal.false();
+    }
+
+    /**
+     * Return true if X is a 2-D array.
+     * @param X
+     * @returns
+     */
+    public static ismatrix(X: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('ismatrix', arguments.length !== 1);
+        return MultiArray.isMatrix(X) ? ComplexDecimal.true() : ComplexDecimal.false();
+    }
+
+    /**
+     * Return true if X is a vector.
+     * @param X
+     * @returns
+     */
+    public static isvector(X: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('isvector', arguments.length !== 1);
+        return MultiArray.isVector(X) ? ComplexDecimal.true() : ComplexDecimal.false();
+    }
+
+    /**
+     * Return true if X is a cell array object.
      * @param M
      * @returns
      */
-    public static isempty(M: MultiArray | ComplexDecimal): ComplexDecimal {
-        return MultiArray.isEmpty(M) ? ComplexDecimal.true() : ComplexDecimal.false();
+    public static iscell(X: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('iscell', arguments.length !== 1);
+        return MultiArray.isCellArray(X) ? ComplexDecimal.true() : ComplexDecimal.false();
+    }
+
+    /**
+     * Return true if X is a row vector.
+     * @param X
+     * @returns
+     */
+    public static isrow(X: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('isrow', arguments.length !== 1);
+        return MultiArray.isRowVector(X) ? ComplexDecimal.true() : ComplexDecimal.false();
+    }
+
+    /**
+     * Return true if X is a column vector.
+     * @param X
+     * @returns
+     */
+    public static iscolumn(X: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('iscolumn', arguments.length !== 1);
+        return MultiArray.isColumnVector(X) ? ComplexDecimal.true() : ComplexDecimal.false();
     }
 
     /**
@@ -78,12 +147,9 @@ export abstract class CoreFunctions {
      * @param M
      * @returns
      */
-    public static ndims(M: MultiArray | ComplexDecimal): ComplexDecimal | undefined {
-        if (arguments.length === 1) {
-            return new ComplexDecimal(MultiArray.scalarToMultiArray(M).dimension.length);
-        } else {
-            CoreFunctions.throwInvalidCallError('ndims');
-        }
+    public static ndims(M: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('ndims', arguments.length !== 1);
+        return new ComplexDecimal(MultiArray.scalarToMultiArray(M).dimension.length);
     }
 
     /**
@@ -91,12 +157,9 @@ export abstract class CoreFunctions {
      * @param M
      * @returns
      */
-    public static rows(M: MultiArray | ComplexDecimal): ComplexDecimal | undefined {
-        if (arguments.length === 1) {
-            return new ComplexDecimal(MultiArray.scalarToMultiArray(M).dimension[0]);
-        } else {
-            CoreFunctions.throwInvalidCallError('rows');
-        }
+    public static rows(M: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('rows', arguments.length !== 1);
+        return new ComplexDecimal(MultiArray.scalarToMultiArray(M).dimension[0]);
     }
 
     /**
@@ -104,12 +167,9 @@ export abstract class CoreFunctions {
      * @param M
      * @returns
      */
-    public static columns(M: MultiArray | ComplexDecimal): ComplexDecimal | undefined {
-        if (arguments.length === 1) {
-            return new ComplexDecimal(MultiArray.scalarToMultiArray(M).dimension[1]);
-        } else {
-            CoreFunctions.throwInvalidCallError('columns');
-        }
+    public static columns(M: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('columns', arguments.length !== 1);
+        return new ComplexDecimal(MultiArray.scalarToMultiArray(M).dimension[1]);
     }
 
     /**
@@ -118,16 +178,13 @@ export abstract class CoreFunctions {
      * @param M
      * @returns
      */
-    public static Length(M: MultiArray | ComplexDecimal): ComplexDecimal | undefined {
+    public static Length(M: ElementType): ComplexDecimal {
         // Capitalized name so as not to conflict with the built-in 'Function.length' property.
-        if (arguments.length === 1) {
-            return new ComplexDecimal(Math.max(...MultiArray.scalarToMultiArray(M).dimension));
-        } else {
-            CoreFunctions.throwInvalidCallError('length');
-        }
+        CoreFunctions.throwInvalidCallError('length', arguments.length !== 1);
+        return new ComplexDecimal(Math.max(...MultiArray.scalarToMultiArray(M).dimension));
     }
 
-    public static numel(M: MultiArray | ComplexDecimal, ...IDX: (MultiArray | ComplexDecimal | CharString)[]): ComplexDecimal {
+    public static numel(M: ElementType, ...IDX: ElementType[]): ComplexDecimal {
         if (IDX.length === 0) {
             return M instanceof MultiArray ? new ComplexDecimal(MultiArray.linearLength(M)) : ComplexDecimal.one();
         } else {
@@ -151,35 +208,32 @@ export abstract class CoreFunctions {
      * @param IND
      * @returns
      */
-    public static ind2sub(DIMS: any, IND: any): any {
-        if (arguments.length === 2) {
-            return AST.nodeReturnList((length: number, index: number): any => {
-                if (length === 1) {
-                    return IND;
+    public static ind2sub(DIMS: ElementType, IND: ElementType): AST.NodeReturnList {
+        CoreFunctions.throwInvalidCallError('ind2sub', arguments.length !== 2);
+        return AST.nodeReturnList((length: number, index: number): ElementType => {
+            if (length === 1) {
+                return IND;
+            } else {
+                let dims = (MultiArray.linearize(DIMS) as ComplexDecimal[]).map((value) => value.re.toNumber());
+                let lenghtGreater = false;
+                if (length > dims.length) {
+                    MultiArray.appendSingletonTail(dims, length);
+                    lenghtGreater = true;
                 } else {
-                    let dims = (MultiArray.linearize(DIMS) as ComplexDecimal[]).map((value) => value.re.toNumber());
-                    let lenghtGreater = false;
-                    if (length > dims.length) {
-                        MultiArray.appendSingletonTail(dims, length);
-                        lenghtGreater = true;
-                    } else {
-                        dims = dims.slice(0, length - 1);
-                    }
-                    const ind = MultiArray.scalarToMultiArray(IND);
-                    const result = new MultiArray(ind.dimension);
-                    const subscript = ind.array.map((row) => row.map((value) => MultiArray.ind2subNumber(dims, (value as ComplexDecimal).re.toNumber())));
-                    if (index === length - 1 && lenghtGreater) {
-                        result.array = subscript.map((row) => row.map((value) => new ComplexDecimal(value[length])));
-                    } else {
-                        result.array = subscript.map((row) => row.map((value) => new ComplexDecimal(value[index])));
-                    }
-                    result.type = ComplexDecimal.REAL;
-                    return MultiArray.MultiArrayToScalar(result);
+                    dims = dims.slice(0, length - 1);
                 }
-            });
-        } else {
-            CoreFunctions.throwInvalidCallError('ind2sub');
-        }
+                const ind = MultiArray.scalarToMultiArray(IND);
+                const result = new MultiArray(ind.dimension);
+                const subscript = ind.array.map((row) => row.map((value) => MultiArray.ind2subNumber(dims, (value as ComplexDecimal).re.toNumber())));
+                if (index === length - 1 && lenghtGreater) {
+                    result.array = subscript.map((row) => row.map((value) => new ComplexDecimal(value[length])));
+                } else {
+                    result.array = subscript.map((row) => row.map((value) => new ComplexDecimal(value[index])));
+                }
+                result.type = ComplexDecimal.REAL;
+                return MultiArray.MultiArrayToScalar(result);
+            }
+        });
     }
 
     /**
@@ -188,30 +242,27 @@ export abstract class CoreFunctions {
      * @param S
      * @returns
      */
-    public static sub2ind(DIMS: any, ...S: any) {
-        if (arguments.length > 1) {
-            const dims = (MultiArray.linearize(DIMS) as ComplexDecimal[]).map((value) => value.re.toNumber());
-            const subscript: MultiArray[] = S.map((s: any) => MultiArray.scalarToMultiArray(s));
-            for (let s = 1; s < subscript.length; s++) {
-                if (!MultiArray.arrayEquals(subscript[0].dimension, subscript[s].dimension)) {
-                    throw new Error('sub2ind: all subscripts must be of the same size.');
-                }
+    public static sub2ind(DIMS: ElementType, ...S: ElementType[]): ElementType {
+        CoreFunctions.throwInvalidCallError('sub2ind', arguments.length < 2);
+        const dims = (MultiArray.linearize(DIMS) as ComplexDecimal[]).map((value) => value.re.toNumber());
+        const subscript: MultiArray[] = S.map((s) => MultiArray.scalarToMultiArray(s));
+        for (let s = 1; s < subscript.length; s++) {
+            if (!MultiArray.arrayEquals(subscript[0].dimension, subscript[s].dimension)) {
+                throw new Error('sub2ind: all subscripts must be of the same size.');
             }
-            MultiArray.appendSingletonTail(dims, subscript.length);
-            const result = new MultiArray(subscript[0].dimension);
-            for (let n = 0; n < MultiArray.linearLength(subscript[0]); n++) {
-                const subscriptN = subscript.map((s) => {
-                    const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(s.dimension[0], s.dimension[1], n);
-                    return s.array[i][j] as ComplexDecimal;
-                });
-                const index = MultiArray.parseSubscript(dims, subscriptN, 'index ');
-                const [p, q] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], n);
-                result.array[p][q] = new ComplexDecimal(index + 1);
-            }
-            return MultiArray.MultiArrayToScalar(result);
-        } else {
-            CoreFunctions.throwInvalidCallError('sub2ind');
         }
+        MultiArray.appendSingletonTail(dims, subscript.length);
+        const result = new MultiArray(subscript[0].dimension);
+        for (let n = 0; n < MultiArray.linearLength(subscript[0]); n++) {
+            const subscriptN = subscript.map((s) => {
+                const [i, j] = MultiArray.linearIndexToMultiArrayRowColumn(s.dimension[0], s.dimension[1], n);
+                return s.array[i][j] as ComplexDecimal;
+            });
+            const index = MultiArray.parseSubscript(dims, subscriptN, 'index ');
+            const [p, q] = MultiArray.linearIndexToMultiArrayRowColumn(result.dimension[0], result.dimension[1], n);
+            result.array[p][q] = new ComplexDecimal(index + 1);
+        }
+        return MultiArray.MultiArrayToScalar(result);
     }
 
     /**
@@ -220,34 +271,31 @@ export abstract class CoreFunctions {
      * @param DIM Dimensions
      * @returns Dimensions of `M` parameter.
      */
-    public static size(M: MultiArray | ComplexDecimal, ...DIM: any): ElementType | void {
-        if (arguments.length > 0) {
-            const parseDimension = (dimension: ComplexDecimal): number => {
-                const dim = dimension.re.toNumber();
-                if (dim < 1 || !dimension.re.trunc().eq(dimension.re)) {
-                    throw new Error(`size: requested dimension DIM (= ${dim}) out of range. DIM must be a positive integer.`);
-                }
-                return dim;
-            };
-            const sizeDim = M instanceof MultiArray ? M.dimension.slice() : [1, 1];
-            if (DIM.length === 0) {
-                const result = new MultiArray([1, sizeDim.length]);
-                result.array[0] = sizeDim.map((d) => new ComplexDecimal(d));
-                result.type = ComplexDecimal.REAL;
-                return result;
-            } else {
-                const dims =
-                    DIM.length === 1 && DIM[0] instanceof MultiArray
-                        ? (MultiArray.linearize(DIM[0]) as ComplexDecimal[]).map((dim) => parseDimension(dim))
-                        : DIM.map((dim: any) => parseDimension(MultiArray.firstElement(dim) as ComplexDecimal));
-                MultiArray.appendSingletonTail(sizeDim, Math.max(...dims));
-                const result = new MultiArray([1, dims.length]);
-                result.array[0] = dims.map((dim: number) => new ComplexDecimal(sizeDim[dim - 1]));
-                result.type = ComplexDecimal.REAL;
-                return MultiArray.MultiArrayToScalar(result);
+    public static size(M: ElementType, ...DIM: ElementType[]): ElementType {
+        CoreFunctions.throwInvalidCallError('size', arguments.length < 1);
+        const parseDimension = (dimension: ComplexDecimal): number => {
+            const dim = dimension.re.toNumber();
+            if (dim < 1 || !dimension.re.trunc().eq(dimension.re)) {
+                throw new Error(`size: requested dimension DIM (= ${dim}) out of range. DIM must be a positive integer.`);
             }
+            return dim;
+        };
+        const sizeDim = M instanceof MultiArray ? M.dimension.slice() : [1, 1];
+        if (DIM.length === 0) {
+            const result = new MultiArray([1, sizeDim.length]);
+            result.array[0] = sizeDim.map((d) => new ComplexDecimal(d));
+            result.type = ComplexDecimal.REAL;
+            return result;
         } else {
-            CoreFunctions.throwInvalidCallError('size');
+            const dims =
+                DIM.length === 1 && DIM[0] instanceof MultiArray
+                    ? (MultiArray.linearize(DIM[0]) as ComplexDecimal[]).map((dim) => parseDimension(dim))
+                    : DIM.map((dim: any) => parseDimension(MultiArray.firstElement(dim) as ComplexDecimal));
+            MultiArray.appendSingletonTail(sizeDim, Math.max(...dims));
+            const result = new MultiArray([1, dims.length]);
+            result.array[0] = dims.map((dim: number) => new ComplexDecimal(sizeDim[dim - 1]));
+            result.type = ComplexDecimal.REAL;
+            return MultiArray.MultiArrayToScalar(result);
         }
     }
 
@@ -256,7 +304,7 @@ export abstract class CoreFunctions {
      * @param args
      * @returns
      */
-    public static colon(...args: (MultiArray | ComplexDecimal)[]): MultiArray | ComplexDecimal | void {
+    public static colon(...args: ElementType[]): ElementType {
         if (args.length === 2) {
             return MultiArray.expandRange(MultiArray.firstElement(args[0]) as ComplexDecimal, MultiArray.firstElement(args[1]) as ComplexDecimal);
         } else if (args.length === 3) {
@@ -275,7 +323,7 @@ export abstract class CoreFunctions {
      * @param args
      * @returns
      */
-    public static linspace(...args: (MultiArray | ComplexDecimal)[]): MultiArray | ComplexDecimal | void {
+    public static linspace(...args: ElementType[]): ElementType {
         let start: ComplexDecimal[] = [];
         let end: ComplexDecimal[] = [];
         let n: ComplexDecimal | MultiArray = ComplexDecimal.one();
@@ -287,7 +335,7 @@ export abstract class CoreFunctions {
                 }
                 start = MultiArray.linearize(args[0]) as ComplexDecimal[];
             } else {
-                start = [args[0]];
+                start = [args[0] as ComplexDecimal];
             }
             if (args[1] instanceof MultiArray) {
                 if (!MultiArray.isVector(args[1])) {
@@ -295,7 +343,7 @@ export abstract class CoreFunctions {
                 }
                 end = MultiArray.linearize(args[1]) as ComplexDecimal[];
             } else {
-                end = [args[1]];
+                end = [args[1] as ComplexDecimal];
             }
         };
         if (args.length === 2) {
@@ -327,7 +375,7 @@ export abstract class CoreFunctions {
             }
             result.array[i][n.re.toNumber() - 1] = end[i];
         }
-        return MultiArray.MultiArrayToScalar(result) as MultiArray | ComplexDecimal;
+        return MultiArray.MultiArrayToScalar(result);
     }
 
     /**
@@ -335,7 +383,7 @@ export abstract class CoreFunctions {
      * @param args
      * @returns
      */
-    public static logspace(...args: (MultiArray | ComplexDecimal)[]): MultiArray | ComplexDecimal | void {
+    public static logspace(...args: ElementType[]): ElementType {
         let start: ComplexDecimal[] = [];
         let end: ComplexDecimal[] = [];
         let n: ComplexDecimal | MultiArray = ComplexDecimal.one();
@@ -347,7 +395,7 @@ export abstract class CoreFunctions {
                 }
                 start = MultiArray.linearize(args[0]) as ComplexDecimal[];
             } else {
-                start = [args[0]];
+                start = [args[0] as ComplexDecimal];
             }
             if (args[1] instanceof MultiArray) {
                 if (!MultiArray.isVector(args[1])) {
@@ -355,7 +403,7 @@ export abstract class CoreFunctions {
                 }
                 end = MultiArray.linearize(args[1]) as ComplexDecimal[];
             } else {
-                end = [args[1]];
+                end = [args[1] as ComplexDecimal];
             }
         };
         if (args.length === 2) {
@@ -398,10 +446,8 @@ export abstract class CoreFunctions {
      * @param args
      * @returns
      */
-    public static meshgrid(...args: (MultiArray | ComplexDecimal)[]): AST.NodeReturnList {
-        if (args.length > 3 || args.length < 1) {
-            CoreFunctions.throwInvalidCallError('meshgrid');
-        }
+    public static meshgrid(...args: ElementType[]): AST.NodeReturnList {
+        CoreFunctions.throwInvalidCallError('meshgrid', args.length > 3 || args.length < 1);
         const argsLinearized: ElementType[][] = [];
         for (let i = 0; i < 3; i++) {
             if (args.length > i) {
@@ -452,7 +498,7 @@ export abstract class CoreFunctions {
      * Given n vectors X1, ..., Xn, returns n arrays of n dimensions.
      * @returns
      */
-    public static ndgrid(...args: (MultiArray | ComplexDecimal)[]): AST.NodeReturnList {
+    public static ndgrid(...args: ElementType[]): AST.NodeReturnList {
         const argsLinearized: MultiArray[] = [];
         for (let i = 0; i < args.length; i++) {
             if (args[i] instanceof MultiArray) {
@@ -488,7 +534,7 @@ export abstract class CoreFunctions {
      * @param dim
      * @returns
      */
-    public static repmat(A: MultiArray | ComplexDecimal, ...dim: (MultiArray | ComplexDecimal)[]): MultiArray | ComplexDecimal {
+    public static repmat(A: ElementType, ...dim: ElementType[]): ElementType {
         let dimension: ElementType[];
         if (dim.length === 1) {
             dimension = MultiArray.firstVector(dim[0]);
@@ -517,7 +563,7 @@ export abstract class CoreFunctions {
      * @param dimension
      * @returns
      */
-    public static reshape(M: MultiArray | ComplexDecimal, ...dimension: (MultiArray | ComplexDecimal)[]): MultiArray | ComplexDecimal {
+    public static reshape(M: ElementType, ...dimension: ElementType[]): ElementType {
         const m = MultiArray.scalarToMultiArray(M);
         let d: number = -1;
         const dims = dimension.map((dim, i) => {
@@ -542,9 +588,7 @@ export abstract class CoreFunctions {
      * @returns
      */
     public static squeeze(...args: ElementType[]): ElementType {
-        if (args.length !== 1) {
-            CoreFunctions.throwInvalidCallError('squeeze');
-        }
+        CoreFunctions.throwInvalidCallError('squeeze', args.length !== 1);
         if (args[0] instanceof MultiArray && !args[0].isCell) {
             if (args[0].dimension.length > 2) {
                 return MultiArray.reshape(
@@ -565,7 +609,7 @@ export abstract class CoreFunctions {
      * @param dimension Dimensions of created MultiArray.
      * @returns MultiArray filled with `fill` parameter.
      */
-    private static newFilled(fill: any, name: string, ...dimension: (MultiArray | ComplexDecimal)[]): ElementType {
+    private static newFilled(fill: ElementType, name: string, ...dimension: ElementType[]): ElementType {
         let dims: number[];
         if (dimension.length === 0) {
             return fill;
@@ -579,7 +623,7 @@ export abstract class CoreFunctions {
                 dims[dims.length] = dims[0];
             }
         } else {
-            dims = dimension.map((dim) => {
+            dims = (dimension as (MultiArray | ComplexDecimal)[]).map((dim) => {
                 if (dim instanceof MultiArray) {
                     throw new Error(`${name}: dimensions must be scalars.`);
                 }
@@ -596,10 +640,10 @@ export abstract class CoreFunctions {
      * @param dimension Dimensions of created MultiArray.
      * @returns MultiArray filled with `fillFunction` results for each element.
      */
-    private static newFilledEach(fillFunction: (index: number) => any, ...dimension: (MultiArray | ComplexDecimal)[]): ElementType {
+    private static newFilledEach(fillFunction: (index: number) => ElementType, ...dimension: ElementType[]): ElementType {
         let dims: number[];
         if (dimension.length === 1) {
-            dims = (MultiArray.linearize(dimension[0]) as ComplexDecimal[]).map((dim: ComplexDecimal) => dim.re.toNumber());
+            dims = (MultiArray.linearize(dimension[0]) as ComplexDecimal[]).map((dim) => dim.re.toNumber());
         } else if (dimension.length === 0) {
             return fillFunction(0);
         } else {
@@ -622,7 +666,7 @@ export abstract class CoreFunctions {
      * @param dimension
      * @returns
      */
-    public static zeros(...dimension: (MultiArray | ComplexDecimal)[]): ElementType {
+    public static zeros(...dimension: ElementType[]): ElementType {
         return CoreFunctions.newFilled(ComplexDecimal.zero(), 'zeros', ...dimension);
     }
 
@@ -631,7 +675,7 @@ export abstract class CoreFunctions {
      * @param dimension
      * @returns
      */
-    public static ones(...dimension: (MultiArray | ComplexDecimal)[]): ElementType {
+    public static ones(...dimension: ElementType[]): ElementType {
         return CoreFunctions.newFilled(ComplexDecimal.one(), 'ones', ...dimension);
     }
 
@@ -641,7 +685,7 @@ export abstract class CoreFunctions {
      * @param dimension
      * @returns
      */
-    public static rand(...dimension: (MultiArray | ComplexDecimal)[]): ElementType {
+    public static rand(...dimension: ElementType[]): ElementType {
         return CoreFunctions.newFilledEach(() => ComplexDecimal.random(), ...dimension);
     }
 
@@ -651,7 +695,7 @@ export abstract class CoreFunctions {
      * @param args
      * @returns
      */
-    public static randi(range: MultiArray | ComplexDecimal, ...dimension: (MultiArray | ComplexDecimal)[]): ElementType {
+    public static randi(range: ElementType, ...dimension: ElementType[]): ElementType {
         let imin: ComplexDecimal;
         let imax: ComplexDecimal;
         if (range instanceof MultiArray) {
@@ -667,7 +711,7 @@ export abstract class CoreFunctions {
             }
         } else {
             imin = ComplexDecimal.zero();
-            imax = range;
+            imax = range as ComplexDecimal;
         }
         if (!(imin.re.isInt() && imax.re.isInt())) {
             throw new Error(`randi: must be integer bounds.`);
@@ -695,7 +739,7 @@ export abstract class CoreFunctions {
      * @param ARRAY Arrays to concatenate.
      * @returns Concatenated arrays along dimension `DIM`.
      */
-    public static cat(DIM: MultiArray | any, ...ARRAY: (MultiArray | any)[]): MultiArray {
+    public static cat(DIM: ElementType, ...ARRAY: ElementType[]): MultiArray {
         return MultiArray.concatenate((MultiArray.firstElement(DIM) as ComplexDecimal).re.toNumber() - 1, 'cat', ...ARRAY.map((m) => MultiArray.scalarToMultiArray(m)));
     }
 
@@ -704,7 +748,7 @@ export abstract class CoreFunctions {
      * @param ARRAY Arrays to concatenate horizontally.
      * @returns Concatenated arrays horizontally.
      */
-    public static horzcat(...ARRAY: (MultiArray | any)[]): MultiArray {
+    public static horzcat(...ARRAY: ElementType[]): MultiArray {
         return MultiArray.concatenate(1, 'horzcat', ...ARRAY.map((m) => MultiArray.scalarToMultiArray(m)));
     }
 
@@ -713,7 +757,7 @@ export abstract class CoreFunctions {
      * @param ARRAY Arrays to concatenate vertically.
      * @returns Concatenated arrays vertically.
      */
-    public static vertcat(...ARRAY: (MultiArray | any)[]): MultiArray {
+    public static vertcat(...ARRAY: ElementType[]): MultiArray {
         return MultiArray.concatenate(0, 'vertcat', ...ARRAY.map((m) => MultiArray.scalarToMultiArray(m)));
     }
 
@@ -723,7 +767,7 @@ export abstract class CoreFunctions {
      * @param DIM Dimension
      * @returns Array with sum of elements along dimension DIM.
      */
-    public static sum(M: MultiArray, DIM?: MultiArray | ComplexDecimal): ElementType {
+    public static sum(M: MultiArray, DIM?: ElementType): ElementType {
         // TODO: Test if MultiArray.reduceToArray is better than MultiArray.reduce.
         return MultiArray.reduce(DIM ? (MultiArray.firstElement(DIM) as ComplexDecimal).re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M), M, (p, c) =>
             ComplexDecimal.add(p as ComplexDecimal, c as ComplexDecimal),
@@ -736,7 +780,7 @@ export abstract class CoreFunctions {
      * @param DIM Dimension
      * @returns One dimensional matrix with sum of squares of elements along dimension DIM.
      */
-    public static sumsq(M: MultiArray, DIM?: MultiArray | ComplexDecimal): ElementType {
+    public static sumsq(M: MultiArray, DIM?: ElementType): ElementType {
         // TODO: Test if MultiArray.reduceToArray is better than MultiArray.reduce.
         return MultiArray.reduce(DIM ? (MultiArray.firstElement(DIM) as ComplexDecimal).re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M), M, (p, c) =>
             ComplexDecimal.add(
@@ -752,7 +796,7 @@ export abstract class CoreFunctions {
      * @param DIM Dimension
      * @returns One dimensional matrix with product of elements along dimension DIM.
      */
-    public static prod(M: MultiArray, DIM?: MultiArray | ComplexDecimal): ElementType {
+    public static prod(M: MultiArray, DIM?: ElementType): ElementType {
         // TODO: Test if MultiArray.reduceToArray is better than MultiArray.reduce.
         return MultiArray.reduce(DIM ? (MultiArray.firstElement(DIM) as ComplexDecimal).re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M), M, (p, c) =>
             ComplexDecimal.mul(p as ComplexDecimal, c as ComplexDecimal),
@@ -765,7 +809,7 @@ export abstract class CoreFunctions {
      * @param DIM Dimension
      * @returns One dimensional matrix with product of elements along dimension DIM.
      */
-    public static mean(M: MultiArray, DIM?: MultiArray | ComplexDecimal): ElementType {
+    public static mean(M: MultiArray, DIM?: ElementType): ElementType {
         // TODO: Test if MultiArray.reduceToArray is better than MultiArray.reduce.
         const dim = DIM ? (MultiArray.firstElement(DIM) as ComplexDecimal).re.toNumber() - 1 : MultiArray.firstNonSingleDimension(M);
         const sum = MultiArray.reduce(dim, M, (p, c) => ComplexDecimal.add(p as ComplexDecimal, c as ComplexDecimal));
@@ -778,7 +822,7 @@ export abstract class CoreFunctions {
      * @param args One to three arguments like user function.
      * @returns Return like user function.
      */
-    private static minMax(op: 'min' | 'max', ...args: any[]): MultiArray | AST.NodeReturnList | undefined {
+    private static minMax(op: 'min' | 'max', ...args: ElementType[]): MultiArray | AST.NodeReturnList | undefined {
         const minMaxAlogDimension = (M: MultiArray, dimension: number) => {
             const reduced = MultiArray.reduceToArray(dimension, M);
             const resultM = new MultiArray(reduced.dimension);
@@ -786,7 +830,7 @@ export abstract class CoreFunctions {
             const cmp = op === 'min' ? 'lt' : 'gt';
             for (let i = 0; i < indexM.array.length; i++) {
                 for (let j = 0; j < indexM.array[0].length; j++) {
-                    const [m, n] = ComplexDecimal[`minMaxArray${args[0].type < 2 ? 'Real' : 'Complex'}WithIndex`](cmp, ...(reduced.array[i][j] as unknown as ComplexDecimal[]));
+                    const [m, n] = ComplexDecimal[`minMaxArray${args[0]!.type < 2 ? 'Real' : 'Complex'}WithIndex`](cmp, ...(reduced.array[i][j] as unknown as ComplexDecimal[]));
                     resultM.array[i][j] = m;
                     indexM.array[i][j] = new ComplexDecimal(n + 1);
                 }
@@ -803,7 +847,7 @@ export abstract class CoreFunctions {
                 return minMaxAlogDimension(MultiArray.scalarToMultiArray(args[0]), dimension);
             case 2:
                 // Broadcast
-                return MultiArray.elementWiseOperation((op + 'Wise') as ComplexDecimal.TBinaryOperationName, MultiArray.scalarToMultiArray(args[0]), args[1]);
+                return MultiArray.elementWiseOperation((op + 'Wise') as ComplexDecimal.TBinaryOperationName, MultiArray.scalarToMultiArray(args[0]), args[1] as MultiArray);
             case 3:
                 // Along selected dimension.
                 if (!MultiArray.isEmpty(args[1])) {
@@ -821,7 +865,7 @@ export abstract class CoreFunctions {
      * @param M
      * @returns
      */
-    public static min(...args: any[]): MultiArray | AST.NodeReturnList | undefined {
+    public static min(...args: ElementType[]): MultiArray | AST.NodeReturnList | undefined {
         return CoreFunctions.minMax('min', ...args);
     }
 
@@ -830,7 +874,7 @@ export abstract class CoreFunctions {
      * @param M
      * @returns
      */
-    public static max(...args: any[]): MultiArray | AST.NodeReturnList | undefined {
+    public static max(...args: ElementType[]): MultiArray | AST.NodeReturnList | undefined {
         return CoreFunctions.minMax('max', ...args);
     }
 
@@ -841,7 +885,7 @@ export abstract class CoreFunctions {
      * @param DIM Dimension in which the cumulative operation occurs.
      * @returns MultiArray with cumulative values along dimension DIM.
      */
-    private static cumMinMax(op: 'min' | 'max', M: MultiArray | ComplexDecimal, DIM?: MultiArray | ComplexDecimal): AST.NodeReturnList {
+    private static cumMinMax(op: 'min' | 'max', M: ElementType, DIM?: ElementType): AST.NodeReturnList {
         M = MultiArray.scalarToMultiArray(M);
         const indexM = new MultiArray(M.dimension);
         let compare: ComplexDecimal;
@@ -859,7 +903,7 @@ export abstract class CoreFunctions {
             indexM.array[i][j] = index;
             return compare;
         });
-        return AST.nodeReturnList((length: number, index: number): any => {
+        return AST.nodeReturnList((length: number, index: number): ElementType => {
             Evaluator.throwErrorIfGreaterThanReturnList(2, length);
             return MultiArray.MultiArrayToScalar(index === 0 ? result : indexM);
         });
@@ -871,7 +915,7 @@ export abstract class CoreFunctions {
      * @param DIM
      * @returns
      */
-    public static cummin(M: MultiArray, DIM?: MultiArray | ComplexDecimal): AST.NodeReturnList {
+    public static cummin(M: ElementType, DIM?: ElementType): AST.NodeReturnList {
         return CoreFunctions.cumMinMax('min', M, DIM);
     }
 
@@ -881,7 +925,7 @@ export abstract class CoreFunctions {
      * @param DIM
      * @returns
      */
-    public static cummax(M: MultiArray, DIM?: MultiArray | ComplexDecimal): AST.NodeReturnList {
+    public static cummax(M: ElementType, DIM?: ElementType): AST.NodeReturnList {
         return CoreFunctions.cumMinMax('max', M, DIM);
     }
 
@@ -892,7 +936,7 @@ export abstract class CoreFunctions {
      * @param DIM
      * @returns
      */
-    private static cumSumProd(op: 'add' | 'mul', M: MultiArray | ComplexDecimal, DIM?: MultiArray | ComplexDecimal): MultiArray | ComplexDecimal {
+    private static cumSumProd(op: 'add' | 'mul', M: ElementType, DIM?: ElementType): ElementType {
         M = MultiArray.scalarToMultiArray(M);
         const initialValue = op === 'add' ? ComplexDecimal.zero() : ComplexDecimal.one();
         const result = MultiArray.alongDimensionMap(
@@ -913,7 +957,7 @@ export abstract class CoreFunctions {
      * @param DIM
      * @returns
      */
-    public static cumsum(M: MultiArray | ComplexDecimal, DIM?: MultiArray | ComplexDecimal): MultiArray | ComplexDecimal {
+    public static cumsum(M: ElementType, DIM?: ElementType): ElementType {
         return CoreFunctions.cumSumProd('add', M, DIM);
     }
 
@@ -923,7 +967,7 @@ export abstract class CoreFunctions {
      * @param DIM
      * @returns
      */
-    public static cumprod(M: MultiArray | ComplexDecimal, DIM?: MultiArray | ComplexDecimal): MultiArray | ComplexDecimal {
+    public static cumprod(M: ElementType, DIM?: ElementType): ElementType {
         return CoreFunctions.cumSumProd('mul', M, DIM);
     }
 
@@ -932,7 +976,7 @@ export abstract class CoreFunctions {
      * @param args
      * @returns
      */
-    public static struct(...args: ElementType[]): Structure | MultiArray {
+    public static struct(...args: ElementType[]): ElementType {
         const errorMessage = `struct: additional arguments must occur as "field", VALUE pairs`;
         if (args.length === 0) {
             return new Structure({});

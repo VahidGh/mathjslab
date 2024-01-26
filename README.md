@@ -4,7 +4,7 @@
 [![MIT License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/sergiolindau/mathjslab/blob/main/LICENSE)
 [![size](https://badgen.net/badgesize/normal/file-url/unpkg.com/mathjslab/lib/mathjslab.js)](https://unpkg.com/mathjslab/lib/mathjslab.js)
 [![gzip size](https://badgen.net/badgesize/gzip/file-url/unpkg.com/mathjslab/)](https://unpkg.com/mathjslab/)
-[![install size](https://badgen.net/packagephobia/install/mathjslab)](https://packagephobia.now.sh/result?p=mathjslab)
+[![install size](https://packagephobia.com/badge?p=mathjslab)](https://packagephobia.com/result?p=mathjslab)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8396265.svg)](https://doi.org/10.5281/zenodo.8396265)
 
 > An interpreter with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
@@ -64,8 +64,6 @@ Install the `mathjslab` package:
 ```bash
 npm install mathjslab
 ```
-
-[![](https://badgen.net/bundlephobia/minzip/mathjslab)](https://bundlephobia.com/package/mathjslab)
 
 ## Usage
 

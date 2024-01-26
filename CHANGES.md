@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.6
+- Optimizations in `CoreFunctions.throwInvalidCallError` (`test`parameter) and all `CoreFunctions` methods that use it.
+- More strong type definitions in 'CoreFunctions.ts' file.
+- User functions isscalar, ismatrix, isvector, iscell, isrow and iscolumn.
+
 ## 1.5.5
 - Sizes and Zenodo badges in 'README.md'.
 - User function squeeze.

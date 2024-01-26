@@ -99,12 +99,30 @@ export class MultiArray {
     }
 
     /**
+     * Check if object is a scalar.
+     * @param obj Any object.
+     * @returns `true` if object is a scalar. false otherwise.
+     */
+    public static isScalar(obj: any): boolean {
+        return !(obj instanceof MultiArray && obj.dimension.reduce((p, c) => p * c, 1) > 1);
+    }
+
+    /**
      * Check if object is a MultiArray and it is a row vector.
      * @param obj Any object.
      * @returns `true` if object is a row vector. false otherwise.
      */
     public static isRowVector(obj: any): boolean {
         return obj instanceof MultiArray && obj.dimension.length === 2 && obj.dimension[0] === 1;
+    }
+
+    /**
+     * Check if object is a MultiArray and it is a row vector.
+     * @param obj Any object.
+     * @returns `true` if object is a row vector. false otherwise.
+     */
+    public static isColumnVector(obj: any): boolean {
+        return obj instanceof MultiArray && obj.dimension.length === 2 && obj.dimension[1] === 1;
     }
 
     /**
@@ -117,6 +135,15 @@ export class MultiArray {
     }
 
     /**
+     * Check if object is a scalar or a 2-D MultiArray.
+     * @param obj Any object.
+     * @returns `true` if object is a row vector or a column vector. false otherwise.
+     */
+    public static isMatrix(obj: any): boolean {
+        return !(obj instanceof MultiArray) || obj.dimension.length === 2;
+    }
+
+    /**
      * Returns `true` if `obj` any one of its dimensions is zero.
      * Returns `false` otherwise.
      * @param obj Any object.
@@ -124,6 +151,15 @@ export class MultiArray {
      */
     public static isEmpty(obj: any): boolean {
         return obj instanceof MultiArray && (obj as MultiArray).dimension.reduce((p, c) => p * c, 1) === 0;
+    }
+
+    /**
+     * Check if object is a MultiArray and it is a cell array.
+     * @param obj Any object.
+     * @returns `true` if object is a cell array. false otherwise.
+     */
+    public static isCellArray(obj: any): boolean {
+        return obj instanceof MultiArray && obj.isCell;
     }
 
     /**
