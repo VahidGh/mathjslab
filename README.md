@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="mathjslab-logo.svg" alt="logo" width="250" height="250">
+</p>
+
 # MathJSLab
 
 [![npm version](https://badge.fury.io/js/mathjslab.svg)](https://badge.fury.io/js/mathjslab)
@@ -95,7 +99,8 @@ let result = evaluator.Evaluate(tree);
 
 * MathML generation
 ```typescript
-let mathml = evaluator.UnparseMathML(tree);
+let mathmlInput = evaluator.UnparseMathML(tree);
+let mathmlResult = evaluator.UnparseMathML(result);
 ```
 
 ## Using UNPKG CDN

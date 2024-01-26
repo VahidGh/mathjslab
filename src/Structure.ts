@@ -34,6 +34,15 @@ export class Structure {
     }
 
     /**
+     * Return true if obj is a structure or a structure array.
+     * @param obj
+     * @returns
+     */
+    public static isStructure(obj: ElementType): boolean {
+        return obj instanceof Structure || (obj instanceof MultiArray && !obj.isCell && obj.dimension[0] > 0 && obj.dimension[1] > 0 && obj.array[0][0] instanceof Structure);
+    }
+
+    /**
      *
      * @param S
      * @param field

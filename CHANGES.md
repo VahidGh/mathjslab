@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.7
+- MathJSLab logo in README.md file.
+- User function isstruc.
+
 ## 1.5.6
 - Optimizations in `CoreFunctions.throwInvalidCallError` (`test`parameter) and all `CoreFunctions` methods that use it.
 - More strong type definitions in 'CoreFunctions.ts' file.

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="67.296 141.941 125.49 123.714" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .trace-stroke {
+      stroke: hsl(0, 0%, 24%);
+    }
+    .trace-fill {
+      fill: hsl(0, 0%, 24%);
+    }
+    .panel-fill {
+      fill: hsl(120, 52%, 88%);
+    }
+    @media (prefers-color-scheme: dark) {
+      .trace-stroke {
+        stroke: hsl(0, 0%, 92%);
+      }
+      .trace-fill {
+        fill: hsl(0, 0%, 92%);
+      }
+      .panel-fill {
+        fill: hsl(120, 52%, 16%);
+      }
+    }
+  </style>
+  <circle style="fill:none;stroke-width:0" cx="130.344" cy="203.385" r="62.8"/>
+  <circle class="panel-fill" style="stroke:green;stroke-width:2px" cx="130.344" cy="203.385" r="56.71"/>
+  <path class="trace-stroke" style="fill:none;stroke-linecap:round;stroke-width:3px" d="m91.433 158.542.57 79.12 87.757-.507"/>
+  <path class="trace-stroke" style="fill:none;stroke-width:3px" d="M92.208 227.401h10.284v10.437"/>
+  <circle class="trace-fill" cx="97.001" cy="232.71" r=".762"/>
+  <text class="trace-fill" style="font-family:'Times New Roman';font-size:20px" x="129.559" y="252.056">x</text>
+  <text class="trace-fill" style="font-family:'Times New Roman';font-size:20px" x="77.351" y="202.196">y</text>
+  <path class="trace-stroke" style="fill:none;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round" d="m138.007 209.533 4.721 11.296 8.093-22.424h37.767"/>
+  <text class="trace-fill" style="font-family:Symbol;font-size:24px" x="159.914" y="215.097">p</text>
+  <path class="trace-stroke" style="fill:none;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:5" d="m91.455 162.359 82.953 74.691"/>
+  <path class="trace-stroke" style="fill:none;stroke-linecap:round;stroke-linejoin:round" d="m117.67 180.556 34.733.169-.338-17.872-34.395 17.703z"/>
+  <text class="trace-fill" style="font-family:Arial,sans-serif;font-size:10px" x="153.46" y="185.167">A</text>
+  <text class="trace-fill" style="font-family:Arial,sans-serif;font-size:10px" x="111.984" y="179.771">B</text>
+  <text class="trace-fill" style="font-family:Arial,sans-serif;font-size:10px" x="148.065" y="160.382">C</text>
+</svg>

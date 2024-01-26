@@ -15,6 +15,7 @@ export abstract class CoreFunctions {
         iscell: CoreFunctions.iscell,
         isrow: CoreFunctions.isrow,
         iscolumn: CoreFunctions.iscolumn,
+        isstruct: CoreFunctions.isstruct,
         ndims: CoreFunctions.ndims,
         rows: CoreFunctions.rows,
         columns: CoreFunctions.columns,
@@ -140,6 +141,16 @@ export abstract class CoreFunctions {
     public static iscolumn(X: ElementType): ComplexDecimal {
         CoreFunctions.throwInvalidCallError('iscolumn', arguments.length !== 1);
         return MultiArray.isColumnVector(X) ? ComplexDecimal.true() : ComplexDecimal.false();
+    }
+
+    /**
+     * Return true if X is a column vector.
+     * @param X
+     * @returns
+     */
+    public static isstruct(X: ElementType): ComplexDecimal {
+        CoreFunctions.throwInvalidCallError('isstruct', arguments.length !== 1);
+        return Structure.isStructure(X) ? ComplexDecimal.true() : ComplexDecimal.false();
     }
 
     /**
