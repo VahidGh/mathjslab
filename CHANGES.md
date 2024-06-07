@@ -2,18 +2,24 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.8
+- Badge changes in 'README.md' file. Using badges from https://shields.io/ .
+- Dependecies update.
+- Bug fix in functions 'asin', 'acsc', 'asec' and 'acot'.
+- Configurations in '.eslintrc.js' (removed) changed to flat config in 'eslint.config.js'.
+
 ## 1.5.7
 - MathJSLab logo in README.md file.
-- User function isstruc.
+- User function 'isstruc'.
 
 ## 1.5.6
 - Optimizations in `CoreFunctions.throwInvalidCallError` (`test`parameter) and all `CoreFunctions` methods that use it.
 - More strong type definitions in 'CoreFunctions.ts' file.
-- User functions isscalar, ismatrix, isvector, iscell, isrow and iscolumn.
+- User functions 'isscalar', 'ismatrix', 'isvector', 'iscell', 'isrow' and 'iscolumn'.
 
 ## 1.5.5
 - Sizes and Zenodo badges in 'README.md'.
-- User function squeeze.
+- User function 'squeeze'.
 
 ## 1.5.4
 - Bug fix in `MultiArray.evaluate` (array of cells be evaluated in the same way as common array now solved).
@@ -24,7 +30,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## 1.5.2
 - Bug fix in `MultiArray.evaluate`. Before the method was page-oriented. Now is full dimensional using recursion and concatenation.
 - Exports `ElementType` from 'MultiArray.ts' in 'lib.ts'.
-- User functions repmat, colon, linspace, logspace, meshgrid and ndgrid.
+- User functions 'repmat', 'colon', 'linspace', 'logspace', 'meshgrid' and 'ndgrid'.
 - Optimizations in `MultiArray.reshape`.
 
 ## 1.5.1
@@ -98,7 +104,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 1.2.2
 - Bug fix in function 'cat'.
-- User functions cummin, cummax, cumsum, cumprod, ndims, rows, columns, length, numel, isempty and reshape.
+- User functions 'cummin', 'cummax', 'cumsum', 'cumprod', 'ndims', 'rows', 'columns', 'length', 'numel', 'isempty' and 'reshape'.
 - Bug fix in MultiArray.unparse and MultiArray.unparseMathML (null array).
 - Bug fix in MultiArray constructor (dimension.length >= 2).
 - Bug fix in MultiArray.isEmpty.

@@ -28,7 +28,6 @@ export class SymbolTable {
     }
 
     public lookupVariable(id: string): [AST.NodeExpr, string | null] | null {
-        /* eslint-disable-next-line  @typescript-eslint/no-this-alias */
         let table: SymbolTable | null = this;
         while (table !== null) {
             if (typeof table.variableTable[id] !== 'undefined') {
@@ -46,7 +45,6 @@ export class SymbolTable {
     }
 
     public lookupFunction(id: string): [AST.NodeFunction | BuiltInFunctionTableEntry, string | null] | null {
-        /* eslint-disable-next-line  @typescript-eslint/no-this-alias */
         let table: SymbolTable | null = this;
         while (table !== null) {
             if (typeof table.functionTable[id] !== 'undefined') {

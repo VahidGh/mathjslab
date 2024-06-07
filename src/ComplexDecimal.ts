@@ -1,6 +1,5 @@
 import { Decimal } from 'decimal.js';
 
-/* eslint-disable-next-line  @typescript-eslint/no-namespace */
 export module ComplexDecimal {
     export type Rounding = Decimal.Rounding;
 
@@ -1405,7 +1404,7 @@ export class ComplexDecimal {
      * @returns Inverse sine of z in radians.
      */
     public static asin(z: ComplexDecimal): ComplexDecimal {
-        return ComplexDecimal.rdiv(
+        return ComplexDecimal.mul(
             ComplexDecimal.onei(),
             ComplexDecimal.log(
                 ComplexDecimal.sub(
@@ -1470,7 +1469,7 @@ export class ComplexDecimal {
      * @returns Inverse cosecant of z in radians.
      */
     public static acsc(z: ComplexDecimal): ComplexDecimal {
-        return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.asin(z));
+        return ComplexDecimal.asin(ComplexDecimal.rdiv(ComplexDecimal.one(), z));
     }
 
     /**
@@ -1488,7 +1487,7 @@ export class ComplexDecimal {
      * @returns Inverse secant of z in radians.
      */
     public static asec(z: ComplexDecimal): ComplexDecimal {
-        return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.acos(z));
+        return ComplexDecimal.acos(ComplexDecimal.rdiv(ComplexDecimal.one(), z));
     }
 
     /**
@@ -1506,7 +1505,7 @@ export class ComplexDecimal {
      * @returns Inverse cotangent of z in radians.
      */
     public static acot(z: ComplexDecimal): ComplexDecimal {
-        return ComplexDecimal.rdiv(ComplexDecimal.one(), ComplexDecimal.atan(z));
+        return ComplexDecimal.atan(ComplexDecimal.rdiv(ComplexDecimal.one(), z));
     }
 
     /**
@@ -1657,6 +1656,7 @@ export class ComplexDecimal {
             '1.5056327351493116e-7',
         ];
         if (z.re.lt(0.5)) {
+            // Euler's reflection formula.
             return ComplexDecimal.rdiv(
                 ComplexDecimal.pi(),
                 ComplexDecimal.mul(ComplexDecimal.sin(ComplexDecimal.mul(ComplexDecimal.pi(), z)), ComplexDecimal.gamma(ComplexDecimal.sub(ComplexDecimal.one(), z))),
@@ -1664,7 +1664,7 @@ export class ComplexDecimal {
         } else {
             z = ComplexDecimal.sub(z, ComplexDecimal.one());
             let x = new ComplexDecimal(p[0]);
-            const t = ComplexDecimal.add(z, new ComplexDecimal(new Decimal(p.length - 1.5)));
+            const t = ComplexDecimal.add(z, new ComplexDecimal(p.length - 1.5));
             for (let i = 1; i < p.length; i++) {
                 x = ComplexDecimal.add(x, ComplexDecimal.rdiv(new ComplexDecimal(p[i]), ComplexDecimal.add(z, new ComplexDecimal(i))));
             }

@@ -1,13 +1,15 @@
 <p align="center">
-    <img src="mathjslab-logo.svg" alt="logo" width="250" height="250">
+    <img src="mathjslab-logo.svg" alt="logo" width="200" height="200">
 </p>
 
 # MathJSLab
 
-[![npm version](https://badge.fury.io/js/mathjslab.svg)](https://badge.fury.io/js/mathjslab)
-[![MIT License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/sergiolindau/mathjslab/blob/main/LICENSE)
-[![size](https://badgen.net/badgesize/normal/file-url/unpkg.com/mathjslab/lib/mathjslab.js)](https://unpkg.com/mathjslab/lib/mathjslab.js)
-[![gzip size](https://badgen.net/badgesize/gzip/file-url/unpkg.com/mathjslab/)](https://unpkg.com/mathjslab/)
+[![npm version](https://img.shields.io/npm/v/mathjslab)](https://www.npmjs.com/package/mathjslab)
+[![npm license](https://img.shields.io/npm/l/mathjslab)](https://github.com/sergiolindau/mathjslab/blob/main/LICENSE)
+[![npm downloads](https://img.shields.io/npm/d18m/mathjslab)](https://www.npmjs.com/package/mathjslab)
+[![npm bundle size](https://img.shields.io/bundlephobia/min/mathjslab)](https://unpkg.com/mathjslab/)
+[![minzip size](https://img.shields.io/bundlephobia/minzip/mathjslab)](https://unpkg.com/mathjslab/)
+[![npm package minimized gzipped size](https://img.shields.io/bundlejs/size/mathjslab)](https://unpkg.com/mathjslab/)
 [![install size](https://packagephobia.com/badge?p=mathjslab)](https://packagephobia.com/result?p=mathjslab)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8396265.svg)](https://doi.org/10.5281/zenodo.8396265)
 
@@ -89,17 +91,17 @@ let evaluator = new Evaluator(EvaluatorConfiguration);
 
 * Parsing
 ```typescript
-let tree = evaluator.Parse('x=sqrt(1+2*3)');
+let input = evaluator.Parse('x=sqrt(1+2*3)');
 ```
 
 * Evaluation
 ```typescript
-let result = evaluator.Evaluate(tree);
+let result = evaluator.Evaluate(input);
 ```
 
 * MathML generation
 ```typescript
-let mathmlInput = evaluator.UnparseMathML(tree);
+let mathmlInput = evaluator.UnparseMathML(input);
 let mathmlResult = evaluator.UnparseMathML(result);
 ```
 
