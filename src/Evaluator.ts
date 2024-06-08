@@ -687,6 +687,7 @@ export class Evaluator {
      */
     public Evaluator(tree: AST.NodeInput, local: boolean = false, fname: string = ''): AST.NodeInput {
         if (this.debug) {
+            // eslint-disable-next-line no-console
             console.log(
                 `Evaluator(\ntree:${JSON.stringify(
                     tree,

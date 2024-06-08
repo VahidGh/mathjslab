@@ -2,11 +2,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.9
+- Prettier settings in 'eslint.config.js'.
+- File '.npmrc' created. Configuration legacy-peer-deps set to true.
+- Target modified to es2015.
+- Badge 'GitHub Created At' added to 'README.md'.
+
 ## 1.5.8
 - Badge changes in 'README.md' file. Using badges from https://shields.io/ .
 - Dependecies update.
 - Bug fix in functions 'asin', 'acsc', 'asec' and 'acot'.
-- Configurations in '.eslintrc.js' (removed) changed to flat config in 'eslint.config.js'.
+- Configurations in '.eslintrc.js' (removed) modified to flat config in 'eslint.config.js'.
 
 ## 1.5.7
 - MathJSLab logo in README.md file.
@@ -37,7 +43,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Bug fix in `Evaluator` ('IDX' node processing).
 
 ## 1.5.0
-- The file 'FunctionHandle.ts' and its corresponding test file has been created. The `FunctionHandle` type has been created and made a member of `AST.NodeExpr` through `ElementType`. `Evaluator.nameTable` entries has been changed to `AST.NodeExpr`. Changes in `Evaluator.Evaluator`, removing function definition, and altering processing of node types 'IDENT' and 'IDX' to use function handles. Now the function definitions and use is the same like in MATLAB&reg;/Octave.
+- The file 'FunctionHandle.ts' and its corresponding test file has been created. The `FunctionHandle` type has been created and made a member of `AST.NodeExpr` through `ElementType`. `Evaluator.nameTable` entries has been modified to `AST.NodeExpr`. Changes in `Evaluator.Evaluator`, removing function definition, and altering processing of node types 'IDENT' and 'IDX' to use function handles. Now the function definitions and use is the same like in MATLAB&reg;/Octave.
 
 ## 1.4.2
 - Bug fix in indexing by colon (:).
@@ -52,7 +58,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - 'constantsTable.ts' file and `Evaluator.readonlyNameTable` has been removed. Improvements in clear command.
 - 'Structure.ts' file with `Structure` class definition and its respective test file has been created. Some indirect reference implemented in lexer, parser and evaluator.
 - Bug fix in expansion with indexing from scalar.
-- Bug fix in test files (references to `Evaluator.initialize` changed to `new Evaluator`).
+- Bug fix in test files (references to `Evaluator.initialize` modified to `new Evaluator`).
 - Bug fix in functions 'rand' and 'randi' (`CoreFunctions.newFilledEach`).
 - Optimizations in `Evaluator.validateAssignment` (remove `left` field in return value).
 - Create `ComplexDecimal.random` using `Decimal.random` so configuration 'crypt' takes effect.
@@ -109,7 +115,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Bug fix in MultiArray constructor (dimension.length >= 2).
 - Bug fix in MultiArray.isEmpty.
 - Functions newFilled and newFilledEach in MultiArray class moved to CoreFunctions and optimized.
-- Some methods related to multiple assignment in Evaluator changed to static functions.
+- Some methods related to multiple assignment in Evaluator modified to static functions.
 
 ## 1.2.1
 - More methods and properties have been renamed to express their functions more clearly.

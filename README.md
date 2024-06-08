@@ -11,6 +11,7 @@
 [![minzip size](https://img.shields.io/bundlephobia/minzip/mathjslab)](https://unpkg.com/mathjslab/)
 [![npm package minimized gzipped size](https://img.shields.io/bundlejs/size/mathjslab)](https://unpkg.com/mathjslab/)
 [![install size](https://packagephobia.com/badge?p=mathjslab)](https://packagephobia.com/result?p=mathjslab)
+[![GitHub Created At](https://img.shields.io/github/created-at/sergiolindau/mathjslab-calculator)](https://github.com/sergiolindau/mathjslab-calculator)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8396265.svg)](https://doi.org/10.5281/zenodo.8396265)
 
 > An interpreter with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
