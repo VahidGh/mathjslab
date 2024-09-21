@@ -5,7 +5,7 @@ export type StringQuote = '"' | "'";
 export class CharString {
     public str: string;
     public quote: StringQuote;
-    public static readonly STRING = ComplexDecimal.COMPLEX + 1;
+    public static readonly STRING = 3;
     public readonly type = CharString.STRING;
     public parent: any;
     constructor(str: string, quote: StringQuote = '"') {

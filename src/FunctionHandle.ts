@@ -1,10 +1,9 @@
 import { ComplexDecimal } from './ComplexDecimal';
-import { Structure } from './Structure';
 import * as AST from './AST';
 import { Evaluator } from './Evaluator';
 
 export class FunctionHandle {
-    public static readonly FUNCTION_HANDLE = Structure.STRUCTURE + 1;
+    public static readonly FUNCTION_HANDLE = 5;
     public readonly type = FunctionHandle.FUNCTION_HANDLE;
     public parent: any;
     public id: string | null;

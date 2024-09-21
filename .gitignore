@@ -12,6 +12,9 @@ src/MathJSLabParser.ts
 src/MathJSLabParser.tokens
 src/MathJSLabParser.interp
 
+# Resources directory
+res/
+
 # Build directory
 lib/
 

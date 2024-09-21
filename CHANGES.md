@@ -2,6 +2,28 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.10
+- The 'node-html-parser', 'tsconfig-paths' and 'tsx' packages have been
+installed as development dependencies. The 'ts-node' package was kept because
+of the 'webpack.config.ts' file. Webpack uses 'ts-node' when the configuration
+file is coded in TypeScript. All dependencies have been updated.
+- The 'jest.config.js' file has been created and the jest configurations in
+the 'package.json' file have been moved to it.
+- The "keywords" field in 'package.json' file was modified.
+- The 'script' directory with build scripts has been created. It contains the
+'helper' directory with useful functions for the build scripts.
+- The 'eslint.config.js' file has been changed to include more flexible rules
+for the 'script' directory.
+- The 'clean-package-lock.cjs' script has been created. It removes the
+'package-lock.json' file and the 'node_modules' directory.
+- The 'build-resources.ts' script has been created. It downloads the latest
+version of ANTLR into the resources directory for use by the project.
+- The identifier property of the base classes (the first property of the class
+of type `public static readonly`, followed by the class name in uppercase) was
+set in each file by the literal numeric value in the files
+'FunctionHandle.ts', 'CharString.ts' and 'Structure.ts'. This was necessary to
+fix errors occurring in jest tests.
+
 ## 1.5.9
 - Prettier settings in 'eslint.config.js'.
 - File '.npmrc' created. Configuration legacy-peer-deps set to true.
@@ -12,38 +34,51 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Badge changes in 'README.md' file. Using badges from https://shields.io/ .
 - Dependecies update.
 - Bug fix in functions 'asin', 'acsc', 'asec' and 'acot'.
-- Configurations in '.eslintrc.js' (removed) modified to flat config in 'eslint.config.js'.
+- Configurations in '.eslintrc.js' (removed) modified to flat config in
+'eslint.config.js'.
 
 ## 1.5.7
 - MathJSLab logo in README.md file.
 - User function 'isstruc'.
 
 ## 1.5.6
-- Optimizations in `CoreFunctions.throwInvalidCallError` (`test`parameter) and all `CoreFunctions` methods that use it.
+- Optimizations in `CoreFunctions.throwInvalidCallError` (`test`parameter) and
+all `CoreFunctions` methods that use it.
 - More strong type definitions in 'CoreFunctions.ts' file.
-- User functions 'isscalar', 'ismatrix', 'isvector', 'iscell', 'isrow' and 'iscolumn'.
+- User functions 'isscalar', 'ismatrix', 'isvector', 'iscell', 'isrow' and
+'iscolumn'.
 
 ## 1.5.5
 - Sizes and Zenodo badges in 'README.md'.
 - User function 'squeeze'.
 
 ## 1.5.4
-- Bug fix in `MultiArray.evaluate` (array of cells be evaluated in the same way as common array now solved).
+- Bug fix in `MultiArray.evaluate` (array of cells be evaluated in the same
+way as common array now solved).
 
 ## 1.5.3
-- Bug fix in `MultiArray.evaluate` (evaluating null array throws error now solved).
+- Bug fix in `MultiArray.evaluate` (evaluating null array throws error now
+solved).
 
 ## 1.5.2
-- Bug fix in `MultiArray.evaluate`. Before the method was page-oriented. Now is full dimensional using recursion and concatenation.
+- Bug fix in `MultiArray.evaluate`. Before the method was page-oriented. Now
+is full dimensional using recursion and concatenation.
 - Exports `ElementType` from 'MultiArray.ts' in 'lib.ts'.
-- User functions 'repmat', 'colon', 'linspace', 'logspace', 'meshgrid' and 'ndgrid'.
+- User functions 'repmat', 'colon', 'linspace', 'logspace', 'meshgrid' and
+'ndgrid'.
 - Optimizations in `MultiArray.reshape`.
 
 ## 1.5.1
 - Bug fix in `Evaluator` ('IDX' node processing).
 
 ## 1.5.0
-- The file 'FunctionHandle.ts' and its corresponding test file has been created. The `FunctionHandle` type has been created and made a member of `AST.NodeExpr` through `ElementType`. `Evaluator.nameTable` entries has been modified to `AST.NodeExpr`. Changes in `Evaluator.Evaluator`, removing function definition, and altering processing of node types 'IDENT' and 'IDX' to use function handles. Now the function definitions and use is the same like in MATLAB&reg;/Octave.
+- The file 'FunctionHandle.ts' and its corresponding test file has been
+created. The `FunctionHandle` type has been created and made a member of
+`AST.NodeExpr` through `ElementType`. `Evaluator.nameTable` entries has been
+modified to `AST.NodeExpr`. Changes in `Evaluator.Evaluator`, removing
+function definition, and altering processing of node types 'IDENT' and 'IDX'
+to use function handles. Now the function definitions and use is the same like
+in MATLAB&reg;/Octave.
 
 ## 1.4.2
 - Bug fix in indexing by colon (:).

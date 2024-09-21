@@ -1,6 +1,6 @@
 import { Decimal } from 'decimal.js';
 
-export module ComplexDecimal {
+export namespace ComplexDecimal {
     export type Rounding = Decimal.Rounding;
 
     export type Modulo = Decimal.Modulo;
