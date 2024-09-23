@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.11
+- Domain setup (mathjslab.com). Set as "homepage" in 'package.json' file. Some changes in 'README.md' file.
+
 ## 1.5.10
 - The 'node-html-parser', 'tsconfig-paths' and 'tsx' packages have been
 installed as development dependencies. The 'ts-node' package was kept because

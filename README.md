@@ -2,7 +2,7 @@
     <img src="mathjslab-logo.svg" alt="logo" width="200" height="200">
 </p>
 
-# MathJSLab
+# MathJSLab - [mathjslab.com](https://mathjslab.com/)
 
 [![npm version](https://img.shields.io/npm/v/mathjslab)](https://www.npmjs.com/package/mathjslab)
 [![npm license](https://img.shields.io/npm/l/mathjslab)](https://github.com/sergiolindau/mathjslab/blob/main/LICENSE)
@@ -22,6 +22,11 @@ This package emulates a parser and evaluator for a subset of
 [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/)
 language. It is written completely in [Typescript](https://www.typescriptlang.org/).
 
+The project page with a functional demo use of this package in a
+[Web application](https://en.wikipedia.org/wiki/Web_application) can be found
+at [mathjslab.com](https://mathjslab.com/). The repository is
+[here](https://github.com/sergiolindau/mathjslab-calculator).
+
 It can run in browser environment and implements an arbitrary precision
 arithmetics using [decimal.js](https://www.npmjs.com/package/decimal.js)
 package.
@@ -36,14 +41,10 @@ Other components besides the [parser](https://en.wikipedia.org/wiki/Parsing)
 are the evaluator, which computes the inputs, and the [MathML](https://www.w3.org/Math/)
 unparser, that generates mathematical representations of the inputs and results.
 
-This software is intended for educational purposes, to provide teachers and
+This software is intended for **educational purposes**, to provide teachers and
 students with a computer aided calculation tool that is capable of running in
 a browser environment. So it can be easily adapted to be used on different devices
 and environments.
-
-A functional [demo](https://mathjslab.netlify.app/) use of this package in a
-[Web application](https://en.wikipedia.org/wiki/Web_application) can be found
-[here](https://github.com/sergiolindau/mathjslab-calculator).
 
 ## Features
 
@@ -51,17 +52,18 @@ A functional [demo](https://mathjslab.netlify.app/) use of this package in a
 - Comes with a large set of built-in functions and constants.
 - Is easily extensible through configuration parameters passed to Evaluator constructor.
 - [Open source](https://en.wikipedia.org/wiki/Open-source_software) with fully documented code.
-- Test suites.
-- Improved [demo Web application](https://mathjslab.netlify.app/).
+- Includes test suite using [Jest](https://jestjs.io/).
+- Improved demo [Web application](https://en.wikipedia.org/wiki/Web_application) at project page: [mathjslab.com](https://mathjslab.com/).
 
 ## Browser support
 
-MathJSLab works on any [ES2016](https://262.ecma-international.org/7.0/) compatible
+**MathJSLab** works on any [ES2015](https://262.ecma-international.org/6.0/) compatible
 [JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/)
-engine, including [Node.js](https://nodejs.org/),
+engine, including [Node.js&reg;](https://nodejs.org/),
 [Chrome](https://www.google.com/chrome/),
 [Firefox](https://www.mozilla.org/en-US/firefox/),
 [Safari](https://www.apple.com/safari/),
+[Opera](https://www.opera.com),
 and [Edge](https://www.microsoft.com/edge).
 
 ## Installation
@@ -76,7 +78,7 @@ npm install mathjslab
 
 The basic API is an instantiation of `Evaluator` with optional configuration.
 
-Import MathJSLab API:
+Import **MathJSLab API**:
 
 ```typescript
 import { Evaluator, TEvaluatorConfig } from 'mathjslab';
@@ -109,7 +111,7 @@ let mathmlResult = evaluator.UnparseMathML(result);
 ## Using UNPKG CDN
 
 You can optimize your application, reducing the size of your bundle, loading
-MathJSLab via the [UNPKG](https://www.unpkg.com/) [CDN](https://en.wikipedia.org/wiki/Content_delivery_network).
+**MathJSLab** via the [UNPKG](https://www.unpkg.com/) [CDN](https://en.wikipedia.org/wiki/Content_delivery_network).
 
 ```html
 <head>
@@ -134,7 +136,20 @@ Join the community chat:
 
 [![Join the chat at https://matrix.to/#/#mathjslab:gitter.im](https://badges.gitter.im/Join%20Chat.svg)](https://matrix.to/#/#mathjslab:gitter.im?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-## Test and Build
+## Build and Test
+
+To build the project, you only need [Node.js&reg;](https://nodejs.org/) and the
+[Java Runtime Environment](https://www.oracle.com/java/) installed. The project
+dependencies are managed by npm. The build scripts download the latest version
+of ANTLR into the resources directory for use by the project. Before building
+and testing the project, run:
+
+```bash
+npm install
+npm run update
+```
+
+This will install the dependencies, update all of them, and download the latest version of ANTLR, preparing any resources needed to build the project.
 
 Run the `mathjslab` tests:
 
@@ -152,7 +167,7 @@ npm run build
 
 Currently only the mathematical expressions of the language are implemented. The control and loop structures are not yet implemented.
 
-There are some differences from the original MATLAB&reg;/Octave language. The main difference is
+There are some differences from the original [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/). The main difference is
 that there are only one a complex numeric type. Other implemented types is
 boolean, character string, structure and function handle.
 
@@ -162,7 +177,7 @@ Common arrays (not only cell arrays) can hold any type of element.
 
 >MIT License
 >
->Copyright &copy; 2016-2024 Sergio Lindau, ISBN 978-65-00-82338-7
+>Copyright &copy; 2016-2024 [Sergio Lindau](mailto:sergiolindau@gmail.com), [mathjslab.com](https://mathjslab.com/), ISBN 978-65-00-82338-7.
 >
 >Permission is hereby granted, free of charge, to any person obtaining a copy
 >of this software and associated documentation files (the "Software"), to deal

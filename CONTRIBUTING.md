@@ -1,6 +1,6 @@
 # Contributing to MathJSLab
 
-The following is a set of guidelines for contributing to the MathJSLab
+The following is a set of guidelines for contributing to the [MathJSLab](https://mathjslab.com/)
 package. These are mostly guidelines, not rules. Use your best judgment and
 feel free to propose changes to this document in a pull request.
 
@@ -18,7 +18,9 @@ file for each project to see which project your contribution fits into.
 This project has an ISBN assigned to it. Whenever significant changes are made
 to the project, or new contributing authors are added, a new ISBN will be
 assigned to the project. Therefore, the project must continue to be
-educational software.
+**educational software**.
+
+The project page is at [mathjslab.com](https://mathjslab.com/) with a demo Web Application.
 
 #### Table Of Contents
 
@@ -87,7 +89,7 @@ export default ClassName
 
 ## Work fronts
 
-The MathJSLab project started almost a decade ago, but it is still in its
+The **MathJSLab** project started almost a decade ago, but it is still in its
 infancy. There are several work fronts, some already open, others yet to
 begin, none yet completed.
 
@@ -107,7 +109,7 @@ You are welcome to contribute to this project. I will be very grateful if you
 participate in some way.
 
 Thanks,
-Sergio Lindau
+[Sergio Lindau](mailto:sergiolindau@gmail.com)
 
 ## References
 

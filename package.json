@@ -1,6 +1,6 @@
 {
   "name": "mathjslab",
-  "version": "1.5.10",
+  "version": "1.5.11",
   "description": "MathJSLab - An interpreter with language syntax like MATLAB®/Octave. ISBN 978-65-00-82338-7",
   "main": "lib/mathjslab.js",
   "types": "lib/src/lib.d.ts",
@@ -9,6 +9,7 @@
     "url": "git+https://github.com/sergiolindau/mathjslab.git"
   },
   "keywords": [
+    "MathJSLab",
     "Mathematics",
     "Educational",
     "MATLAB",
@@ -26,7 +27,7 @@
   "bugs": {
     "url": "https://github.com/sergiolindau/mathjslab/issues"
   },
-  "homepage": "https://github.com/sergiolindau/mathjslab#readme",
+  "homepage": "https://mathjslab.com/",
   "scripts": {
     "clean:package-lock": "node script/clean-package-lock.cjs",
     "clean:resources": "rimraf res",
@@ -54,6 +55,11 @@
     "build": "webpack --mode production",
     "postbuild": "npm run clean:antlr:tokens:interp",
     "do:all": "npm run clean && npm run update && npm run format:lint && npm run build && npm run add:commit:push:publish"
+  },
+  "browser": {
+    "fs": false,
+    "os": false,
+    "path": false
   },
   "dependencies": {
     "antlr4": "^4.13.2",
@@ -85,10 +91,5 @@
     "typescript": "^5.6.2",
     "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4"
-  },
-  "browser": {
-    "fs": false,
-    "os": false,
-    "path": false
   }
 }
