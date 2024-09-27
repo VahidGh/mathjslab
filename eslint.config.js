@@ -1,3 +1,8 @@
+/**
+ * eslint.config.js: ESLint configuration.
+ */
+
+// @ts-nocheck
 const globals = require('globals');
 const tsPlugin = require('@typescript-eslint/eslint-plugin');
 const tsParser = require('@typescript-eslint/parser');
@@ -24,7 +29,7 @@ module.exports = [
             '@typescript-eslint': tsPlugin,
             prettier: prettierPlugin,
         },
-        ignores: ['eslint.config.js', 'jest.config.js', 'res/**', 'lib/**', 'src/MathJSLabLexer.ts', 'src/MathJSLabParser.ts'],
+        ignores: ['eslint.config.*', 'jest.config.*', 'webpack.config.*', '**/*.spec.*', 'res/**', 'lib/**', 'src/MathJSLabLexer.ts', 'src/MathJSLabParser.ts'],
         rules: {
             ...tsPlugin.configs['eslint-recommended'].rules,
             ...tsPlugin.configs['recommended'].rules,
@@ -44,7 +49,7 @@ module.exports = [
         },
     },
     {
-        files: ['script/**/*.ts'],
+        files: ['script/**/*.ts', 'eslint.config.*', 'jest.config.*', 'webpack.config.*', '**/*.spec.*'],
         languageOptions: {
             parser: tsParser,
             parserOptions: {

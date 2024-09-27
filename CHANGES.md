@@ -2,8 +2,18 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.12
+- Some changes in 'README.md' file (links to mathjslab.com).
+- Exclude eslint and jest config from build ('tsconfig.build.json' file).
+- Improvements to the 'webpack.config.ts' file to setup
+`configuration.mode = argv.mode`. Webpack configuration was hardcoded as
+a factory.
+- The 'eslint.config.js' file has been changed to include more granular rules
+for the 'script' directory and configuration files.
+
 ## 1.5.11
-- Domain setup (mathjslab.com). Set as "homepage" in 'package.json' file. Some changes in 'README.md' file.
+- Domain setup (mathjslab.com). Set as "homepage" in 'package.json' file. Some
+changes in 'README.md' file.
 
 ## 1.5.10
 - The 'node-html-parser', 'tsconfig-paths' and 'tsx' packages have been

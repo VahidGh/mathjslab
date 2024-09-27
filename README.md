@@ -1,8 +1,8 @@
 <p align="center">
-    <img src="mathjslab-logo.svg" alt="logo" width="200" height="200">
+    <a href="https://mathjslab.com/" target="_blank" rel="noopener"><img src="mathjslab-logo.svg" alt="logo" width="200" height="200" /></a>
 </p>
 
-# MathJSLab - [mathjslab.com](https://mathjslab.com/)
+# [MathJSLab](https://mathjslab.com/) - [mathjslab.com](https://mathjslab.com/)
 
 [![npm version](https://img.shields.io/npm/v/mathjslab)](https://www.npmjs.com/package/mathjslab)
 [![npm license](https://img.shields.io/npm/l/mathjslab)](https://github.com/sergiolindau/mathjslab/blob/main/LICENSE)
@@ -51,13 +51,13 @@ and environments.
 - Runs on any [JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/) engine.
 - Comes with a large set of built-in functions and constants.
 - Is easily extensible through configuration parameters passed to Evaluator constructor.
-- [Open source](https://en.wikipedia.org/wiki/Open-source_software) with fully documented code.
+- [Open source](https://en.wikipedia.org/wiki/Open-source_software) with fully documented code: [MIT License](https://opensource.org/license/mit).
 - Includes test suite using [Jest](https://jestjs.io/).
-- Improved demo [Web application](https://en.wikipedia.org/wiki/Web_application) at project page: [mathjslab.com](https://mathjslab.com/).
+- Improved demo [Web application](https://en.wikipedia.org/wiki/Web_application) at project page: [mathjslab.com](https://mathjslab.com/) ([repository](https://github.com/sergiolindau/mathjslab-calculator)).
 
 ## Browser support
 
-**MathJSLab** works on any [ES2015](https://262.ecma-international.org/6.0/) compatible
+[MathJSLab](https://mathjslab.com/) works on any [ES2015](https://262.ecma-international.org/6.0/) compatible
 [JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/)
 engine, including [Node.js&reg;](https://nodejs.org/),
 [Chrome](https://www.google.com/chrome/),
@@ -76,9 +76,9 @@ npm install mathjslab
 
 ## Usage
 
-The basic API is an instantiation of `Evaluator` with optional configuration.
+The basic [API](https://en.wikipedia.org/wiki/API) is an instantiation of `Evaluator` class with optional configuration.
 
-Import **MathJSLab API**:
+Import **[MathJSLab](https://mathjslab.com/) [API](https://en.wikipedia.org/wiki/API)**:
 
 ```typescript
 import { Evaluator, TEvaluatorConfig } from 'mathjslab';
@@ -87,31 +87,31 @@ import { Evaluator, TEvaluatorConfig } from 'mathjslab';
 Initialize evaluator with:
 
 ```typescript
-let evaluator = new Evaluator(EvaluatorConfiguration);
+let evaluator: Evaluator = new Evaluator(EvaluatorConfiguration);
 ```
 
 ### Examples:
 
 * Parsing
 ```typescript
-let input = evaluator.Parse('x=sqrt(1+2*3)');
+let input: AST.NodeInput = evaluator.Parse('x=sqrt(1+2*3)');
 ```
 
 * Evaluation
 ```typescript
-let result = evaluator.Evaluate(input);
+let result: AST.NodeInput = evaluator.Evaluate(input);
 ```
 
 * MathML generation
 ```typescript
-let mathmlInput = evaluator.UnparseMathML(input);
-let mathmlResult = evaluator.UnparseMathML(result);
+let mathmlInput: string = evaluator.UnparseMathML(input);
+let mathmlResult: string = evaluator.UnparseMathML(result);
 ```
 
 ## Using UNPKG CDN
 
 You can optimize your application, reducing the size of your bundle, loading
-**MathJSLab** via the [UNPKG](https://www.unpkg.com/) [CDN](https://en.wikipedia.org/wiki/Content_delivery_network).
+[MathJSLab](https://mathjslab.com/) via the [UNPKG](https://www.unpkg.com/) [CDN](https://en.wikipedia.org/wiki/Content_delivery_network).
 
 ```html
 <head>
@@ -145,11 +145,10 @@ of ANTLR into the resources directory for use by the project. Before building
 and testing the project, run:
 
 ```bash
-npm install
 npm run update
 ```
 
-This will install the dependencies, update all of them, and download the latest version of ANTLR, preparing any resources needed to build the project.
+This will update the dependencies, install all of them, and download the latest version of ANTLR, preparing any resources needed to build the project.
 
 Run the `mathjslab` tests:
 
@@ -167,9 +166,10 @@ npm run build
 
 Currently only the mathematical expressions of the language are implemented. The control and loop structures are not yet implemented.
 
-There are some differences from the original [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/). The main difference is
-that there are only one a complex numeric type. Other implemented types is
-boolean, character string, structure and function handle.
+There are some differences from the original
+[MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/).
+The main difference is that there are only one a complex numeric type. Other
+implemented types is boolean, character string, structure and function handle.
 
 Common arrays (not only cell arrays) can hold any type of element.
 

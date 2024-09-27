@@ -1,10 +1,16 @@
+/**
+ * jest.config.js: Jest configuration.
+ */
+
+// @ts-nocheck
+
 module.exports = {
     preset: 'ts-jest',
-    moduleFileExtensions: ['js', 'json', 'ts'],
+    moduleFileExtensions: ['ts', 'js', 'json'],
     rootDir: '.',
     testRegex: '.*\\.spec\\.ts$',
     transform: {
-        '^.+\\.(t|j)s$': 'ts-jest',
+        '^.+\\.[tj]s$': 'ts-jest',
     },
     testEnvironment: 'node',
 };

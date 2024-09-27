@@ -1,6 +1,6 @@
 {
   "name": "mathjslab",
-  "version": "1.5.11",
+  "version": "1.5.12",
   "description": "MathJSLab - An interpreter with language syntax like MATLAB®/Octave. ISBN 978-65-00-82338-7",
   "main": "lib/mathjslab.js",
   "types": "lib/src/lib.d.ts",
@@ -35,6 +35,7 @@
     "clean:antlr:tokens:interp": "rimraf ./src/.antlr ./src/MathJSLabLexer.tokens ./src/MathJSLabLexer.interp ./src/MathJSLabParser.tokens ./src/MathJSLabParser.interp",
     "clean:parser": "npm run clean:antlr:tokens:interp && rimraf ./src/MathJSLabLexer.ts ./src/MathJSLabParser.ts",
     "clean": "npm run clean:resources && npm run clean:parser && npm run clean:build",
+    "clean:all": "npm run clean && npm run clean:package-lock",
     "update": "npx ncu -u && npm install && npm run build:resources",
     "git:add": "git add .",
     "git:commit": "git commit -m \"Initial Commit\"",
@@ -47,12 +48,13 @@
     "format:lint": "npm run format && npm run lint",
     "pretest": "npm run build:parser",
     "test": "jest --verbose",
+    "pretest:watch": "npm run build:parser",
     "test:watch": "jest --watch",
     "tsx": "tsx --require tsconfig-paths/register",
     "build:resources": "npm run tsx script/build-resources.ts",
     "build:parser": "set CLASSPATH=./res/antlr-complete.jar && java org.antlr.v4.Tool ./src/MathJSLabLexer.g4 ./src/MathJSLabParser.g4 -Dlanguage=TypeScript -no-visitor -no-listener -o ./src/",
     "prebuild": "npm run build:parser",
-    "build": "webpack --mode production",
+    "build": "tsx --require tsconfig-paths/register ./node_modules/webpack/bin/webpack --mode production",
     "postbuild": "npm run clean:antlr:tokens:interp",
     "do:all": "npm run clean && npm run update && npm run format:lint && npm run build && npm run add:commit:push:publish"
   },
@@ -61,20 +63,16 @@
     "os": false,
     "path": false
   },
-  "dependencies": {
-    "antlr4": "^4.13.2",
-    "decimal.js": "^10.4.3"
-  },
   "devDependencies": {
     "@types/debug": "^4.1.12",
     "@types/eslint-config-prettier": "^6.11.3",
     "@types/jest": "29.5.13",
-    "@types/node": "^22.5.5",
+    "@types/node": "^22.7.3",
     "@types/supertest": "^6.0.2",
     "@types/webpack": "^5.28.5",
-    "@typescript-eslint/eslint-plugin": "^8.6.0",
-    "@typescript-eslint/parser": "^8.6.0",
-    "eslint": "^9.11.0",
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "eslint": "^9.11.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.30.0",
     "eslint-plugin-prettier": "^5.2.1",
@@ -85,11 +83,14 @@
     "rimraf": "^6.0.1",
     "ts-jest": "29.2.5",
     "ts-loader": "^9.5.1",
-    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
-    "webpack": "^5.94.0",
+    "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "antlr4": "^4.13.2",
+    "decimal.js": "^10.4.3"
   }
 }
