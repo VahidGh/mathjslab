@@ -16,7 +16,9 @@ export default (url: http.RequestOptions | string | URL, callback?: (res: http.I
     } else if (url.constructor.name === 'URL' || typeof url === 'object') {
         protocol = url.protocol ?? 'https:';
     } else {
-        throw new URIError('protocol unrecognized.');
+        const message = 'httpGet: Protocol not recognized.';
+        console.error(message);
+        throw new URIError(message);
     }
     return (protocol === 'https:' ? https : http).get(url, callback);
 };

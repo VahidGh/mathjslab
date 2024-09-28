@@ -4,19 +4,23 @@
 
 # [MathJSLab](https://mathjslab.com/) - [mathjslab.com](https://mathjslab.com/)
 
-[![npm version](https://img.shields.io/npm/v/mathjslab)](https://www.npmjs.com/package/mathjslab)
-[![npm license](https://img.shields.io/npm/l/mathjslab)](https://github.com/sergiolindau/mathjslab/blob/main/LICENSE)
-[![npm downloads](https://img.shields.io/npm/d18m/mathjslab)](https://www.npmjs.com/package/mathjslab)
-[![npm bundle size](https://img.shields.io/bundlephobia/min/mathjslab)](https://unpkg.com/mathjslab/)
-[![minzip size](https://img.shields.io/bundlephobia/minzip/mathjslab)](https://unpkg.com/mathjslab/)
-[![npm package minimized gzipped size](https://img.shields.io/bundlejs/size/mathjslab)](https://unpkg.com/mathjslab/)
-[![install size](https://packagephobia.com/badge?p=mathjslab)](https://packagephobia.com/result?p=mathjslab)
-[![GitHub Created At](https://img.shields.io/github/created-at/sergiolindau/mathjslab-calculator)](https://github.com/sergiolindau/mathjslab-calculator)
+[![NPM Version](https://img.shields.io/npm/v/mathjslab)](https://www.npmjs.com/package/mathjslab)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fmathjslab.com%2F)](https://mathjslab.com/)
+[![GitHub Created At](https://img.shields.io/github/created-at/sergiolindau/mathjslab-calculator)](https://github.com/sergiolindau/mathjslab)
+[![NPM License](https://img.shields.io/npm/l/mathjslab)](https://github.com/sergiolindau/mathjslab/blob/main/LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8396265.svg)](https://doi.org/10.5281/zenodo.8396265)
+[![ISBN](https://img.shields.io/badge/ISBN-978--65--00--82338--7-green?style=flat&link=https://grp.isbn-international.org/search/piid_solr?keys=978-65-00-82338-7)](https://grp.isbn-international.org/search/piid_solr?keys=978-65-00-82338-7)
+[![NPM Downloads](https://img.shields.io/npm/d18m/mathjslab)](https://www.npmjs.com/package/mathjslab)
+[![jsDelivr hits (npm)](https://img.shields.io/jsdelivr/npm/hy/mathjslab)](https://www.jsdelivr.com/package/npm/mathjslab)
+[![Libraries.io SourceRank](https://img.shields.io/librariesio/sourcerank/npm/mathjslab)](https://libraries.io/npm/mathjslab)
+[![NPM Bundle Size](https://img.shields.io/bundlephobia/min/mathjslab)](https://www.npmjs.com/package/mathjslab)
+[![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/mathjslab)](https://www.npmjs.com/package/mathjslab)
+[![Minzip Size](https://img.shields.io/bundlephobia/minzip/mathjslab)](https://www.npmjs.com/package/mathjslab)
+[![NPM package minimized gzipped size](https://img.shields.io/bundlejs/size/mathjslab)](https://www.npmjs.com/package/mathjslab)
 
 > An interpreter with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
 
-**ISBN 978-65-00-82338-7**
+**[ISBN 978-65-00-82338-7](https://grp.isbn-international.org/search/piid_solr?keys=978-65-00-82338-7)**
 
 This package emulates a parser and evaluator for a subset of
 [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/)
@@ -50,9 +54,9 @@ and environments.
 
 - Runs on any [JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/) engine.
 - Comes with a large set of built-in functions and constants.
-- Is easily extensible through configuration parameters passed to Evaluator constructor.
+- Is easily extensible through configuration parameters passed to `Evaluator` constructor.
 - [Open source](https://en.wikipedia.org/wiki/Open-source_software) with fully documented code: [MIT License](https://opensource.org/license/mit).
-- Includes test suite using [Jest](https://jestjs.io/).
+- Includes test suite using [Jest](https://jestjs.io/) [framework](https://en.wikipedia.org/wiki/Software_framework).
 - Improved demo [Web application](https://en.wikipedia.org/wiki/Web_application) at project page: [mathjslab.com](https://mathjslab.com/) ([repository](https://github.com/sergiolindau/mathjslab-calculator)).
 
 ## Browser support
@@ -84,44 +88,68 @@ Import **[MathJSLab](https://mathjslab.com/) [API](https://en.wikipedia.org/wiki
 import { Evaluator, TEvaluatorConfig } from 'mathjslab';
 ```
 
-Initialize evaluator with:
+Instantiate the `Evaluator` class with:
 
 ```typescript
 let evaluator: Evaluator = new Evaluator(EvaluatorConfiguration);
 ```
 
-### Examples:
+### Examples
 
-* Parsing
+* **Parsing**:
 ```typescript
 let input: AST.NodeInput = evaluator.Parse('x=sqrt(1+2*3)');
 ```
 
-* Evaluation
+* **Evaluation**:
 ```typescript
 let result: AST.NodeInput = evaluator.Evaluate(input);
 ```
 
-* MathML generation
+* **[MathML](https://www.w3.org/Math/) generation**:
 ```typescript
 let mathmlInput: string = evaluator.UnparseMathML(input);
 let mathmlResult: string = evaluator.UnparseMathML(result);
 ```
 
-## Using UNPKG CDN
+## Using a [CDN](https://en.wikipedia.org/wiki/Content_delivery_network)
 
-You can optimize your application, reducing the size of your bundle, loading
-[MathJSLab](https://mathjslab.com/) via the [UNPKG](https://www.unpkg.com/) [CDN](https://en.wikipedia.org/wiki/Content_delivery_network).
+You can optimize your application by reducing the size of your bundle by
+loading [MathJSLab package](https://www.npmjs.com/package/mathjslab) through a
+[CDN](https://en.wikipedia.org/wiki/Content_delivery_network).
+
+You can use [UNPKG](https://unpkg.com/), [jsDelivr](https://www.jsdelivr.com/),
+or any other [CDN](https://en.wikipedia.org/wiki/Content_delivery_network)
+that delivers content from the [npm repository](https://www.npmjs.com/).
+
+
+### Using [UNPKG](https://unpkg.com/)
+
+To load [MathJSLab package](https://www.npmjs.com/package/mathjslab) through
+[UNPKG](https://unpkg.com/browse/mathjslab/)
+[CDN](https://en.wikipedia.org/wiki/Content_delivery_network) copy the
+following [HTML](https://en.wikipedia.org/wiki/HTML) code:
 
 ```html
-<head>
-    ...
-    <script defer type="module" src="https://www.unpkg.com/mathjslab"></script>
-    ...
-</head>
+<script src="https://www.unpkg.com/mathjslab"></script>
 ```
 
-The module will be loaded with `mathjslab` name. You can instantiate `Evaluator` with:
+### Using [jsDelivr](https://www.jsdelivr.com/)
+
+[![jsDelivr hits (npm)](https://img.shields.io/jsdelivr/npm/hy/mathjslab)](https://www.jsdelivr.com/package/npm/mathjslab)
+
+To load [MathJSLab package](https://www.npmjs.com/package/mathjslab) through
+[jsDelivr](https://www.jsdelivr.com/package/npm/mathjslab)
+[CDN](https://en.wikipedia.org/wiki/Content_delivery_network) copy the
+following [HTML](https://en.wikipedia.org/wiki/HTML) code:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/mathjslab/lib/mathjslab.min.js"></script>
+```
+
+### [MathJSLab](https://www.npmjs.com/package/mathjslab) [module](https://github.com/umdjs/umd) use
+
+The [UMD module](https://github.com/umdjs/umd) will be loaded with `mathjslab` name. You can instantiate `Evaluator` with:
 
 ```typescript
 let evaluator = new mathjslab.Evaluator(EvaluatorConfiguration);
@@ -136,31 +164,64 @@ Join the community chat:
 
 [![Join the chat at https://matrix.to/#/#mathjslab:gitter.im](https://badges.gitter.im/Join%20Chat.svg)](https://matrix.to/#/#mathjslab:gitter.im?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-## Build and Test
+## Project build and test
 
-To build the project, you only need [Node.js&reg;](https://nodejs.org/) and the
-[Java Runtime Environment](https://www.oracle.com/java/) installed. The project
-dependencies are managed by npm. The build scripts download the latest version
-of ANTLR into the resources directory for use by the project. Before building
-and testing the project, run:
+To build the project, you only need [Node.js&reg;](https://nodejs.org/) and
+the [Java Runtime Environment](https://www.oracle.com/java/) installed. The
+project build and dependencies are managed by
+[npm](https://www.npmjs.com/package/npm) through scripts in the
+[`package.json`](https://github.com/sergiolindau/mathjslab/blob/main/package.json)
+file. The build scripts download the latest version of
+[ANTLR](https://www.antlr.org/) into the resources directory for use by the
+project.
+
+The test suite uses the
+[Jest](https://jestjs.io/)
+[framework](https://en.wikipedia.org/wiki/Software_framework).
+
+* **Before building and testing** the project, to **initialize** the workspace, run:
 
 ```bash
 npm run update
 ```
 
-This will update the dependencies, install all of them, and download the latest version of ANTLR, preparing any resources needed to build the project.
+This will update the dependencies, install all of them, and download the
+latest version of ANTLR, preparing any resources needed to build the project.
 
-Run the `mathjslab` tests:
+* Run the `mathjslab` **tests**:
 
 ```bash
 npm run test
 ```
 
-Build `mathjslab`:
+* **Format** and **lint** `mathjslab` code:
+
+```bash
+npm run format:lint
+```
+
+* **Build** `mathjslab` package:
 
 ```bash
 npm run build
 ```
+
+* Workspace **cleanup**:
+
+To clean build files use:
+
+```bash
+npm run clean
+```
+
+To delete resources, `package-lock.json` file and `node_modules` directory too, use:
+
+```bash
+npm run clean:all
+```
+
+Before run this command you will need to do workspace setup running
+`npm run update` again.
 
 ## Language subset
 
@@ -175,9 +236,9 @@ Common arrays (not only cell arrays) can hold any type of element.
 
 ## License
 
->MIT License
+>[MIT License](https://opensource.org/license/mit)
 >
->Copyright &copy; 2016-2024 [Sergio Lindau](mailto:sergiolindau@gmail.com), [mathjslab.com](https://mathjslab.com/), ISBN 978-65-00-82338-7.
+>Copyright &copy; 2016-2024 [Sergio Lindau](mailto:sergiolindau@gmail.com), [mathjslab.com](https://mathjslab.com/), [ISBN 978-65-00-82338-7](https://grp.isbn-international.org/search/piid_solr?keys=978-65-00-82338-7).
 >
 >Permission is hereby granted, free of charge, to any person obtaining a copy
 >of this software and associated documentation files (the "Software"), to deal

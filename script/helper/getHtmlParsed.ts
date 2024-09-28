@@ -24,6 +24,7 @@ export default async (url: http.RequestOptions | string | URL, options?: Partial
                 resolve(root);
             });
             response.on('error', (err: Error) => {
+                console.error(`getHtmlParsed: ${err.message}`);
                 reject(err.message);
             });
         });

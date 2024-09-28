@@ -1,7 +1,7 @@
 {
   "name": "mathjslab",
-  "version": "1.5.12",
-  "description": "MathJSLab - An interpreter with language syntax like MATLAB®/Octave. ISBN 978-65-00-82338-7",
+  "version": "1.5.13",
+  "description": "MathJSLab - An interpreter with language syntax like MATLAB®/Octave, ISBN 978-65-00-82338-7.",
   "main": "lib/mathjslab.js",
   "types": "lib/src/lib.d.ts",
   "repository": {
@@ -16,6 +16,7 @@
     "Octave",
     "MathML",
     "ANTLR",
+    "ANTLR4",
     "math",
     "lexer",
     "parser",
@@ -32,10 +33,11 @@
     "clean:package-lock": "node script/clean-package-lock.cjs",
     "clean:resources": "rimraf res",
     "clean:build": "rimraf lib",
-    "clean:antlr:tokens:interp": "rimraf ./src/.antlr ./src/MathJSLabLexer.tokens ./src/MathJSLabLexer.interp ./src/MathJSLabParser.tokens ./src/MathJSLabParser.interp",
-    "clean:parser": "npm run clean:antlr:tokens:interp && rimraf ./src/MathJSLabLexer.ts ./src/MathJSLabParser.ts",
-    "clean": "npm run clean:resources && npm run clean:parser && npm run clean:build",
-    "clean:all": "npm run clean && npm run clean:package-lock",
+    "clean:parser-tokens-interp": "rimraf ./src/.antlr ./src/MathJSLabLexer.tokens ./src/MathJSLabLexer.interp ./src/MathJSLabParser.tokens ./src/MathJSLabParser.interp",
+    "clean:parser-src": "rimraf ./src/MathJSLabLexer.ts ./src/MathJSLabParser.ts",
+    "clean:parser": "npm run clean:parser-src && npm run clean:parser-tokens-interp",
+    "clean": "npm run clean:build && npm run clean:parser",
+    "clean:all": "npm run clean && npm run clean:resources && npm run clean:package-lock",
     "update": "npx ncu -u && npm install && npm run build:resources",
     "git:add": "git add .",
     "git:commit": "git commit -m \"Initial Commit\"",
@@ -55,8 +57,7 @@
     "build:parser": "set CLASSPATH=./res/antlr-complete.jar && java org.antlr.v4.Tool ./src/MathJSLabLexer.g4 ./src/MathJSLabParser.g4 -Dlanguage=TypeScript -no-visitor -no-listener -o ./src/",
     "prebuild": "npm run build:parser",
     "build": "tsx --require tsconfig-paths/register ./node_modules/webpack/bin/webpack --mode production",
-    "postbuild": "npm run clean:antlr:tokens:interp",
-    "do:all": "npm run clean && npm run update && npm run format:lint && npm run build && npm run add:commit:push:publish"
+    "do:all": "npm run clean:all && npm run update && npm run format:lint && npm run test && npm run build && npm run add:commit:push:publish"
   },
   "browser": {
     "fs": false,
@@ -67,7 +68,7 @@
     "@types/debug": "^4.1.12",
     "@types/eslint-config-prettier": "^6.11.3",
     "@types/jest": "29.5.13",
-    "@types/node": "^22.7.3",
+    "@types/node": "^22.7.4",
     "@types/supertest": "^6.0.2",
     "@types/webpack": "^5.28.5",
     "@typescript-eslint/eslint-plugin": "^8.7.0",

@@ -11,8 +11,7 @@ const resourceDir = 'res';
 
 (async () => {
     console.log(`Running ${__filename} ...`);
-
-    console.log('Getting the latest version of ANTLR ...');
+    console.warn('Getting the latest version of ANTLR ...');
     const links = Array.from(((await getHtmlParsed('https://www.antlr.org/download.html')) as unknown as HTMLElement).querySelectorAll('a'));
     let antlrVersion = '';
     const antlrUrl =
@@ -50,6 +49,6 @@ const resourceDir = 'res';
     } else {
         console.log('The last version of ANTLR is installed.');
     }
-    console.log('Getting the latest version of ANTLR done.');
-    console.log(`Running ${__filename} done.`);
+    console.warn('Getting the latest version of ANTLR done.');
+    console.log(`Running ${__filename} done.\n\n`);
 })();

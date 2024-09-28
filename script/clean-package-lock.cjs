@@ -6,12 +6,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 console.log(`Running ${__filename} ...`);
-console.log('Removing package-lock.json file and node_modules directory ...');
+console.warn('Removing package-lock.json file and node_modules directory ...');
 try {
     const dirPath = path.resolve(__dirname, '..', 'node_modules');
     fs.rmSync(dirPath, { recursive: true, force: true });
+    console.log(`${dirPath} removed.`);
 } catch (err) {
     console.error(`Error removing ${dirPath} : ${err.message}`);
+    console.error('ignoring...');
 }
 const filePath = path.resolve(__dirname, '..', 'package-lock.json');
 try {
@@ -20,6 +22,7 @@ try {
     console.log(`${filePath} removed.`);
 } catch (err) {
     console.error(`Error removing ${filePath} : ${err.message}`);
+    console.error('ignoring...');
 }
-console.log('Removing package-lock.json file and node_modules directory done.');
-console.log(`Running ${__filename} done.`);
+console.warn('Removing package-lock.json file and node_modules directory done.');
+console.log(`Running ${__filename} done.\n\n`);

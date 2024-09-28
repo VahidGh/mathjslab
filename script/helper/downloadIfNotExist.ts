@@ -32,6 +32,7 @@ export default async (url: string, filePath: string): Promise<boolean | void> =>
                     resolve(false);
                 });
                 file.on('error', (err) => {
+                    console.error(`downloadIfNotExist: ${err.message}`);
                     reject(new EvalError(err.message));
                 });
             });

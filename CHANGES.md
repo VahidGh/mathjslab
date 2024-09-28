@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.5.13
+- Changes in 'README.md' file (CDN instructions and links, badges, build
+instructions, ISBN link, etc.).
+- Changes to build scripts ('script' directory): some console messages issued
+using `console.warn` and `console.error` instead of `console.log`.
+- The structure of the build files in the 'package.json' file has been
+modified (cleanup scripts).
+
 ## 1.5.12
 - Some changes in 'README.md' file (links to mathjslab.com).
 - Exclude eslint and jest config from build ('tsconfig.build.json' file).
