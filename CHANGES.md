@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.6.0
+- Change repository owner to MathJSLab GitHub organization: https://github.com/MathJSLab .
+Changes in repository references in 'package.json' file and documentation.
+
 ## 1.5.13
 - Changes in 'README.md' file (CDN instructions and links, badges, build
 instructions, ISBN link, etc.).

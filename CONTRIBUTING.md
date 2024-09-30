@@ -8,11 +8,11 @@ I'm really glad you're reading this, because we need volunteer developers to
 help this project come to fruition.
 
 All notable changes to this project will be documented in
-[CHANGES.md](https://github.com/sergiolindau/mathjslab/blob/main/CHANGES.md) file.
+[CHANGES.md](https://github.com/MathJSLab/mathjslab/blob/main/CHANGES.md) file.
 
-Please consider contributing to the [MathJSLab Calculator](https://github.com/sergiolindau/mathjslab-calculator)
-project, which is the standard use case of the [MathJSLab](https://github.com/sergiolindau/mathjslab).
-See the [Work fronts](#work-fronts) section in the [CONTRIBUTING.md](https://github.com/sergiolindau/mathjslab/blob/main/CONTRIBUTING.md)
+Please consider contributing to the [MathJSLab Calculator](https://github.com/MathJSLab/mathjslab-calculator)
+project, which is the standard use case of the [MathJSLab](https://github.com/MathJSLab/mathjslab).
+See the [Work fronts](#work-fronts) section in the [CONTRIBUTING.md](https://github.com/MathJSLab/mathjslab/blob/main/CONTRIBUTING.md)
 file for each project to see which project your contribution fits into.
 
 This project has an ISBN assigned to it. Whenever significant changes are made
@@ -34,15 +34,15 @@ The project page is at [mathjslab.com](https://mathjslab.com/) with a demo Web A
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the
-[MathJSLab Code of Conduct](https://github.com/sergiolindau/mathjslab/blob/main/CODE_OF_CONDUCT.md).
+[MathJSLab Code of Conduct](https://github.com/MathJSLab/mathjslab/blob/main/CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code. Please report
 unacceptable behavior to [sergiolindau@gmail.com](mailto:sergiolindau@gmail.com).
 
 ## How to Contribute
 
-Check for similar previous [issues](https://github.com/sergiolindau/mathjslab/issues) before send your own.
+Check for similar previous [issues](https://github.com/MathJSLab/mathjslab/issues) before send your own.
 
-Please send a [GitHub Pull Request to MathJSLab](https://github.com/sergiolindau/mathjslab/pull/new/main)
+Please send a [GitHub Pull Request to MathJSLab](https://github.com/MathJSLab/mathjslab/pull/new/main)
 with a clear list of what you've done (read more about
 [pull requests](http://help.github.com/pull-requests/)). Please follow our
 coding conventions (below) and make sure all of your commits are atomic (one

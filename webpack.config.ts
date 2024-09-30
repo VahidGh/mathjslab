@@ -6,8 +6,7 @@ import path from 'node:path';
 import webpack from 'webpack';
 
 export default (env: any, argv: any): webpack.Configuration => {
-    console.warn('webpack.config.ts: Building production bundle.');
-    console.log('Environment variables:');
+    console.warn(`Webpack configuration path: ${__filename}\n- Building ${argv.mode} bundle.\n- Environment variables:`);
     console.table(env);
     return {
         mode: argv.mode,
