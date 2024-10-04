@@ -6,15 +6,15 @@ import path from 'node:path';
 import webpack from 'webpack';
 
 export default (env: any, argv: any): webpack.Configuration => {
-    console.warn(`Webpack configuration path: ${__filename}\n- Building ${argv.mode} bundle.\n- Environment variables:`);
+    console.warn(`Webpack configuration path: ${__filename}\n- Building ${argv.mode} bundle.\n- Build environment variables:`);
     console.table(env);
     return {
         mode: argv.mode,
-        entry: './src/lib.ts',
+        entry: path.join(__dirname, 'src', 'lib.ts'),
         module: {
             rules: [
                 {
-                    test: /\.[tj]s$/,
+                    test: /\.ts$/,
                     use: [
                         {
                             loader: 'ts-loader',
@@ -23,7 +23,7 @@ export default (env: any, argv: any): webpack.Configuration => {
                             },
                         },
                     ],
-                    exclude: [/node_modules/, /lib/, /res/, /script/, /.*\.spec\.[tj]s/],
+                    exclude: [/node_modules/, /lib/, /res/, /script/, /.*\.spec\.ts$/],
                 },
             ],
         },
@@ -31,8 +31,8 @@ export default (env: any, argv: any): webpack.Configuration => {
             extensions: ['.ts', '.js'],
         },
         output: {
-            path: path.resolve(__dirname, 'lib'),
             filename: 'mathjslab.js',
+            path: path.join(__dirname, 'lib'),
             library: {
                 name: 'mathjslab',
                 type: 'umd',

@@ -10,7 +10,7 @@ module.exports = {
     rootDir: '.',
     testRegex: '.*\\.spec\\.ts$',
     transform: {
-        '^.+\\.[tj]s$': 'ts-jest',
+        '^.+\\.ts$': 'ts-jest',
     },
     testEnvironment: 'node',
 };

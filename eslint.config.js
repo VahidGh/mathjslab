@@ -2,7 +2,6 @@
  * eslint.config.js: ESLint configuration.
  */
 
-// @ts-nocheck
 const globals = require('globals');
 const tsPlugin = require('@typescript-eslint/eslint-plugin');
 const tsParser = require('@typescript-eslint/parser');

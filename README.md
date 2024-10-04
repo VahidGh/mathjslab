@@ -18,7 +18,7 @@
 [![Minzip Size](https://img.shields.io/bundlephobia/minzip/mathjslab)](https://www.npmjs.com/package/mathjslab)
 [![NPM package minimized gzipped size](https://img.shields.io/bundlejs/size/mathjslab)](https://www.npmjs.com/package/mathjslab)
 
-> An interpreter with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
+> An [interpreter](https://en.wikipedia.org/wiki/Interpreter_(computing)) with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
 
 **[ISBN 978-65-00-82338-7](https://grp.isbn-international.org/search/piid_solr?keys=978-65-00-82338-7)**
 
@@ -51,14 +51,29 @@ students with a computer aided calculation tool that is capable of running in
 a browser environment. So it can be easily adapted to be used on different devices
 and environments.
 
+All [MathJSLab](https://mathjslab.com/)
+[interpreter](https://en.wikipedia.org/wiki/Interpreter_(computing))
+operations, functions and commands are documented in the
+[demo Web application's](https://github.com/MathJSLab/mathjslab-demo) command
+`help NAME`. Its in
+[english](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/en),
+[portuguese](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/pt)
+and [spanish](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/es).
+It can also be accessed directly from the
+[demo Web application repository](https://github.com/MathJSLab/mathjslab-demo/tree/main/help).
+Additional documentation, beyond the operations, functions and commands, is
+available in the
+[demo Web application `doc` directory](https://github.com/MathJSLab/mathjslab-demo/tree/main/doc).
+
 ## Features
 
 - Runs on any [JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/) engine.
-- Comes with a large set of built-in functions and constants.
-- Is easily extensible through configuration parameters passed to `Evaluator` constructor.
-- [Open source](https://en.wikipedia.org/wiki/Open-source_software) with fully documented code: [MIT License](https://opensource.org/license/mit).
+- Improved demo [Web application](https://en.wikipedia.org/wiki/Web_application) at project page: [mathjslab.com](https://mathjslab.com/) ([repository](https://github.com/MathJSLab/mathjslab-demo)).
+- Comes with a large set of built-in operations, functions and commands well documented in the demo [Web application](https://en.wikipedia.org/wiki/Web_application) in [english](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/en), [portuguese](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/pt) and [spanish](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/es).
+- Is easily extensible through configuration parameters passed to [`Evaluator` constructor](https://github.com/MathJSLab/mathjslab/blob/main/src/Evaluator.ts).
+- [Open source](https://opensource.org/) software with fully documented code: [MIT License](https://github.com/MathJSLab/mathjslab/blob/main/LICENSE).
 - Includes test suite using [Jest](https://jestjs.io/) [framework](https://en.wikipedia.org/wiki/Software_framework).
-- Improved demo [Web application](https://en.wikipedia.org/wiki/Web_application) at project page: [mathjslab.com](https://mathjslab.com/) ([repository](https://github.com/MathJSLab/mathjslab-calculator)).
+- Software with assigned [ISBN](https://grp.isbn-international.org/search/piid_solr?keys=978-65-00-82338-7) and [DOI](https://doi.org/10.5281/zenodo.8396265), so that it can be used in academic work and research, being referenced appropriately. Any inclusion of authors will result in an update of the [ISBN](https://grp.isbn-international.org/) records.
 
 ## Browser support
 

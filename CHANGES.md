@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.6.1
+- All dependencies have been updated.
+- Optimizations in the file 'mathjslab-logo.svg'
+- Changes in the 'webpack.config.ts': `path.resolve` changed to `path.join`
+when possible. More rational path specifications. JavaScript files selection
+removed from regular expression test (`configuration.module.rules[0].test` and
+`configuration.module.rules[0].exclude`). JavaScript files selection
+removed from regular expressions in the file 'jest.config.js' too.
+- The demo Web application of MathJSLab package has been renamed to
+'mathjslab-demo', with its repository also being renamed. All references to
+its name and repository have been updated.
+- Added information to the 'README.md' file stating that the MathJSLab package
+documentation is in three languages, in the demo web application repository.
+
 ## 1.6.0
 - Change repository owner to MathJSLab GitHub organization: https://github.com/MathJSLab .
 Changes in repository references in 'package.json' file and documentation.
@@ -210,7 +224,7 @@ in MATLAB&reg;/Octave.
 ## 1.1.22
 - Fix `end` in ranges. The `colon_item` parser rule has been removed and the `end` descriptor in ranges has been created in the `primary_expr` rule.
 - Fix range expansion. Before it could only be increasing, now it can also be decreasing.
-- Reference to contribute to MathJSLab Calculator in CONTRIBUTING.md file.
+- Reference to contribute to MathJSLab Demo in CONTRIBUTING.md file.
 
 ## 1.1.21
 - Fix evaluator: 'LIST' `parent` setting.
