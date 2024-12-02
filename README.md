@@ -1,5 +1,5 @@
 <p align="center">
-    <a href="https://mathjslab.com/" target="_blank" rel="noopener"><img src="mathjslab-logo.svg" alt="logo" width="200" height="200" /></a>
+    <a href="https://mathjslab.com/" target="_blank" rel="noopener"><img src="mathjslab-logo.svg" alt="logo" width="210" height="210" /></a>
 </p>
 
 # [MathJSLab](https://mathjslab.com/) - [mathjslab.com](https://mathjslab.com/)
@@ -18,13 +18,13 @@
 [![Minzip Size](https://img.shields.io/bundlephobia/minzip/mathjslab)](https://www.npmjs.com/package/mathjslab)
 [![NPM package minimized gzipped size](https://img.shields.io/bundlejs/size/mathjslab)](https://www.npmjs.com/package/mathjslab)
 
-> An [interpreter](https://en.wikipedia.org/wiki/Interpreter_(computing)) with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [Typescript](https://www.typescriptlang.org/).
+> An [interpreter](https://en.wikipedia.org/wiki/Interpreter_(computing)) with language syntax like [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/) written in [TypeScript](https://www.typescriptlang.org/).
 
 **[ISBN 978-65-00-82338-7](https://grp.isbn-international.org/search/piid_solr?keys=978-65-00-82338-7)**
 
 This package emulates a parser and evaluator for a subset of
 [MATLAB&reg;](https://www.mathworks.com/)/[Octave](https://www.gnu.org/software/octave/)
-language. It is written completely in [Typescript](https://www.typescriptlang.org/).
+language. It is written completely in [TypeScript](https://www.typescriptlang.org/).
 
 The project page with a functional demo use of this package in a
 [Web application](https://en.wikipedia.org/wiki/Web_application) can be found
@@ -54,25 +54,25 @@ and environments.
 All [MathJSLab](https://mathjslab.com/)
 [interpreter](https://en.wikipedia.org/wiki/Interpreter_(computing))
 operations, functions and commands are documented in the
-[demo Web application's](https://github.com/MathJSLab/mathjslab-demo) command
+[demo Web application's](https://github.com/MathJSLab/mathjslab-app) command
 `help NAME`. Its in
-[english](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/en),
-[portuguese](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/pt)
-and [spanish](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/es).
+[english](https://github.com/MathJSLab/mathjslab-app/tree/main/help/en),
+[portuguese](https://github.com/MathJSLab/mathjslab-app/tree/main/help/pt)
+and [spanish](https://github.com/MathJSLab/mathjslab-app/tree/main/help/es).
 It can also be accessed directly from the
-[demo Web application repository](https://github.com/MathJSLab/mathjslab-demo/tree/main/help).
+[demo Web application repository](https://github.com/MathJSLab/mathjslab-app/tree/main/help).
 Additional documentation, beyond the operations, functions and commands, is
 available in the
-[demo Web application `doc` directory](https://github.com/MathJSLab/mathjslab-demo/tree/main/doc).
+[demo Web application `doc` directory](https://github.com/MathJSLab/mathjslab-app/tree/main/doc).
 
 ## Features
 
 - Runs on any [JavaScript](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/) engine.
-- Improved demo [Web application](https://en.wikipedia.org/wiki/Web_application) at project page: [mathjslab.com](https://mathjslab.com/) ([repository](https://github.com/MathJSLab/mathjslab-demo)).
-- Comes with a large set of built-in operations, functions and commands well documented in the demo [Web application](https://en.wikipedia.org/wiki/Web_application) in [english](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/en), [portuguese](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/pt) and [spanish](https://github.com/MathJSLab/mathjslab-demo/tree/main/help/es).
+- Improved demo [Web application](https://en.wikipedia.org/wiki/Web_application) at project page: [mathjslab.com](https://mathjslab.com/) ([repository](https://github.com/MathJSLab/mathjslab-app)).
+- Comes with a large set of built-in operations, functions and commands well documented in the demo [Web application](https://en.wikipedia.org/wiki/Web_application) in [english](https://github.com/MathJSLab/mathjslab-app/tree/main/help/en), [portuguese](https://github.com/MathJSLab/mathjslab-app/tree/main/help/pt) and [spanish](https://github.com/MathJSLab/mathjslab-app/tree/main/help/es).
+- Includes test suite using [Jest](https://jestjs.io/) [framework](https://en.wikipedia.org/wiki/Software_framework).
 - Is easily extensible through configuration parameters passed to [`Evaluator` constructor](https://github.com/MathJSLab/mathjslab/blob/main/src/Evaluator.ts).
 - [Open source](https://opensource.org/) software with fully documented code: [MIT License](https://github.com/MathJSLab/mathjslab/blob/main/LICENSE).
-- Includes test suite using [Jest](https://jestjs.io/) [framework](https://en.wikipedia.org/wiki/Software_framework).
 - Software with assigned [ISBN](https://grp.isbn-international.org/search/piid_solr?keys=978-65-00-82338-7) and [DOI](https://doi.org/10.5281/zenodo.8396265), so that it can be used in academic work and research, being referenced appropriately. Any inclusion of authors will result in an update of the [ISBN](https://grp.isbn-international.org/) records.
 
 ## Browser support
@@ -128,6 +128,8 @@ let mathmlInput: string = evaluator.UnparseMathML(input);
 let mathmlResult: string = evaluator.UnparseMathML(result);
 ```
 
+You can try [this example](https://codepen.io/Sergio-Lindau/pen/EaYjXxE) on [CodePen](https://codepen.io/).
+
 ## Using a [CDN](https://en.wikipedia.org/wiki/Content_delivery_network)
 
 You can optimize your application by reducing the size of your bundle by
@@ -137,7 +139,6 @@ loading [MathJSLab package](https://www.npmjs.com/package/mathjslab) through a
 You can use [UNPKG](https://unpkg.com/), [jsDelivr](https://www.jsdelivr.com/),
 or any other [CDN](https://en.wikipedia.org/wiki/Content_delivery_network)
 that delivers content from the [npm repository](https://www.npmjs.com/).
-
 
 ### Using [UNPKG](https://unpkg.com/)
 

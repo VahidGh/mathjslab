@@ -1,13 +1,15 @@
 /**
- * eslint.config.js: ESLint configuration.
+ * eslint.config.cjs: ESLint configuration.
  */
-
+const path = require('node:path');
 const globals = require('globals');
 const tsPlugin = require('@typescript-eslint/eslint-plugin');
 const tsParser = require('@typescript-eslint/parser');
 const prettierPlugin = require('eslint-plugin-prettier');
 const eslintConfigPrettier = require('eslint-config-prettier');
 const imprt = require('eslint-plugin-import');
+
+console.log(`Running project lint (configuration: ${path.basename(__filename)}) ...`);
 
 module.exports = [
     {
@@ -67,6 +69,7 @@ module.exports = [
         rules: {
             ...tsPlugin.configs['eslint-recommended'].rules,
             ...tsPlugin.configs['recommended'].rules,
+            '@typescript-eslint/no-require-imports': 'off',
             '@typescript-eslint/explicit-function-return-type': 'off',
             '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-unused-vars': 'warn',

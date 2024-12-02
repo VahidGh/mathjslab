@@ -9,7 +9,7 @@ import httpGet from './httpGet';
  * @param url
  * @param filePath
  */
-export default async (url: string, filePath: string): Promise<boolean | void> => {
+export default async function (url: string, filePath: string): Promise<boolean | void> {
     let exist = true;
     try {
         fs.accessSync(filePath, fs.constants.F_OK);
@@ -38,4 +38,4 @@ export default async (url: string, filePath: string): Promise<boolean | void> =>
             });
         }
     });
-};
+}

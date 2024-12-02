@@ -2,6 +2,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.6.2
+- All dependencies have been updated.
+- The MathJSLab logo has been modified. It is built on the MathJSLab
+organization repository, and the 'mathjslab' package downloads the
+logo-related files (and other common files too) from the organization
+repository using the `download-files.cjs` script, which also provides a means
+to clean up the downloaded files. The download of these files is triggered by
+the script in the `package.json` file called "download-resources".
+- The ESLint configuration file (`eslint.config.js`) has been revised.
+- An example on CodePen was added (on README.md).
+
 ## 1.6.1
 - All dependencies have been updated.
 - Optimizations in the file 'mathjslab-logo.svg'

@@ -10,7 +10,7 @@ help this project come to fruition.
 All notable changes to this project will be documented in
 [CHANGES.md](https://github.com/MathJSLab/mathjslab/blob/main/CHANGES.md) file.
 
-Please consider contributing to the [MathJSLab Demo](https://github.com/MathJSLab/mathjslab-demo)
+Please consider contributing to the [MathJSLab Demo](https://github.com/MathJSLab/mathjslab-app)
 project, which is the standard use case of the [MathJSLab](https://github.com/MathJSLab/mathjslab).
 See the [Work fronts](#work-fronts) section in the [CONTRIBUTING.md](https://github.com/MathJSLab/mathjslab/blob/main/CONTRIBUTING.md)
 file for each project to see which project your contribution fits into.
