@@ -424,15 +424,15 @@ export class Evaluator {
         // Give the lexer the input as a stream of characters.
         const inputStream = CharStreams.fromString(input);
         const lexer = new MathJSLabLexer(inputStream);
-
+        
         // Set word-list commands in lexer.
         lexer.commandNames = Object.keys(this.commandWordListTable);
-
+        
         // Create a stream of tokens and give it to the parser. Set parser to construct a parse tree.
         const tokenStream = new CommonTokenStream(lexer);
         const parser = new MathJSLabParser(tokenStream);
         parser.buildParseTrees = true;
-
+        
         // Remove error listeners and add LexerErrorListener and ParserErrorListener.
         lexer.removeErrorListeners();
         lexer.addErrorListener(new LexerErrorListener());
@@ -444,7 +444,7 @@ export class Evaluator {
             // parser.addErrorListener(new DiagnosticErrorListener());
             // parser._interp.predictionMode = PredictionMode.LL_EXACT_AMBIG_DETECTION;
         }
-
+        
         // Parse input and return AST.
         return parser.input().node;
     }
@@ -1188,6 +1188,43 @@ export class Evaluator {
                             parent: tree,
                         };
                     }
+                    case 'FOR': {
+                        /*
+                        Sample for loops:
+                        -   for i = 1:10
+                                disp(i)
+                            end
+                        -   for i = 1*10^1:10:1*10^2
+                                disp(i)
+                            end
+                        -   for i = [1 3 5 7 9]
+                                disp(i)
+                            end
+                        */
+                        let expr = tree.expression[0];
+                        expr.parent = tree;
+                        const evalExp = this.Evaluator(expr, local, fname);
+                        const rangeArray = evalExp.array[0];
+                        const variable = this.Unparse(expr.left);
+                        tree.forStmt[0].parent = tree;
+                        const forStmt0 = { ...tree.forStmt[0] };
+                        rangeArray.forEach((variableValue:any, forIndex:any) => {
+                            variableValue = this.Unparse(variableValue);
+                            if (forIndex > 0) {
+                                tree.forStmt.push(forStmt0);
+                            }
+                            const varExpr = `${variable} = ${variableValue}`;
+                            //TODO: consider efficiency
+                            let tempVar = this.Parse(varExpr);
+                            this.Evaluator(tempVar, local, fname);
+                            return this.reduceIfReturnList(this.Evaluator(tree.forStmt[forIndex], local, fname));
+                        });
+                        return {
+                            type: 'LIST',
+                            list: [],
+                            parent: tree,
+                        };
+                    }
                     default:
                         throw new EvalError(`evaluating undefined type '${tree.type}'.`);
                 }
@@ -1315,6 +1352,13 @@ export class Evaluator {
                                 return ':';
                             }
                         case 'ENDRANGE':
+                            return 'end';
+                        case 'FOR':
+                            let forstr = 'FOR ' + this.Unparse(tree.expression[0]) + '\n';
+                            forstr += this.Unparse(tree.forStmt[0]) + '\n';
+                            forstr += 'ENDFOR';
+                            return forstr;
+                        case 'ENDFOR':
                             return 'end';
                         case ':':
                             return ':';
@@ -1495,6 +1539,59 @@ export class Evaluator {
                             );
                             const ifElse = tree.else ? `<mtr><mtd><mo><b>else</b></mo></mtd></mtr><mtr><mtd></mtd><mtd>${this.unparserMathML(tree.else)}</mtd></mtr>` : '';
                             return `<mtable>${ifThenArray.join('')}${ifElse}<mtr><mtd><mo><b>endif</b></mo></mtd></mtr></mtable>`;
+                        case 'FOR':
+                            const expr = tree.expression[0];
+                            let forLoopML = ``;
+                            if (expr.right.type === 'RANGE'){
+                                const variable =this.Unparse(expr.left);
+                                const range = expr.right;
+                                const start = this.Unparse(range.start_);
+                                const stop = this.Unparse(range.stop_);
+                                const stride = range.stride_ ? this.Unparse(range.stride_) : 1;
+                                const init = `${variable} = ${start}`;
+                                const condition = `${variable} <= ${stop}`;
+                                const increment = `${variable} += ${stride}`;
+                                forLoopML = `
+                                  <mtr>
+                                    <mtd><mo><b>for</b></mo></mtd>
+                                    <mtd>
+                                      <mrow>
+                                        <mo>(</mo>
+                                        <mo>${init}</mo>
+                                        <mo>;</mo>
+                                        <mo>${condition}</mo>
+                                        <mo>;</mo>
+                                        <mo>${increment}</mo>
+                                        <mo>)</mo>
+                                      </mrow>
+                                    </mtd>
+                                  </mtr>
+                                `;
+                            } else {
+                                const variable = expr.left.id;
+                                const varArray = this.unparserMathML(expr.right);
+                                forLoopML = `
+                                  <mtr>
+                                    <mtd><mo><b>for</b></mo></mtd>
+                                    <mtd>
+                                      <mrow>
+                                        <mo>(let</mo>
+                                        <mo>${variable}</mo>
+                                        <mo>of</mo>
+                                        <mo>${varArray}</mo>
+                                        <mo>)</mo>
+                                      </mrow>
+                                    </mtd>
+                                  </mtr>
+                                `;
+                            }
+                            forLoopML += `<mtr>
+                                            <mtd></mtd>
+                                            <mtd>${this.unparserMathML(tree.forStmt[0])}</mtd>
+                                          </mtr>`;
+                            return `<mtable>${forLoopML}<mtr><mtd><mo><b>endfor</b></mo></mtd></mtr></mtable>`;
+                        case 'ENDFOR':
+                            return '<mi>endfor</mi>';
                         default:
                             return '<mi>invalid</mi>';
                     }

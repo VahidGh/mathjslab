@@ -73,7 +73,7 @@ export interface PrimaryNode {
     stop?: { line: number; column: number };
 }
 
-export type NodeInput = NodeExpr | NodeList | NodeDeclaration | NodeIf;
+export type NodeInput = NodeExpr | NodeList | NodeDeclaration | NodeIf | NodeFor;
 
 /**
  * Expression node.
@@ -228,6 +228,14 @@ export interface NodeElseIf {
 
 export interface NodeElse {
     else: NodeList;
+}
+
+export interface NodeFor extends PrimaryNode {
+    type: 'FOR';
+    expression: NodeExpr[];
+    // TODO: check for forStmt and omitAns
+    forStmt: NodeList[];
+    omitAns?: boolean;
 }
 
 /**
@@ -547,5 +555,14 @@ export const nodeElseIf = (expression: NodeExpr, then: NodeList): NodeElseIf => 
 export const nodeElse = (elseStmt: NodeList): NodeElse => {
     return {
         else: elseStmt,
+    };
+};
+
+export const nodeForStmt = (expression: NodeExpr, forStmt: NodeList): NodeFor => {
+    return {
+        type: 'FOR',
+        expression: [expression],
+        forStmt: [forStmt],
+        omitAns: true,
     };
 };

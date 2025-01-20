@@ -413,6 +413,9 @@ select_command returns [node: AST.NodeInput]
     : if_command {
         localctx.node = localctx.if_command().node;
     }
+    | for_command {
+        localctx.node = localctx.for_command().node;
+    }
     ;
 
 /**
@@ -442,6 +445,16 @@ else_clause returns [node: AST.NodeElse]
     : ELSE sep? list? {
         localctx.node = AST.nodeElse(localctx.list() ? localctx.list().node : AST.nodeListFirst());
     }
+    ;
+
+/**
+ * For statement.
+ */
+
+for_command returns [node: AST.NodeFor]
+    : FOR expression sep? list? {
+        localctx.node = AST.nodeForStmt(localctx.expression().node, localctx.list() ? localctx.list().node : AST.nodeListFirst());
+    } (END | ENDFOR)
     ;
 
 /**
